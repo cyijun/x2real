@@ -225,7 +225,7 @@ def main(argv: list[str] | None = None) -> int:
         # local kernel wheel; coverage restores Numba's actual import contract.
         _run([sys.executable, "-m", "pip", "install", "--no-deps",
               "coverage==7.6.1", "typing_extensions==4.16.0", "websockets==16.1.1", *wheels])
-        _run([sys.executable, "-m", "pip", "check"])
+        _run([sys.executable, "-P", str(Path(__file__).with_name("x2real_pip_check.py"))])
     return 0
 
 

@@ -487,7 +487,7 @@ print("ManaEnv publication install: OK")
         print_error 'Publication import verification failed.'
         return 1
     }
-    "$python_bin" -m pip check || {
+    "$python_bin" -P "$MANAENV_ROOT/manaenv/scripts/x2real_pip_check.py" || {
         print_error 'Publication dependency verification failed.'
         return 1
     }

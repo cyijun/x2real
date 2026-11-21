@@ -28,6 +28,25 @@ INTERNAL_NEWTON_REF = "git+ssh://git@gitlab.zbl.local:50022/mana/engine/newton.g
 PUBLIC_NEWTON_REF = "git+https://github.com/X-Square-Robot/Newton.git@x2real"
 ISAACLAB_NEWTON_PIN_FILES = ("pyproject.toml", "tools/wheel_builder/uv-overrides.txt")
 PYTORCH_INDEX_URL = "https://download.pytorch.org/whl"
+# ``uv pip install`` ignores Arena/IsaacLab ``[tool.uv] override-dependencies``,
+# so the resolver floats these past Isaac Sim's hard pins (llvmlite via numba,
+# idna via openai>=3 -> httpx2, psutil/decorator via ipython>=9, packaging via
+# virtualenv). Re-align them to versions that satisfy isaacsim-core/kernel and
+# Arena together; validated with a clean ``pip check`` on aarch64 (DGX Spark).
+RESOLVER_DRIFT_PINS = (
+    "coacd==1.0.7",
+    "llvmlite==0.46.0",
+    "numba==0.64.0",
+    "idna==3.10",
+    "psutil==5.9.8",
+    "packaging==26.0",
+    "openai==2.54.0",
+    "ipython==8.39.0",
+    "decorator>=4.0.2,<5",
+    "virtualenv==21.14.5",
+)
+# Left behind by openai>=3; nothing else requires it and it needs idna>=3.18.
+RESOLVER_DRIFT_ORPHANS = ("httpx2",)
 
 
 class Installer:
@@ -365,6 +384,33 @@ def _ensure_torchaudio(installer: Installer, python: Path) -> None:
     installer.run(*command)
 
 
+def _align_resolver_drift(installer: Installer, python: Path) -> None:
+    """Pin packages that drifted past Isaac Sim's requirements; drop orphans."""
+    installer.run(python, "-m", "pip", "install", *RESOLVER_DRIFT_PINS)
+    probe = (
+        "import sys, re\n"
+        "from importlib.metadata import distributions, PackageNotFoundError, version\n"
+        "names = set(sys.argv[1:])\n"
+        "needed = set()\n"
+        "for d in distributions():\n"
+        "    for r in d.requires or []:\n"
+        "        if 'extra ==' in r: continue\n"
+        "        n = re.split(r'[ <>=!~;\\[(]', r, 1)[0].lower().replace('_', '-')\n"
+        "        if n in names: needed.add(n)\n"
+        "for n in sorted(names - needed):\n"
+        "    try:\n"
+        "        version(n); print(n)\n"
+        "    except PackageNotFoundError:\n"
+        "        pass\n"
+    )
+    orphans = subprocess.run(
+        [str(python), "-c", probe, *RESOLVER_DRIFT_ORPHANS],
+        capture_output=True, text=True, check=False,
+    ).stdout.split()
+    if orphans:
+        installer.run(python, "-m", "pip", "uninstall", "-y", *orphans)
+
+
 def _verify_python(python: Path) -> None:
     if not python.is_file() or not os.access(python, os.X_OK):
         raise RuntimeError(f"Python interpreter is not executable: {python}")
@@ -470,6 +516,7 @@ def _install_editables(
             installer.run(*command)
     installer.run(python, "-m", "pip", "install", "--editable", ROOT)
     _ensure_torchaudio(installer, python)
+    _align_resolver_drift(installer, python)
     installer.run(python, "-P", ROOT / "manaenv/scripts/x2real_runtime_wheels.py", "--install")
 
 
@@ -530,7 +577,9 @@ print("ManaEnv publication source install: OK")
         ],
         check=True,
     )
-    subprocess.run([str(python), "-m", "pip", "check"], check=True)
+    subprocess.run(
+        [str(python), "-P", str(ROOT / "manaenv/scripts/x2real_pip_check.py")], check=True
+    )
 
 
 def _parser() -> argparse.ArgumentParser:
