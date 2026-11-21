@@ -450,6 +450,42 @@ install_manaenv() {
         _cleaned_command "$python_bin" "$MANAENV_ROOT/install.py" "${args[@]}"
 }
 
+# Isaac Sim on aarch64 (e.g. DGX Spark / GB10) refuses to start unless libgomp
+# is preloaded. Resolve the system copy once and persist it in the environment.
+arm_libgomp_path() {
+    [[ "$(uname -m)" == aarch64 ]] || return 1
+    local candidate
+    candidate="$(ldconfig -p 2>/dev/null | awk '/libgomp\.so\.1 .*aarch64/ { print $NF; exit }')"
+    [[ -n "$candidate" ]] || candidate=/lib/aarch64-linux-gnu/libgomp.so.1
+    [[ -f "$candidate" ]] || return 1
+    printf '%s\n' "$candidate"
+}
+
+configure_arm_runtime_env() {
+    local libgomp activate_script line
+    libgomp="$(arm_libgomp_path)" || return 0
+    case "$ENV_BACKEND" in
+        conda)
+            print_info "Persist LD_PRELOAD=$libgomp in Conda environment '$ENV_NAME' (Isaac Sim aarch64 requirement)."
+            conda env config vars set -n "$ENV_NAME" LD_PRELOAD="$libgomp" >/dev/null || {
+                print_error 'Unable to set LD_PRELOAD for the Conda environment.'
+                return 1
+            }
+            ;;
+        uv)
+            activate_script="$(target_uv_dir)/bin/activate"
+            line="export LD_PRELOAD=\"$libgomp\${LD_PRELOAD:+:\$LD_PRELOAD}\"  # Isaac Sim aarch64"
+            if ! grep -qF '# Isaac Sim aarch64' "$activate_script" 2>/dev/null; then
+                print_info "Add LD_PRELOAD=$libgomp to $activate_script (Isaac Sim aarch64 requirement)."
+                printf '%s\n' "$line" >>"$activate_script"
+            fi
+            ;;
+        python)
+            print_warning "Isaac Sim on aarch64 needs: export LD_PRELOAD=$libgomp"
+            ;;
+    esac
+}
+
 verify_install() {
     if [[ "$SKIP_VERIFY" == true ]]; then
         print_warning 'Skipping final import verification.'
@@ -459,6 +495,11 @@ verify_install() {
     local python_bin
     python_bin="$(target_python)" || return 1
     print_info 'Step 5: Verify publication imports.'
+    local libgomp
+    if libgomp="$(arm_libgomp_path)"; then
+        # Function-scoped export so a sourced install does not leak it.
+        local -x LD_PRELOAD="$libgomp${LD_PRELOAD:+:$LD_PRELOAD}"
+    fi
     "$python_bin" -c '
 import importlib
 import sys
@@ -659,6 +700,7 @@ _manaenv_install() {
         print_info 'Step 3: Reuse the existing simulation core.'
     fi
     install_manaenv || return 1
+    configure_arm_runtime_env || return 1
     verify_install || return 1
 
     cd "$original_dir" || return 1
