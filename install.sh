@@ -377,6 +377,8 @@ probe_environment() {
         return 0
     fi
 
+    # Check before removing the environment that Step 3 must recreate.
+    preflight_cmake || return 1
     _strip_active_sim_paths
     local deactivate_guard=0
     while [[ "${CONDA_DEFAULT_ENV:-base}" == "$ENV_NAME" && "$deactivate_guard" -lt 5 ]]; do
@@ -392,15 +394,100 @@ probe_environment() {
     SKIP_CORE=false
 }
 
+# IsaacLab's installer runs `sudo apt-get update` and `apt-get install cmake
+# build-essential` whenever cmake is not on PATH. Without root or passwordless
+# sudo that prompts or fails deep inside Step 3, so stop early with a clear hint.
+preflight_cmake() {
+    command -v cmake >/dev/null 2>&1 && return 0
+    [[ "$(id -u)" -eq 0 ]] && return 0
+    if command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
+        print_info 'cmake is missing; IsaacLab will install cmake/build-essential with sudo apt-get.'
+        return 0
+    fi
+    print_error 'cmake is not on PATH, and IsaacLab would run "sudo apt-get install cmake build-essential", which needs root or sudo.'
+    print_error 'Install cmake first, then rerun this installer, for example:'
+    print_error '  sudo apt-get install -y cmake build-essential     # with sudo'
+    print_error '  python3 -m pip install --user cmake               # without sudo; keep ~/.local/bin on PATH'
+    return 1
+}
+
+# Arena's step 8 appends an "# IsaacLab Arena Configuration" block (a stale
+# ISAACLAB_PATH, a PS1 for the env, and ll/.. aliases) to ~/.bashrc and has no
+# switch for it. Remove exactly that block afterwards; everything else in the
+# file, including edits made while the installer ran, is kept.
+_MANAENV_ARENA_BASHRC_MARKER='# IsaacLab Arena Configuration'
+_MANAENV_ARENA_BASHRC_LAST="alias ..='cd ..'"
+
+_bashrc_has_arena_block() {
+    [[ -f "$HOME/.bashrc" ]] && grep -qxF "$_MANAENV_ARENA_BASHRC_MARKER" "$HOME/.bashrc"
+}
+
+# Print $1 without Arena's appended block. The block is the 11 lines from the
+# marker through the ".." alias plus the blank line before it; anything that
+# does not match that shape is printed unchanged.
+_without_arena_bashrc_block() {
+    awk -v first="$_MANAENV_ARENA_BASHRC_MARKER" -v last="$_MANAENV_ARENA_BASHRC_LAST" '
+        function flush(   i) { for (i = 1; i <= held; i++) print buffer[i]; held = 0 }
+        skipping {
+            buffer[++held] = $0
+            if ($0 == last && held == 11) { held = 0; skipping = 0; blank = 0; next }
+            if (held >= 11) { skipping = 0; if (blank) print ""; blank = 0; flush() }
+            next
+        }
+        $0 == first { skipping = 1; held = 0; buffer[++held] = $0; next }
+        { if (blank) print ""; blank = 0 }
+        $0 == "" { blank = 1; next }
+        { print }
+        END { if (skipping) { if (blank) print ""; flush() } else if (blank) print "" }
+    ' "$1"
+}
+
+_restore_bashrc_after_arena() {
+    local had_block="$1" bashrc="$HOME/.bashrc" stripped backup
+    [[ "$had_block" == false ]] && _bashrc_has_arena_block || return 0
+    stripped="$(mktemp)" || return 0
+    _without_arena_bashrc_block "$bashrc" >"$stripped" || {
+        rm -f "$stripped"
+        return 0
+    }
+    if cmp -s "$stripped" "$bashrc"; then
+        rm -f "$stripped"
+        print_warning "Arena added '$_MANAENV_ARENA_BASHRC_MARKER' to $bashrc in an unexpected shape; left it unchanged."
+        return 0
+    fi
+    backup="$bashrc.manaenv-backup.$(date +%Y%m%d%H%M%S)"
+    cp -p "$bashrc" "$backup" || {
+        rm -f "$stripped"
+        return 0
+    }
+    # Rewrite in place so a symlinked ~/.bashrc and its permissions survive.
+    cat "$stripped" >"$bashrc"
+    rm -f "$stripped"
+    print_info "Removed the '$_MANAENV_ARENA_BASHRC_MARKER' block that the Arena installer appended to $bashrc (copy before removal: $backup)."
+}
+
 install_core() {
     [[ -f "$MANAENV_ARENA_INSTALLER" ]] || {
         print_error "Arena installer is missing: $MANAENV_ARENA_INSTALLER"
         return 1
     }
+    local had_bashrc_block=false arena_status=0
+    _bashrc_has_arena_block && had_bashrc_block=true
+    _run_arena_installer || arena_status=$?
+    _restore_bashrc_after_arena "$had_bashrc_block"
+    return "$arena_status"
+}
+
+_run_arena_installer() {
     local -a args
-    local uv_http_timeout
+    local uv_http_timeout pip_find_links
     args=("--$ENV_BACKEND" "$ENV_NAME")
     uv_http_timeout="${UV_HTTP_TIMEOUT:-600}"
+    # IsaacLab only sets PIP_FIND_LINKS=https://py.mujoco.org/ when it is unset.
+    # That page lists nightly builds only and times out from some networks
+    # (~75 s per resolved package); mujoco~=3.11.0 comes from PyPI anyway.
+    # An explicitly exported PIP_FIND_LINKS is passed through unchanged.
+    pip_find_links="${PIP_FIND_LINKS-}"
     [[ "$FORCE" == true ]] && args+=(-f)
     print_info 'Step 3: Install IsaacLab and Arena through the Arena installer.'
 
@@ -420,7 +507,7 @@ install_core() {
             return 1
         }
         _run_or_fail 'Arena core installation failed.' \
-            env UV_HTTP_TIMEOUT="$uv_http_timeout" bash -c '
+            env UV_HTTP_TIMEOUT="$uv_http_timeout" PIP_FIND_LINKS="$pip_find_links" bash -c '
                 source "$1"
                 arena_installer="$2"
                 shift 2
@@ -430,7 +517,7 @@ install_core() {
     fi
 
     _run_or_fail 'Arena core installation failed.' \
-        env UV_HTTP_TIMEOUT="$uv_http_timeout" \
+        env UV_HTTP_TIMEOUT="$uv_http_timeout" PIP_FIND_LINKS="$pip_find_links" \
             bash "$MANAENV_ARENA_INSTALLER" "${args[@]}"
 }
 
@@ -681,6 +768,9 @@ _manaenv_install() {
 
     if [[ "$DRY_RUN" == true ]]; then
         [[ "$SKIP_SOURCES" == true ]] || prepare_sources || return 1
+        if [[ "$SKIP_SOURCES" != true && "$ENV_BACKEND" != python ]]; then
+            preflight_cmake || print_warning 'Dry run: a real install would stop before Step 3 until cmake is available.'
+        fi
         return 0
     fi
 
@@ -695,6 +785,7 @@ _manaenv_install() {
     preflight_hardware || return 1
     probe_environment || return 1
     if [[ "$SKIP_CORE" != true ]]; then
+        preflight_cmake || return 1
         install_core || return 1
     else
         print_info 'Step 3: Reuse the existing simulation core.'
