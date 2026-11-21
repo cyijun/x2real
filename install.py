@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
+import platform
 import shlex
+import shutil
 import subprocess
 import sys
+import urllib.parse
+import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -50,6 +55,23 @@ RESOLVER_DRIFT_ORPHANS = ("httpx2",)
 # conda-forge git-lfs (3.8.x) rewrites the tracked LFS hooks under Arena's
 # ``.githooks/`` into its newer format, which is not a user source change.
 ARENA_IGNORED_DIRTY_PREFIXES = (".githooks/",)
+# PyPI's warp-lang 1.19.0 is a CUDA 13 build and needs an R580+ driver; on older
+# drivers it fails with "Insufficient CUDA driver version" and then
+# "Invalid device identifier: cuda:0". NVIDIA publishes the same release built
+# against CUDA 12 on GitHub. sha256 values are the release asset digests.
+WARP_CUDA13_MIN_DRIVER_MAJOR = 580
+WARP_CU12_VERSION = "1.19.0"
+WARP_CU12_RELEASE_URL = "https://github.com/NVIDIA/warp/releases/download/v{version}/{filename}"
+WARP_CU12_WHEELS = {
+    "x86_64": (
+        "warp_lang-1.19.0+cu12-py3-none-manylinux_2_28_x86_64.whl",
+        "f95d9581ed12663df272e45a50101b171e143fde1ef7b2433a8bfc9fba096598",
+    ),
+    "aarch64": (
+        "warp_lang-1.19.0+cu12-py3-none-manylinux_2_34_aarch64.whl",
+        "b3d0222132811b1db8c5c5d1d04bdc92923b77b7df8556d665116569a361a5d2",
+    ),
+}
 
 
 class Installer:
@@ -415,6 +437,116 @@ def _align_resolver_drift(installer: Installer, python: Path) -> None:
         installer.run(python, "-m", "pip", "uninstall", "-y", *orphans)
 
 
+def _nvidia_driver_major() -> int | None:
+    """Lowest NVIDIA driver major version across GPUs, or None when unknown.
+
+    ``MANAENV_NVIDIA_DRIVER_VERSION`` (e.g. ``570.211.01``) overrides the
+    ``nvidia-smi`` query, for containers without it and for testing.
+    """
+    lines = [os.environ.get("MANAENV_NVIDIA_DRIVER_VERSION", "")]
+    if not lines[0]:
+        try:
+            result = subprocess.run(
+                ["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"],
+                capture_output=True, text=True, check=False, timeout=60,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return None
+        if result.returncode != 0:
+            return None
+        lines = result.stdout.splitlines()
+    majors = [
+        int(head)
+        for head in (line.strip().split(".", 1)[0] for line in lines)
+        if head.isdigit()
+    ]
+    return min(majors) if majors else None
+
+
+def _warp_cu12_wheel(
+    *, driver_major: int | None, machine: str, installed_warp: str | None
+) -> tuple[str, str] | None:
+    """Return ``(filename, sha256)`` of the CUDA 12 warp build to install, if any.
+
+    ``None`` keeps the installed warp-lang: the driver is unknown or R580+,
+    warp-lang is absent, or a CUDA 12 build is already installed. A pre-R580
+    driver with a warp-lang version/architecture that has no verified CUDA 12
+    wheel here only warns, so the rest of the installation is kept.
+    """
+    if driver_major is None or driver_major >= WARP_CUDA13_MIN_DRIVER_MAJOR:
+        return None
+    if installed_warp is None:
+        return None
+    base, _, local = installed_warp.partition("+")
+    if local.startswith("cu12"):
+        return None
+    machine = {"amd64": "x86_64", "arm64": "aarch64"}.get(machine.lower(), machine.lower())
+    wheel = WARP_CU12_WHEELS.get(machine)
+    if base != WARP_CU12_VERSION or wheel is None:
+        print(
+            f"[WARNING] NVIDIA driver {driver_major} is older than R{WARP_CUDA13_MIN_DRIVER_MAJOR}, "
+            f"but no verified CUDA 12 build of warp-lang {installed_warp} for {machine} is known. "
+            "If Warp reports 'Insufficient CUDA driver version', install the matching "
+            "'+cu12' wheel from https://github.com/NVIDIA/warp/releases with "
+            "'pip install --no-deps --force-reinstall'.",
+            file=sys.stderr,
+        )
+        return None
+    return wheel
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1 << 20), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _ensure_warp_matches_driver(installer: Installer, python: Path) -> None:
+    """Swap PyPI's CUDA 13 warp-lang for NVIDIA's CUDA 12 build on pre-R580 drivers."""
+    driver_major = _nvidia_driver_major()
+    probe = subprocess.run(
+        [str(python), "-c",
+         "from importlib.metadata import version, PackageNotFoundError\n"
+         "try:\n    print(version('warp-lang'))\n"
+         "except PackageNotFoundError:\n    pass"],
+        capture_output=True, text=True, check=False,
+    )
+    installed_warp = probe.stdout.strip() or None
+    wheel = _warp_cu12_wheel(
+        driver_major=driver_major, machine=platform.machine(), installed_warp=installed_warp
+    )
+    if wheel is None:
+        return
+    filename, expected_sha256 = wheel
+    print(
+        f"NVIDIA driver {driver_major} < R{WARP_CUDA13_MIN_DRIVER_MAJOR}: replace warp-lang "
+        f"{installed_warp} (CUDA 13) with {filename}"
+    )
+    cache = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "manaenv" / "warp-cu12"
+    wheel_path = cache / filename
+    if not (wheel_path.is_file() and _sha256(wheel_path) == expected_sha256):
+        url = WARP_CU12_RELEASE_URL.format(
+            version=WARP_CU12_VERSION, filename=urllib.parse.quote(filename)
+        )
+        print(f"+ download {url} -> {wheel_path}")
+        if not installer.dry_run:
+            cache.mkdir(parents=True, exist_ok=True)
+            partial = wheel_path.with_name(wheel_path.name + ".part")
+            with urllib.request.urlopen(url, timeout=300) as response, partial.open("wb") as out:
+                shutil.copyfileobj(response, out, 1 << 20)
+            actual_sha256 = _sha256(partial)
+            if actual_sha256 != expected_sha256:
+                partial.unlink()
+                raise RuntimeError(
+                    f"{filename}: sha256 {actual_sha256} does not match the release digest "
+                    f"{expected_sha256}"
+                )
+            partial.replace(wheel_path)
+    installer.run(python, "-m", "pip", "install", "--no-deps", "--force-reinstall", wheel_path)
+
+
 def _verify_python(python: Path) -> None:
     if not python.is_file() or not os.access(python, os.X_OK):
         raise RuntimeError(f"Python interpreter is not executable: {python}")
@@ -522,6 +654,7 @@ def _install_editables(
     _ensure_torchaudio(installer, python)
     _align_resolver_drift(installer, python)
     installer.run(python, "-P", ROOT / "manaenv/scripts/x2real_runtime_wheels.py", "--install")
+    _ensure_warp_matches_driver(installer, python)
 
 
 def _verify_install(
