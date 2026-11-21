@@ -1,0 +1,46 @@
+model_type: qwen2_5
+min_key: q001
+delta_key: delta_001
+dof_config:
+  follow_left_ee_cartesian_pos_relative: 3
+  follow_left_ee_rotation_6D_relative: 6
+  follow_left_gripper: 1
+  follow_right_ee_cartesian_pos_relative: 3
+  follow_right_ee_rotation_6D_relative: 6
+  follow_right_gripper: 1
+  velocity_decomposed: 3
+  height: 1
+  head_actions: 2
+ar_dof_config:
+  follow_left_ee_cartesian_pos_relative: 3
+  follow_left_ee_rotation_6D_relative: 6
+  follow_left_gripper: 1
+  follow_right_ee_cartesian_pos_relative: 3
+  follow_right_ee_rotation_6D_relative: 6
+  follow_right_gripper: 1
+  velocity_decomposed: 3
+  height: 1
+  head_actions: 2
+agent_pos_config:
+  follow_left_ee_cartesian_pos: 3
+  follow_left_ee_rotation_6D: 6
+  follow_left_gripper: 1
+  follow_right_ee_cartesian_pos: 3
+  follow_right_ee_rotation_6D: 6
+  follow_right_gripper: 1
+  velocity_decomposed: 3
+  height: 1
+  head_actions: 2
+use_state_string_representation: true
+state_bins: 512
+data:
+  action_horizon_flow: 32
+  action_horizon_ar: 32
+  use_state_string_representation: true
+  use_embodied_system_prompt_ratio: 0.0
+  state_bins: 512
+  max_length: 1024
+  resolution:
+    face_view: 448
+    left_wrist_view: 448
+    right_wrist_view: 448

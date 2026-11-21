@@ -1,0 +1,178 @@
+--- 3rd/policy_space/policies/wallx/wall_oss_05_artixon_arm_6a_eef/model.py	2026-11-21 18:08:28.923714883 +0800
++++ vla_debug/policies/wallx_oss05_fix/model.py	2026-11-21 23:46:08.000000000 +0800
+@@ -171,6 +171,13 @@
+         self.jpeg_quality = int(knobs.get("jpeg_quality", 95))
+         self.response_left_key = str(knobs.get("response_left_key", "follow1_pos"))
+         self.response_right_key = str(knobs.get("response_right_key", "follow2_pos"))
++        # vla_debug fix: the public wall-oss-0.5 base checkpoint was pre-trained with the ex_normal gripper
++        # channel in raw drive units (normalizer min -0.06, max ~5.5 = min+delta), NOT [0, 1]. ManaEnv
++        # (gripper_convention: normalized_01) sends/expects [0, 1]; rescale at the model boundary.
++        # Set WALLX_GRIPPER_MODEL_SCALE=1 for checkpoints fine-tuned on normalized X2Real data.
++        self.gripper_model_scale = float(_env_or(knobs, "WALLX_GRIPPER_MODEL_SCALE", "gripper_model_scale", 1.0))
++        print(f"[WallX] gripper_model_scale={self.gripper_model_scale}", flush=True)
++        self._model_cfg_preopen = int(knobs.get("preopen_chunks", 0))
+         self.control_rate_hz = int(
+             _env_or(knobs, "WALLX_CONTROL_RATE_HZ", "control_rate_hz", 20)
+         )
+@@ -378,6 +385,7 @@
+                 self.instruction = instr
+         self._latest_obs = None
+         self._policy.reset()
++        self._episode_infer = 0
+ 
+     def runtime_metadata(self) -> dict[str, Any]:
+         """Advertise RTC only when the loaded checkpoint was trained for it."""
+@@ -440,6 +448,20 @@
+             raise RuntimeError(
+                 "No observation buffered. Call ingest_observation first."
+             )
++        # vla_debug fix: X2Real resets the G gripper to (almost) closed, while the base model only saw episodes that
++        # start with open grippers; a closed gripper reads as "already holding something". Open both grippers in place
++        # for the first WALLX_PREOPEN_CHUNKS chunk(s) of every episode before handing control to the model.
++        n_pre = int(os.environ.get("WALLX_PREOPEN_CHUNKS", str(self._model_cfg_preopen)))
++        ep_i = getattr(self, "_episode_infer", 0)
++        self._episode_infer = ep_i + 1
++        if ep_i < n_pre:
++            st = self._latest_obs.get("state") or {}
++            row = np.concatenate([np.asarray(st[self.response_left_key], dtype=np.float32)[:7],
++                                  np.asarray(st[self.response_right_key], dtype=np.float32)[:7]])
++            chunk = np.repeat(row[None], 33, axis=0)
++            chunk[1:, [6, 13]] = 1.0
++            self._dump(None, chunk, preopen=True)
++            return chunk
+         envelope = self._build_envelope(self._latest_obs)
+         try:
+             response = self._policy.infer(envelope)
+@@ -461,7 +483,22 @@
+                 else type(response).__name__
+             )
+             print(f"[WallX] infer #{self._infer_count} response keys: {resp_summary}")
+-        return self._parse_response(response)
++        chunk = self._parse_response(response)
++        self._dump(envelope, chunk)
++        return chunk
++
++    def _dump(self, envelope, chunk, preopen=False):
++        path = os.environ.get("WALLX_DUMP_PATH")
++        if not path:
++            return
++        import json
++        st = (self._latest_obs or {}).get("state") or {}
++        rec = {"episode_infer": getattr(self, "_episode_infer", 0), "preopen": preopen,
++               "instruction": (self._latest_obs or {}).get("instruction"),
++               "state": {k: np.asarray(v, dtype=float).round(5).tolist() for k, v in st.items()},
++               "chunk": np.asarray(chunk, dtype=float).round(5).tolist()}
++        with open(path, "a") as f:
++            f.write(json.dumps(rec) + "\n")
+ 
+     def close(self) -> None:
+         pass
+@@ -492,7 +529,10 @@
+         for name, val in state_in.items():
+             if val is None:
+                 continue
+-            state[name] = np.asarray(val, dtype=np.float32)
++            arr = np.asarray(val, dtype=np.float32).copy()
++            if name in (self.response_left_key, self.response_right_key) and arr.shape[-1] >= 7:
++                arr[..., 6] *= self.gripper_model_scale
++            state[name] = arr
+ 
+         instruction = obs.get("instruction")
+         if not isinstance(instruction, str) or not instruction.strip():
+@@ -538,6 +578,8 @@
+                 chunk = np.concatenate(
+                     [left_arr[:horizon], right_arr[:horizon]], axis=-1
+                 ).astype(np.float32)
++                if self.gripper_model_scale != 1.0:
++                    chunk[:, [6, 13]] /= self.gripper_model_scale
+                 return self._validate_chunk(chunk)
+ 
+         for key in ("action_pred", "actions", "action", "trajectory"):
+--- 3rd/policy_space/policies/wallx/wall_oss_05_artixon_arm_6a_eef/deploy.yaml	2026-11-21 18:08:28.923714883 +0800
++++ vla_debug/policies/wallx_oss05_fix/deploy.yaml	2026-11-21 23:46:08.000000000 +0800
+@@ -1,23 +1,18 @@
+-# Policy Space deployment config: Wall-X bimanual EE
+-#
+-# Launch: policy-space serve policies/wallx/wall_oss_05_artixon_arm_6a_eef/deploy.yaml --port 8001
+-#
+-# The model is loaded directly in this process — no separate wallx server needed.
+-# Set WALLX_CHECKPOINT_PATH env var or checkpoint_path below.
+-#
+-# ``policy_name`` stays ``wallx``: it is the wire identity PolicySpaceImpl checks
+-# against ``policy/wallx_ps@v1.0.0.yaml``, not the directory name.
++# vla_debug fixed deployment of the public wall-oss-0.5 base checkpoint on X2Real ArtiXon Arm-6A (G gripper).
++# Differences from 3rd/policy_space/policies/wallx/wall_oss_05_artixon_arm_6a_eef/deploy.yaml:
++#   * gripper_model_scale: 5.5  (base checkpoint gripper channel is in raw ex_normal units ~0..5.5)
++#   * preopen_chunks: 1        (open both grippers in place for the first chunk; X2Real resets them closed)
++# Required environment (see ../../serve_wallx_fix.sh):
++#   WALLX_CHECKPOINT_PATH -> overlay dir with config.yml (3 cameras @448, max_length 1024)
++#   ps_patched.py / wallx_patch.py -> vision-MLP padding fix (verified: loaded weights == checkpoint)
+ policy_name: wallx
+ 
+ model:
+   module: policy_space.wallx_wall_oss_05.model
+   class: Model
+   cfg:
+-    # Wall-X 1.1 serving interface. Use "legacy" for older runtimes.
+     backend: "standard"
+-    # Required unless WALLX_ROOT is set.
+     wallx_root: ""
+-    # Required: path to wallx checkpoint (or set WALLX_CHECKPOINT_PATH env var)
+     checkpoint_path: ""
+     robot_type: "desktop"
+     robot_id: "10158"
+@@ -25,10 +20,6 @@
+     action_dim: 26
+     action_horizon: 32
+     num_inference_timesteps: 10
+-    # Native WallX actions are sampled at 20 Hz: 32 rows span 1.60 s. The
+-    # client interpolates them into 48 simulator commands at 30 Hz, preserving
+-    # the same 1.60 s span. This value describes the native RTC model rate; it
+-    # must not override the simulator's post-interpolation execution rate.
+     control_rate_hz: 20
+     model_device: "cuda"
+     image_passing_mode: "base64"
+@@ -36,19 +27,15 @@
+     robot_action_end_ratio: 1.0
+     robot_action_interpolate_multiplier: 70
+     instruction: ""
+-    # Lossless by default: JPEG95 changes pixels and breaks train/infer parity.
+-    # Set WALLX_IMAGE_WIRE_ENCODING=jpeg95 only for legacy comparisons.
+     image_wire_encoding: "lossless_png"
+     jpeg_quality: 95
+-    # Non-default CFG options are supported by the legacy backend only.
+     cfg_scale: 1.0
+-    # cfg_uncond_instruction: null
+-    # cfg_uncond_metadata: null
+-    # cfg_drop: null
++    gripper_model_scale: 5.5
++    preopen_chunks: 1
+ 
+ server:
+-  host: "0.0.0.0"
+-  port: 8001
++  host: "127.0.0.1"
++  port: 8011
+   session_mode: multiplexed_serial
+ 
+ metadata:
+@@ -59,19 +46,4 @@
+   action_dim: 14
+   action_mode: "ik_eef_abs"
+   action_horizon: 33
+-  # Unit contract for the gripper channel, declared once per model.
+-  #
+-  # ``normalized_01``: this checkpoint was trained on gripper values the dataset
+-  # builder pre-divided by the source robot's gripper scale, so it emits and
+-  # expects [0, 1] (0 = closed, 1 = fully open). ManaEnv converts to and from the
+-  # selected embodiment's native units (ArtiXon Arm-6A drive-joint radians: H 5.717175,
+-  # G 1.89) on both the action and the observation path.
+-  #
+-  # ``raw``: the model already speaks sim units — set this for checkpoints trained
+-  # on non-normalized data that already carry per-gripper norm_stats and therefore
+-  # do not need the [0, 1] workaround.
+-  #
+-  # Getting this wrong is silent in one direction: an unconverted [0, 1] command
+-  # is a legal radian value that the action term clamps without complaint, and the
+-  # gripper simply never opens past ~18% of travel.
+   gripper_convention: normalized_01
