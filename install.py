@@ -173,10 +173,12 @@ def _ensure_checkout(
     update: bool,
     ignored_prefixes: tuple[str, ...] = (),
 ) -> None:
-    if path.is_dir() and not any(path.iterdir()):
-        if not installer.dry_run:
-            path.rmdir()
-    if not path.exists():
+    # An uninitialised submodule leaves an empty directory; a dry run must
+    # treat it as absent too instead of failing the Git checkout check.
+    empty_dir = path.is_dir() and not any(path.iterdir())
+    if empty_dir and not installer.dry_run:
+        path.rmdir()
+    if empty_dir or not path.exists():
         if not installer.dry_run:
             path.parent.mkdir(parents=True, exist_ok=True)
         installer.run(
