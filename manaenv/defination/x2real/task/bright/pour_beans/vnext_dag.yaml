@@ -1,0 +1,127 @@
+graph_task_generator:
+  definition:
+    task_type: bright_pour_beans
+    layout:
+      runtime_sample:
+        id: runtime
+        targets:
+          assets:
+          - id: tablecloth_asset
+            target:
+              type: node
+              id: tablecloth
+            selector:
+              type: uniform
+          - id: distractor_bowl_asset
+            target:
+              type: node
+              id: distractor_bowl
+            selector:
+              type: uniform
+          - id: empty_cup_asset
+            target:
+              type: node
+              id: empty_cup
+            selector:
+              type: uniform
+          placements:
+          - id: tablecloth
+            target:
+              type: node
+              id: tablecloth
+            sample:
+              type: inherit
+          - id: tray
+            target:
+              type: node
+              id: tray
+            sample:
+              type: inherit
+          - id: target_bowl
+            target:
+              type: node
+              id: target_bowl
+            sample:
+              type: inherit
+          - id: bean_cup
+            target:
+              type: node
+              id: bean_cup
+            sample:
+              type: inherit
+          - id: distractor_bowl
+            target:
+              type: node
+              id: distractor_bowl
+            sample:
+              type: inherit
+          - id: empty_cup
+            target:
+              type: node
+              id: empty_cup
+            sample:
+              type: inherit
+          - id: beans_in_cup
+            target:
+              type: group
+              id: beans_in_cup
+            sample:
+              type: inherit
+        global:
+          lighting:
+            dome:
+              intensity:
+                range: [600.0, 2600.0]
+              color_temperature:
+                range: [3600.0, 7500.0]
+              rotation:
+                range: [-180.0, 180.0]
+    component_sections:
+      log_component:
+        entries:
+          active_assets:
+            trigger: enter
+            func: schema_vnext_active_asset_ids_label
+            params:
+              object_names:
+              - tablecloth
+              - distractor_bowl
+              - empty_cup
+      instruction_component:
+        instructions:
+        - text: Hold the light-blue bowl steady with the left hand. With the right hand pick up the green cup with
+            red beans, move it above the bowl, tilt it to pour the beans into the bowl, then put the cup back on
+            the tray.
+          log:
+            instruction_variant: direct
+      overlay_component:
+        evaluation: true
+        entries:
+        - log_key: active_assets
+          label: Assets
+          font_size: 18
+  nodes:
+  - id: hold_bowl
+    include: x2real/task/bright/pour_beans/stages/hold_bowl.yaml
+    score: 2
+  - id: pick_cup
+    include: x2real/task/bright/pour_beans/stages/pick_cup.yaml
+    score: 2
+  - id: cup_over_bowl
+    include: x2real/task/bright/pour_beans/stages/cup_over_bowl.yaml
+    score: 2
+  - id: pour
+    include: x2real/task/bright/pour_beans/stages/pour.yaml
+    score: 2
+  - id: return_cup
+    include: x2real/task/bright/pour_beans/stages/return_cup.yaml
+    score: 2
+  edges:
+  - src: hold_bowl
+    dst: pick_cup
+  - src: pick_cup
+    dst: cup_over_bowl
+  - src: cup_over_bowl
+    dst: pour
+  - src: pour
+    dst: return_cup

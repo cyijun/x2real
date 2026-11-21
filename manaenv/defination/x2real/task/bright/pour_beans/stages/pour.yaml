@@ -1,0 +1,31 @@
+include: x2real/task/bright/pour_beans/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_pour_beans_pour
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          _func: objects_count_in_relative_zone
+          object_names:
+          - bean_1
+          - bean_2
+          - bean_3
+          - bean_4
+          - bean_5
+          - bean_6
+          - bean_7
+          - bean_8
+          - bean_9
+          reference_cfg: '@target_bowl'
+          min_count: 4
+          xy_distance_threshold: 0.08
+          z_min_offset: -0.01
+          z_max_offset: 0.09
+          velocity_threshold: 0.3
+          consecutive_steps: 10
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: beans poured into the bowl (L3)

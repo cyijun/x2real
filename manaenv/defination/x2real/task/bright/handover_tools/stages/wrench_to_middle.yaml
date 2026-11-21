@@ -1,0 +1,26 @@
+include: x2real/task/bright/handover_tools/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_handover_tools_wrench_to_middle
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          terms:
+          - mid:
+              _func: object_position_in_zone
+              object_cfg: '@tool_2'
+              consecutive_steps: 5
+              x_range: [0.0, 0.4]
+              y_range: [-0.4, -0.14]
+              z_range: [-0.1904, 0.2096]
+          - held:
+              _func: object_contact_destination
+              contact_sensor_cfgs: '@tool2_left_contact'
+              force_threshold: 0.1
+              consecutive_steps: 1
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: wrench carried to the handover point (M1)

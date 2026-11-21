@@ -1,0 +1,133 @@
+graph_task_generator:
+  definition:
+    task_type: bright_arrange_flowers
+    layout:
+      runtime_sample:
+        id: runtime
+        targets:
+          assets:
+          - id: tablecloth_asset
+            target:
+              type: node
+              id: tablecloth
+            selector:
+              type: uniform
+          - id: vase_asset
+            target:
+              type: node
+              id: vase
+            selector:
+              type: uniform
+          placements:
+          - id: tablecloth
+            target:
+              type: node
+              id: tablecloth
+            sample:
+              type: inherit
+          - id: vase
+            target:
+              type: node
+              id: vase
+            sample:
+              type: inherit
+          - id: flower_1
+            target:
+              type: node
+              id: flower_1
+            sample:
+              type: inherit
+          - id: flower_2
+            target:
+              type: node
+              id: flower_2
+            sample:
+              type: inherit
+          - id: flower_3
+            target:
+              type: node
+              id: flower_3
+            sample:
+              type: inherit
+        global:
+          lighting:
+            dome:
+              intensity:
+                range: [600.0, 2600.0]
+              color_temperature:
+                range: [3600.0, 7500.0]
+              rotation:
+                range: [-180.0, 180.0]
+    component_sections:
+      log_component:
+        entries:
+          active_assets:
+            trigger: enter
+            func: schema_vnext_active_asset_ids_label
+            params:
+              object_names:
+              - tablecloth
+              - vase
+      instruction_component:
+        instructions:
+        - text: With the left hand pick up the red rose by its stem, hand it to the right hand which holds the flower
+            head, and insert the stem into the vase; then do the same with the pink rose. Leave the purple rose
+            on the table.
+          log:
+            instruction_variant: direct
+      overlay_component:
+        evaluation: true
+        entries:
+        - log_key: active_assets
+          label: Assets
+          font_size: 18
+  nodes:
+  - id: pick_red
+    include: x2real/task/bright/arrange_flowers/stages/pick_red.yaml
+    score: 2
+  - id: red_to_middle
+    include: x2real/task/bright/arrange_flowers/stages/red_to_middle.yaml
+    score: 2
+  - id: red_handover
+    include: x2real/task/bright/arrange_flowers/stages/red_handover.yaml
+    score: 2
+  - id: red_over_vase
+    include: x2real/task/bright/arrange_flowers/stages/red_over_vase.yaml
+    score: 2
+  - id: red_inserted
+    include: x2real/task/bright/arrange_flowers/stages/red_inserted.yaml
+    score: 2
+  - id: pick_pink
+    include: x2real/task/bright/arrange_flowers/stages/pick_pink.yaml
+    score: 2
+  - id: pink_to_middle
+    include: x2real/task/bright/arrange_flowers/stages/pink_to_middle.yaml
+    score: 2
+  - id: pink_handover
+    include: x2real/task/bright/arrange_flowers/stages/pink_handover.yaml
+    score: 2
+  - id: pink_over_vase
+    include: x2real/task/bright/arrange_flowers/stages/pink_over_vase.yaml
+    score: 2
+  - id: pink_inserted
+    include: x2real/task/bright/arrange_flowers/stages/pink_inserted.yaml
+    score: 2
+  edges:
+  - src: pick_red
+    dst: red_to_middle
+  - src: red_to_middle
+    dst: red_handover
+  - src: red_handover
+    dst: red_over_vase
+  - src: red_over_vase
+    dst: red_inserted
+  - src: red_inserted
+    dst: pick_pink
+  - src: pick_pink
+    dst: pink_to_middle
+  - src: pink_to_middle
+    dst: pink_handover
+  - src: pink_handover
+    dst: pink_over_vase
+  - src: pink_over_vase
+    dst: pink_inserted

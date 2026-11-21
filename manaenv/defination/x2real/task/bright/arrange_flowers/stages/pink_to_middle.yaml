@@ -1,0 +1,26 @@
+include: x2real/task/bright/arrange_flowers/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_arrange_flowers_pink_to_middle
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          terms:
+          - mid:
+              _func: object_position_in_zone
+              object_cfg: '@flower_2'
+              consecutive_steps: 5
+              x_range: [0.0, 0.4]
+              y_range: [-0.4, -0.14]
+              z_range: [-0.1904, 0.2596]
+          - held:
+              _func: object_contact_destination
+              contact_sensor_cfgs: '@flower2_left_contact'
+              force_threshold: 0.05
+              consecutive_steps: 1
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: pink rose lifted to the table centre (M1)

@@ -1,0 +1,21 @@
+include: x2real/task/bright/handover_tools/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_handover_tools_hammer_over_slot
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          _func: object_position_in_zone
+          object_cfg: '@tool_1'
+          consecutive_steps: 3
+          reference_cfg: '@toolbox'
+          in_reference_frame: true
+          x_range: [-0.12, 0.12]
+          y_range: [-0.088, -0.008]
+          z_range: [0.04, 0.3]
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: hammer aligned above its slot (M3)

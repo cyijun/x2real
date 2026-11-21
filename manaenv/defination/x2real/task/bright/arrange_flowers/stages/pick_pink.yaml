@@ -1,0 +1,25 @@
+include: x2real/task/bright/arrange_flowers/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_arrange_flowers_pick_pink
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          terms:
+          - grasp:
+              _func: object_contact_destination
+              contact_sensor_cfgs: '@flower2_left_contact'
+              force_threshold: 0.05
+              consecutive_steps: 3
+          - raised:
+              _func: object_lifted
+              object_cfg: '@flower_2'
+              min_lift: 0.04
+              consecutive_steps: 3
+              contact_sensor: left_gripper_contact
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: left hand picks the pink rose by the stem (G1)

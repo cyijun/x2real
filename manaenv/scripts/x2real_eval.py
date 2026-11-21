@@ -86,6 +86,10 @@ _EXPECTED_BOARD_COUNTS = {
     "arx_r5_tabletop": 12,
     "franka_panda_tabletop": 10,
 }
+# Local extension boards (BRIGHT 2026 hackathon tasks); not part of the 73 formal cases.
+_EXTENSION_BOARD_COUNTS = {
+    "bright_arm6a_tabletop": 5,
+}
 _BOARD_ALIASES = {
     "ex001_tabletop": "artixon_arm6a_tabletop",
     "ex001_challenge": "artixon_arm6a_challenge",
@@ -767,13 +771,14 @@ def check_eval_catalog() -> list[str]:
     except (OSError, TypeError, ValueError, yaml.YAMLError) as exc:
         return [str(exc)]
 
-    if set(boards) != set(_EXPECTED_BOARD_COUNTS):
+    if set(boards) - set(_EXTENSION_BOARD_COUNTS) != set(_EXPECTED_BOARD_COUNTS):
         errors.append(
             "public boards must be exactly: "
             + ", ".join(_EXPECTED_BOARD_COUNTS)
         )
     all_cases: list[EvalCase] = []
-    for board_id, expected_count in _EXPECTED_BOARD_COUNTS.items():
+    extension_cases: list[EvalCase] = []
+    for board_id, expected_count in {**_EXPECTED_BOARD_COUNTS, **_EXTENSION_BOARD_COUNTS}.items():
         board = boards.get(board_id)
         if board is None:
             continue
@@ -784,7 +789,9 @@ def check_eval_catalog() -> list[str]:
                 f"{board_id}: case_count={board.case_count}, expected {expected_count}"
             )
         try:
-            all_cases.extend(load_eval_cases(board_id, boards))
+            (extension_cases if board_id in _EXTENSION_BOARD_COUNTS else all_cases).extend(
+                load_eval_cases(board_id, boards)
+            )
         except (OSError, TypeError, ValueError, yaml.YAMLError) as exc:
             errors.append(str(exc))
 
@@ -799,7 +806,7 @@ def check_eval_catalog() -> list[str]:
     except (OSError, TypeError, ValueError, yaml.YAMLError) as exc:
         errors.append(str(exc))
     else:
-        catalog_envs = set(envs)
+        catalog_envs = set(envs) | {case.env for case in extension_cases}
         missing = sorted(catalog_envs - suite_envs)
         extra = sorted(suite_envs - catalog_envs)
         if missing:

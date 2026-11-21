@@ -1,0 +1,117 @@
+graph_task_generator:
+  definition:
+    task_type: bright_fold_towel
+    layout:
+      runtime_sample:
+        id: runtime
+        targets:
+          assets:
+          - id: tablecloth_asset
+            target:
+              type: node
+              id: tablecloth
+            selector:
+              type: uniform
+          - id: towel_asset
+            target:
+              type: node
+              id: towel
+            selector:
+              type: uniform
+              distinct_id: towel_color
+          - id: basket_asset
+            target:
+              type: node
+              id: basket
+            selector:
+              type: uniform
+          - id: distractor_towel_asset
+            target:
+              type: node
+              id: distractor_towel
+            selector:
+              type: uniform
+              distinct_id: towel_color
+          placements:
+          - id: tablecloth
+            target:
+              type: node
+              id: tablecloth
+            sample:
+              type: inherit
+          - id: towel
+            target:
+              type: node
+              id: towel
+            sample:
+              type: inherit
+          - id: basket
+            target:
+              type: node
+              id: basket
+            sample:
+              type: inherit
+          - id: distractor_towel
+            target:
+              type: node
+              id: distractor_towel
+            sample:
+              type: inherit
+        global:
+          lighting:
+            dome:
+              intensity:
+                range: [600.0, 2600.0]
+              color_temperature:
+                range: [3600.0, 7500.0]
+              rotation:
+                range: [-180.0, 180.0]
+    component_sections:
+      log_component:
+        entries:
+          active_assets:
+            trigger: enter
+            func: schema_vnext_active_asset_ids_label
+            params:
+              object_names:
+              - tablecloth
+              - towel
+              - basket
+              - distractor_towel
+      instruction_component:
+        instructions:
+        - text: Grasp the two near corners of the towel with both hands, fold it once away from you, put it down,
+            then pick the folded towel up and drop it into the basket.
+          log:
+            instruction_variant: direct
+      overlay_component:
+        evaluation: true
+        entries:
+        - log_key: active_assets
+          label: Assets
+          font_size: 18
+  nodes:
+  - id: grasp_corners
+    include: x2real/task/bright/fold_towel/stages/grasp_corners.yaml
+    score: 2
+  - id: fold_lift
+    include: x2real/task/bright/fold_towel/stages/fold_lift.yaml
+    score: 2
+  - id: release
+    include: x2real/task/bright/fold_towel/stages/release.yaml
+    score: 2
+  - id: pick_folded
+    include: x2real/task/bright/fold_towel/stages/pick_folded.yaml
+    score: 2
+  - id: into_basket
+    include: x2real/task/bright/fold_towel/stages/into_basket.yaml
+    score: 2
+  edges:
+  - src: grasp_corners
+    dst: fold_lift
+  - src: fold_lift
+    dst: release
+  - src: release
+    dst: pick_folded
+  - src: pick_folded
+    dst: into_basket

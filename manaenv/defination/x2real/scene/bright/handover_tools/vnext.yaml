@@ -1,0 +1,153 @@
+definition:
+  scene_type: bright_handover_tools_scene
+  metadata:
+    name: bright_handover_tools
+    source: bright/handover_tools
+    semantic_goal: Left hand picks a tool, hands it over at the table centre, right hand puts it into the matching
+      toolbox slot
+render_settings:
+  gen_method: 0
+  tags: green_booth
+background:
+  id: booth
+  asset:
+    type: asset_id
+    id: green_booth_mesh
+  pose:
+    position: [-0.452, -0.271, -0.985]
+    orientation: [0.0, 0.0, -0.704, 0.709]
+  required_surfaces:
+  - tabletop
+objects:
+- id: tablecloth
+  asset:
+    type: pool
+    candidates:
+    - id: any
+      assets:
+      - bright_tablecloth_gray_grid
+      - bright_tablecloth_forest_deer
+      - bright_tablecloth_blue_cloud
+      - bright_tablecloth_wood
+  semantic_tags:
+  - background_cloth
+  kinematic: true
+  anchors:
+    local_surfaces:
+      top:
+        center: [0.0, 0.0, 0.0015]
+        x_axis: [-1.0, 0.0, 0.0]
+        y_axis: [0.0, -1.0, 0.0]
+        bounds:
+          x: [-0.32, 0.32]
+          y: [-0.53, 0.53]
+- id: toolbox
+  asset:
+    type: asset_id
+    id: bright_toolbox
+  semantic_tags:
+  - container
+  - toolbox
+- id: hammer
+  asset:
+    type: asset_id
+    id: bright_hammer
+  semantic_tags:
+  - pickable
+  - tool_1
+- id: wrench
+  asset:
+    type: asset_id
+    id: bright_wrench
+  semantic_tags:
+  - pickable
+  - tool_2
+- id: screwdriver
+  asset:
+    type: asset_id
+    id: bright_screwdriver
+  semantic_tags:
+  - distractor
+layout:
+  surfaces:
+    tabletop:
+      type: ref
+      ref: background.tabletop
+    cloth:
+      type: ref
+      ref: tablecloth.top
+  nodes:
+    tablecloth:
+      object: tablecloth
+      placement:
+        type: surface
+        surface: tabletop
+        ranges:
+          x: [0.0, 0.0]
+          y: [0.0, 0.0]
+        yaws: 0.0
+    toolbox:
+      object: toolbox
+      placement:
+        type: surface
+        surface: cloth
+        ranges:
+          x: [-0.04, 0.04]
+          y: [0.24, 0.32]
+        yaws: [-0.1, 0.1]
+    hammer:
+      object: hammer
+    wrench:
+      object: wrench
+    screwdriver:
+      object: screwdriver
+  groups:
+    tools_region:
+      type: slot
+      nodes:
+      - hammer
+      - wrench
+      - screwdriver
+      slots:
+        slot_0:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.16]
+            y: [-0.44, -0.38]
+          yaws: &id001 [-0.15, 0.15]
+        slot_1:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.16]
+            y: [-0.31, -0.25]
+          yaws: *id001
+        slot_2:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.16]
+            y: [-0.18, -0.12]
+          yaws: *id001
+      assignments:
+        mode: permutation
+        nodes:
+        - hammer
+        - wrench
+        - screwdriver
+        slots:
+        - slot_0
+        - slot_1
+        - slot_2
+      default_assignment: perm_0
+variants:
+  materialization:
+  - id: tablecloth_pick
+    type: asset_pool_choice
+    choices:
+    - id: pick
+      candidate_refs:
+      - tablecloth.any
+      weight: 1.0
+  assignments: []

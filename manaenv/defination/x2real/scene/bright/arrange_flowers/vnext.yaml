@@ -1,0 +1,146 @@
+definition:
+  scene_type: bright_arrange_flowers_scene
+  metadata:
+    name: bright_arrange_flowers
+    source: bright/arrange_flowers
+    semantic_goal: Insert the red and the pink crochet roses stem-first into the vase
+render_settings:
+  gen_method: 0
+  tags: green_booth
+background:
+  id: booth
+  asset:
+    type: asset_id
+    id: green_booth_mesh
+  pose:
+    position: [-0.452, -0.271, -0.985]
+    orientation: [0.0, 0.0, -0.704, 0.709]
+  required_surfaces:
+  - tabletop
+objects:
+- id: tablecloth
+  asset:
+    type: pool
+    candidates:
+    - id: any
+      assets:
+      - bright_tablecloth_gray_grid
+      - bright_tablecloth_forest_deer
+      - bright_tablecloth_blue_cloud
+      - bright_tablecloth_wood
+  semantic_tags:
+  - background_cloth
+  kinematic: true
+  anchors:
+    local_surfaces:
+      top:
+        center: [0.0, 0.0, 0.0015]
+        x_axis: [-1.0, 0.0, 0.0]
+        y_axis: [0.0, -1.0, 0.0]
+        bounds:
+          x: [-0.32, 0.32]
+          y: [-0.53, 0.53]
+- id: vase
+  asset:
+    type: pool
+    candidates:
+    - id: any
+      assets:
+      - bright_vase_white
+      - bright_vase_celadon
+  semantic_tags:
+  - container
+  - vase
+- id: flower_1
+  asset:
+    type: asset_id
+    id: bright_flower_rose_red
+  semantic_tags:
+  - pickable
+  - flower_1
+- id: flower_2
+  asset:
+    type: asset_id
+    id: bright_flower_rose_pink
+  semantic_tags:
+  - pickable
+  - flower_2
+- id: flower_3
+  asset:
+    type: asset_id
+    id: bright_flower_rose_purple
+  semantic_tags:
+  - distractor
+layout:
+  surfaces:
+    tabletop:
+      type: ref
+      ref: background.tabletop
+    cloth:
+      type: ref
+      ref: tablecloth.top
+  nodes:
+    tablecloth:
+      object: tablecloth
+      placement:
+        type: surface
+        surface: tabletop
+        ranges:
+          x: [0.0, 0.0]
+          y: [0.0, 0.0]
+        yaws: 0.0
+    vase:
+      object: vase
+      placement:
+        type: surface
+        surface: cloth
+        ranges:
+          x: [-0.06, 0.04]
+          y: [0.18, 0.3]
+    flower_1:
+      object: flower_1
+      placement:
+        type: surface
+        surface: cloth
+        ranges:
+          x: [-0.03, 0.07]
+          y: [-0.46, -0.38]
+        orientation: &id001 [0.0, 0.0, 0.0, 1.0]
+        yaws: [-0.15, 0.15]
+    flower_2:
+      object: flower_2
+      placement:
+        type: surface
+        surface: cloth
+        ranges:
+          x: [-0.03, 0.07]
+          y: [-0.33, -0.25]
+        orientation: *id001
+        yaws: [-0.15, 0.15]
+    flower_3:
+      object: flower_3
+      placement:
+        type: surface
+        surface: cloth
+        ranges:
+          x: [-0.03, 0.07]
+          y: [-0.2, -0.12]
+        orientation: *id001
+        yaws: [-0.15, 0.15]
+variants:
+  materialization:
+  - id: tablecloth_pick
+    type: asset_pool_choice
+    choices:
+    - id: pick
+      candidate_refs:
+      - tablecloth.any
+      weight: 1.0
+  - id: vase_pick
+    type: asset_pool_choice
+    choices:
+    - id: pick
+      candidate_refs:
+      - vase.any
+      weight: 1.0
+  assignments: []

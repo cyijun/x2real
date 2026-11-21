@@ -1,0 +1,27 @@
+include: x2real/task/bright/pour_beans/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_pour_beans_cup_over_bowl
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          terms:
+          - over:
+              _func: object_position_in_zone
+              object_cfg: '@bean_cup'
+              consecutive_steps: 5
+              reference_cfg: '@target_bowl'
+              xy_distance_threshold: 0.13
+              z_min_offset: 0.06
+              z_max_offset: 0.3
+          - bowl_held:
+              _func: object_contact_destination
+              contact_sensor_cfgs: '@bowl_left_contact'
+              force_threshold: 0.1
+              consecutive_steps: 1
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: cup moved above the bowl (M1)

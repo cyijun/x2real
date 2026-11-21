@@ -1,0 +1,22 @@
+include: x2real/task/bright/fold_towel/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_fold_towel_pick_folded
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          terms:
+          - raised:
+              _func: object_lifted
+              object_cfg: '@towel'
+              min_lift: 0.05
+              consecutive_steps: 3
+              contact_sensor:
+              - left_gripper_contact
+              - right_gripper_contact
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: folded towel picked up (G1)

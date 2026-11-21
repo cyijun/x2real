@@ -1,0 +1,25 @@
+include: x2real/task/bright/handover_tools/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_handover_tools_pick_hammer
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          terms:
+          - grasp:
+              _func: object_contact_destination
+              contact_sensor_cfgs: '@tool1_left_contact'
+              force_threshold: 0.1
+              consecutive_steps: 3
+          - raised:
+              _func: object_lifted
+              object_cfg: '@tool_1'
+              min_lift: 0.04
+              consecutive_steps: 3
+              contact_sensor: left_gripper_contact
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: left hand picks the hammer (G1)

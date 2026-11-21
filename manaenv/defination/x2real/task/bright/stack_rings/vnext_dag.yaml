@@ -1,0 +1,119 @@
+graph_task_generator:
+  definition:
+    task_type: bright_stack_rings
+    layout:
+      runtime_sample:
+        id: runtime
+        targets:
+          assets:
+          - id: tablecloth_asset
+            target:
+              type: node
+              id: tablecloth
+            selector:
+              type: uniform
+          placements:
+          - id: tablecloth
+            target:
+              type: node
+              id: tablecloth
+            sample:
+              type: inherit
+          - id: stacker
+            target:
+              type: node
+              id: stacker
+            sample:
+              type: inherit
+          - id: distractor_stacker
+            target:
+              type: node
+              id: distractor_stacker
+            sample:
+              type: inherit
+          - id: rings_region
+            target:
+              type: group
+              id: rings_region
+            sample:
+              type: inherit
+        global:
+          lighting:
+            dome:
+              intensity:
+                range: [600.0, 2600.0]
+              color_temperature:
+                range: [3600.0, 7500.0]
+              rotation:
+                range: [-180.0, 180.0]
+    component_sections:
+      log_component:
+        entries:
+          active_assets:
+            trigger: enter
+            func: schema_vnext_active_asset_ids_label
+            params:
+              object_names:
+              - tablecloth
+      instruction_component:
+        instructions:
+        - text: Press the left end of the wooden base with the left hand. With the right hand put the rings onto
+            the right peg from the largest to the smallest.
+          log:
+            instruction_variant: direct
+      overlay_component:
+        evaluation: true
+        entries:
+        - log_key: active_assets
+          label: Assets
+          font_size: 18
+  nodes:
+  - id: press_base
+    include: x2real/task/bright/stack_rings/stages/press_base.yaml
+    score: 2
+  - id: pick_large
+    include: x2real/task/bright/stack_rings/stages/pick_large.yaml
+    score: 2
+  - id: large_over_peg
+    include: x2real/task/bright/stack_rings/stages/large_over_peg.yaml
+    score: 2
+  - id: large_on_peg
+    include: x2real/task/bright/stack_rings/stages/large_on_peg.yaml
+    score: 2
+  - id: pick_medium
+    include: x2real/task/bright/stack_rings/stages/pick_medium.yaml
+    score: 2
+  - id: medium_over_peg
+    include: x2real/task/bright/stack_rings/stages/medium_over_peg.yaml
+    score: 2
+  - id: medium_on_peg
+    include: x2real/task/bright/stack_rings/stages/medium_on_peg.yaml
+    score: 2
+  - id: pick_small
+    include: x2real/task/bright/stack_rings/stages/pick_small.yaml
+    score: 2
+  - id: small_over_peg
+    include: x2real/task/bright/stack_rings/stages/small_over_peg.yaml
+    score: 2
+  - id: small_on_peg
+    include: x2real/task/bright/stack_rings/stages/small_on_peg.yaml
+    score: 2
+  edges:
+  - src: press_base
+    dst: pick_large
+  - src: pick_large
+    dst: large_over_peg
+  - src: large_over_peg
+    dst: large_on_peg
+  - src: large_on_peg
+    dst: pick_medium
+  - src: pick_medium
+    dst: medium_over_peg
+  - src: medium_over_peg
+    dst: medium_on_peg
+  - src: medium_on_peg
+    dst: pick_small
+  - src: pick_small
+    dst: small_over_peg
+  - src: small_over_peg
+    dst: small_on_peg

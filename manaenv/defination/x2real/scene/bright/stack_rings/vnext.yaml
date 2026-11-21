@@ -1,0 +1,167 @@
+definition:
+  scene_type: bright_stack_rings_scene
+  metadata:
+    name: bright_stack_rings
+    source: bright/stack_rings
+    semantic_goal: Hold the long base with the left hand and stack the three rings large-to-small on the right peg
+render_settings:
+  gen_method: 0
+  tags: green_booth
+background:
+  id: booth
+  asset:
+    type: asset_id
+    id: green_booth_mesh
+  pose:
+    position: [-0.452, -0.271, -0.985]
+    orientation: [0.0, 0.0, -0.704, 0.709]
+  required_surfaces:
+  - tabletop
+objects:
+- id: tablecloth
+  asset:
+    type: pool
+    candidates:
+    - id: any
+      assets:
+      - bright_tablecloth_gray_grid
+      - bright_tablecloth_forest_deer
+      - bright_tablecloth_blue_cloud
+      - bright_tablecloth_wood
+  semantic_tags:
+  - background_cloth
+  kinematic: true
+  anchors:
+    local_surfaces:
+      top:
+        center: [0.0, 0.0, 0.0015]
+        x_axis: [-1.0, 0.0, 0.0]
+        y_axis: [0.0, -1.0, 0.0]
+        bounds:
+          x: [-0.32, 0.32]
+          y: [-0.53, 0.53]
+- id: stacker
+  asset:
+    type: asset_id
+    id: bright_stacker_base
+  semantic_tags:
+  - destination
+  - stacker
+- id: ring_large
+  asset:
+    type: asset_id
+    id: bright_ring_large
+  semantic_tags:
+  - pickable
+  - ring_1
+- id: ring_medium
+  asset:
+    type: asset_id
+    id: bright_ring_medium
+  semantic_tags:
+  - pickable
+  - ring_2
+- id: ring_small
+  asset:
+    type: asset_id
+    id: bright_ring_small
+  semantic_tags:
+  - pickable
+  - ring_3
+- id: distractor_stacker
+  asset:
+    type: asset_id
+    id: bright_stacker_round
+  semantic_tags:
+  - distractor
+layout:
+  surfaces:
+    tabletop:
+      type: ref
+      ref: background.tabletop
+    cloth:
+      type: ref
+      ref: tablecloth.top
+  nodes:
+    tablecloth:
+      object: tablecloth
+      placement:
+        type: surface
+        surface: tabletop
+        ranges:
+          x: [0.0, 0.0]
+          y: [0.0, 0.0]
+        yaws: 0.0
+    stacker:
+      object: stacker
+      placement:
+        type: surface
+        surface: cloth
+        ranges:
+          x: [-0.06, -0.01]
+          y: [-0.04, 0.04]
+        yaws: [3.06, 3.22]
+    distractor_stacker:
+      object: distractor_stacker
+      placement:
+        type: surface
+        surface: cloth
+        ranges:
+          x: [-0.2, -0.14]
+          y: [-0.44, -0.32]
+    ring_large:
+      object: ring_large
+    ring_medium:
+      object: ring_medium
+    ring_small:
+      object: ring_small
+  groups:
+    rings_region:
+      type: slot
+      nodes:
+      - ring_large
+      - ring_medium
+      - ring_small
+      slots:
+        slot_0:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.1, 0.22]
+            y: [0.05, 0.13]
+          yaws: &id001 [-3.14, 3.14]
+        slot_1:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.1, 0.22]
+            y: [0.17, 0.25]
+          yaws: *id001
+        slot_2:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.1, 0.22]
+            y: [0.29, 0.37]
+          yaws: *id001
+      assignments:
+        mode: permutation
+        nodes:
+        - ring_large
+        - ring_medium
+        - ring_small
+        slots:
+        - slot_0
+        - slot_1
+        - slot_2
+      default_assignment: perm_0
+variants:
+  materialization:
+  - id: tablecloth_pick
+    type: asset_pool_choice
+    choices:
+    - id: pick
+      candidate_refs:
+      - tablecloth.any
+      weight: 1.0
+  assignments: []

@@ -40,6 +40,9 @@ from manaenv.pipeline.translator.reflective_translator import (
 _X2REAL_CONFIG = _REPO_ROOT / "manaenv" / "defination" / "x2real.yaml"
 _PUBLIC_CONFIG_SPLIT = "id"
 _EXPECTED_CASE_COUNT = 73
+# Local extension tasks (BRIGHT 2026 hackathon) live in the same suite but are
+# excluded from the formal 73-case count. Their env names carry this marker.
+_EXTENSION_ENV_MARKER = "_bright_"
 _BENCHMARK_ONLY_CAPABILITY = "benchmark"
 _PUBLIC_ROBOTS = (
     "artixon_arm6a",
@@ -675,8 +678,9 @@ def check_suite(path: Path | None = None) -> list[str]:
         cases = load_cases(cfg)
     except (OSError, ValueError) as exc:
         return [str(exc)]
-    if len(cases) != _EXPECTED_CASE_COUNT:
-        errors.append(f"public suite must contain exactly {_EXPECTED_CASE_COUNT} assemblies, got {len(cases)}")
+    formal = [case for case in cases if _EXTENSION_ENV_MARKER not in case.env]
+    if len(formal) != _EXPECTED_CASE_COUNT:
+        errors.append(f"public suite must contain exactly {_EXPECTED_CASE_COUNT} assemblies, got {len(formal)}")
     if any(case.split != "id" for case in cases):
         errors.append("public suite must contain only ID assemblies")
     if any("gendata" in value for value in _walk_strings(data)):

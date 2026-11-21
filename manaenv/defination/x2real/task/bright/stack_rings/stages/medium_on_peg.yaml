@@ -1,0 +1,30 @@
+include: x2real/task/bright/stack_rings/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_stack_rings_medium_on_peg
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          terms:
+          - on_peg:
+              _func: object_position_in_zone
+              object_cfg: '@ring_2'
+              consecutive_steps: 10
+              reference_cfg: '@destination'
+              velocity_threshold: 0.05
+              in_reference_frame: true
+              x_range: [-0.012, 0.012]
+              y_range: [0.08800000000000001, 0.112]
+              z_range: [0.032, 0.048]
+          - released:
+              _func: object_no_contact_destination
+              contact_sensor_cfgs:
+              - '@ring2_right_contact'
+              force_threshold: 0.05
+              consecutive_steps: 10
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: medium ring dropped onto the peg (P3)
