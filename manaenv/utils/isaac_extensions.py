@@ -58,6 +58,7 @@ PHYSICS_COLLIDER_UI_EXTENSION = "omni.physx.ui"
 PHYSICS_COLLIDER_VISUALIZATION_SETTING = "/persistent/physics/visualizationDisplayColliders"
 PHYSICS_COLLIDER_VISUALIZATION_UI_SETTING = "/manaenv/physics/colliderVisualizationUiEnabled"
 FABRIC_RENDER_DELEGATE_TRANSFORM_SETTING = "/rtx/hydra/readTransformsFromFabricInRenderDelegate"
+UJITSO_TEXTURE_CACHE_SETTING = "/UJITSO/textures"
 
 # Mana rendering experiences for windowed, offscreen-camera, and WebRTC runs.
 MANA_EXPERIENCE_FILE = Path(__file__).resolve().parents[1] / "experience" / "mana.kit"
@@ -248,6 +249,28 @@ def prepare_mana_fabric_transform_kit_args(args: object) -> bool:
             )
         return True
     sys.argv.append(argument)
+    return True
+
+
+def prepare_texture_cache_kit_args(args: object | None = None) -> bool:
+    """Disable Kit's UJITSO derived-texture cache before RTX starts.
+
+    Kit 110.1 (Isaac Sim 6.0) keys each cached GPU texture on the content hash
+    of its source file, but skips that hash when the file's modification time
+    is 0. The public X2Real asset shards restore every file with mtime 0
+    (1970-01-01), so all textures that share the same processing parameters
+    (sRGB / auto / raw colour space) collapse onto one cache key and render
+    with whichever texture reached the persistent cache first. Nothing is
+    logged, and the wrong texture differs from machine to machine.
+
+    With the cache off, Kit decodes every texture from its own file. An
+    explicit ``--/UJITSO/textures=...`` Kit argument is left untouched so the
+    cache can be re-enabled once the asset files carry real mtimes.
+    """
+    prefix = f"--{UJITSO_TEXTURE_CACHE_SETTING}="
+    if any(candidate.startswith(prefix) for candidate in _declared_kit_arguments(args)):
+        return False
+    sys.argv.append(_kit_setting_argument(UJITSO_TEXTURE_CACHE_SETTING, False))
     return True
 
 

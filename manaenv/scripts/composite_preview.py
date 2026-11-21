@@ -200,6 +200,7 @@ def main() -> None:
         maybe_default_mana_experience,
         prepare_camera_kit_args,
         prepare_mana_fabric_transform_kit_args,
+        prepare_texture_cache_kit_args,
         skip_kit_window_task_registration,
         strip_window_title_version,
         validate_mana_fabric_transform_setting,
@@ -209,6 +210,7 @@ def main() -> None:
     prepare_camera_kit_args()
     mana_experience_active = maybe_default_mana_experience(args)
     prepare_mana_fabric_transform_kit_args(args)
+    prepare_texture_cache_kit_args(args)
 
     app_launcher = AppLauncher(args)
     simulation_app = app_launcher.app

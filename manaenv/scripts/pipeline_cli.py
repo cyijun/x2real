@@ -26,6 +26,7 @@ from manaenv.utils.isaac_extensions import (
     prepare_kit_async_render_args,
     prepare_mana_fabric_transform_kit_args,
     prepare_physics_collider_kit_args,
+    prepare_texture_cache_kit_args,
     skip_kit_window_task_registration,
     strip_window_title_version,
     suppress_simulation_manager_plugin_warnings_below_error,
@@ -196,6 +197,7 @@ def _bootstrap_isaac(args: Any) -> Any:
     maybe_livestream3_experience(args)
     mana_experience_active = maybe_default_mana_experience(args)
     prepare_mana_fabric_transform_kit_args(args)
+    prepare_texture_cache_kit_args(args)
     launcher = AppLauncher(args)
     app = launcher.app
     app_launcher = launcher
