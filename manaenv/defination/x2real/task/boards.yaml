@@ -87,6 +87,12 @@ boards:
   
   
   
+  
+  
+  
+  
+  
+  
   # >>> bright2026 begin
   bright_arm6a_tabletop:
     robot: artixon_arm6a

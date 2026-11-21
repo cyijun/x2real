@@ -18,7 +18,7 @@ direct_task_generator:
           - bean_8
           - bean_9
           reference_cfg: '@target_bowl'
-          min_count: 4
+          min_count: 5
           xy_distance_threshold: 0.08
           z_min_offset: -0.01
           z_max_offset: 0.09

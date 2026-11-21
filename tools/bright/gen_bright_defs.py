@@ -101,7 +101,10 @@ def scene_doc(task, goal, objects, nodes, groups=None, surfaces=None):
     for o in objects:  # group members must still be declared as (placement-less) nodes
         if "instances" not in o and o["id"] not in nodes:
             nodes[o["id"]] = {"object": o["id"]}
-    layout = {"surfaces": {"tabletop": {"type": "ref", "ref": "background.tabletop"}, "cloth": {"type": "ref", "ref": "tablecloth.top"}, **(surfaces or {})},
+    has_cloth = any(o["id"] == "tablecloth" for o in objects)
+    layout = {"surfaces": {"tabletop": {"type": "ref", "ref": "background.tabletop"},
+                           **({"cloth": {"type": "ref", "ref": "tablecloth.top"}} if has_cloth else {}),
+                           **(surfaces or {})},
               "nodes": nodes}
     if groups:
         layout["groups"] = groups
@@ -268,19 +271,21 @@ def write_task(task, sensors, stages, dag, scene, *, dropped="@pickable"):
 N_BEANS = 9
 
 
+# Pour scene layout notes: ManaEnv's runtime sampler supports only ONE level of object-relative
+# placement.  Beans must sit on the cup ("cup.rim" local surface), so the cup has to be placed directly
+# on the background tabletop -- which means this scene cannot use the tablecloth object (that would make
+# beans a 2nd-level child) nor the tray.  Background variation for this task comes from dome lighting.
+CUP_RIM_Z = 0.102
+
+
 def task_pour_beans():
     task = "pour_beans"
     beans = [f"bean_{i}" for i in range(1, N_BEANS + 1)]
     objects = [
-        tablecloth(),
-        fixed("tray", "bright_tray_yellow", ["tray"],
-             anchors={"local_surfaces": {"top": {"center": [0.0, 0.0, 0.0045], "x_axis": [0.0, 1.0, 0.0],
-                                                 "y_axis": [-1.0, 0.0, 0.0],
-                                                 "bounds": {"x": [-0.135, 0.135], "y": [-0.185, 0.185]}}}}),
         fixed("target_bowl", "bright_bowl_blue", ["container", "target_bowl"]),
         pool("distractor_bowl", ["bright_bowl_pink", "bright_bowl_beige", "bright_bowl_mint"], ["distractor"]),
         fixed("bean_cup", "bright_cup_green", ["pickable", "bean_cup"],
-              anchors={"local_surfaces": {"rim": {"center": [0.0, 0.0, 0.102], "x_axis": [1.0, 0.0, 0.0],
+              anchors={"local_surfaces": {"rim": {"center": [0.0, 0.0, CUP_RIM_Z], "x_axis": [1.0, 0.0, 0.0],
                                                   "y_axis": [0.0, 1.0, 0.0],
                                                   "bounds": {"x": [-0.026, 0.026], "y": [-0.026, 0.026]}}}}),
         pool("empty_cup", ["bright_cup_purple", "bright_cup_pink", "bright_cup_beige", "bright_cup_blue",
@@ -290,20 +295,18 @@ def task_pour_beans():
          "spawn_mass": [0.0003, 0.0005], "semantic_tags": ["content", "beans"]},
     ]
     nodes = {
-        "tablecloth": TABLECLOTH_NODE,
-        "tray": {"object": "tray", "placement": surf([0.02, 0.08], [-0.05, 0.03], yaws=[1.47, 1.67])},
-        "target_bowl": {"object": "target_bowl", "placement": surf([-0.03, 0.03], [-0.095, -0.085],
-                                                                    surface="tray_top")},
-        "bean_cup": {"object": "bean_cup", "placement": surf([-0.06, 0.06], [0.10, 0.13], surface="tray_top")},
-        "distractor_bowl": {"object": "distractor_bowl", "placement": surf([-0.16, -0.08], [-0.46, -0.40])},
-        "empty_cup": {"object": "empty_cup", "placement": surf([-0.12, 0.12], [0.30, 0.42])},
+        "target_bowl": {"object": "target_bowl", "placement": surf([0.04, 0.12], [-0.22, -0.14], surface="tabletop")},
+        "bean_cup": {"object": "bean_cup", "placement": surf([0.04, 0.12], [0.08, 0.16], surface="tabletop")},
+        "distractor_bowl": {"object": "distractor_bowl", "placement": surf([-0.22, -0.16], [-0.36, -0.20],
+                                                                          surface="tabletop")},
+        "empty_cup": {"object": "empty_cup", "placement": surf([-0.14, 0.10], [0.30, 0.42], surface="tabletop")},
     }
     groups = {"beans_in_cup": {"type": "region", "nodes": "@instances:beans", "surface": "cup_rim",
                                "ranges": {"x": [-0.024, 0.024], "y": [-0.024, 0.024]}, "yaws": 0.0,
                                "sample_method": "stratified", "spacing_mode": "center_distance",
                                "min_spacing": 0.003, "jitter": 0.2, "max_attempts": 4000,
                                "ignore_intra_group_collision": True}}
-    surfaces = {"tray_top": {"type": "ref", "ref": "tray.top"}, "cup_rim": {"type": "ref", "ref": "bean_cup.rim"}}
+    surfaces = {"cup_rim": {"type": "ref", "ref": "bean_cup.rim"}}
     scene = scene_doc(task, "Left hand steadies the blue bowl, right hand pours red beans from the green cup into it "
                             "and puts the cup back", objects, nodes, groups, surfaces)
     sensors = {
@@ -311,7 +314,7 @@ def task_pour_beans():
         "cup_right_contact": {"type": "contact", "source": "@bean_cup", "against": RIGHT_GRIPPER},
     }
     beans_in_bowl = {"_func": "objects_count_in_relative_zone", "object_names": beans,
-                     "reference_cfg": "@target_bowl", "min_count": N_BEANS // 2, "xy_distance_threshold": 0.08,
+                     "reference_cfg": "@target_bowl", "min_count": (N_BEANS + 1) // 2, "xy_distance_threshold": 0.08,
                      "z_min_offset": -0.01, "z_max_offset": 0.09, "velocity_threshold": 0.3,
                      "consecutive_steps": 10}
     stages = {
@@ -324,22 +327,22 @@ def task_pour_beans():
                                  bowl_held=contact("bowl_left_contact", 0.1, 1)),
                           "cup moved above the bowl (M1)"),
         "pour": (beans_in_bowl, "beans poured into the bowl (L3)"),
+        # "back to its original place" ~ upright, on the table, on the right half (y<-0.273 world), released
         "return_cup": (all_of(upright=tilt("@bean_cup", "z", 10, min_dot=0.9, max_dot=1.0),
-                              on_tray=zone("@bean_cup", "@tray", 10, vel=0.05, reference_footprint_zone=True,
-                                           xy_inset_ratio=0.05, z_range=[-0.02, 0.03]),
+                              home=zone("@bean_cup", None, 10, vel=0.05, x_range=[0.0, 0.30],
+                                        y_range=[-0.50, -0.30], z_range=[TABLE_Z - 0.02, TABLE_Z + 0.03]),
                               released=no_contact(["cup_right_contact"], 0.05, 10),
                               beans_kept={**beans_in_bowl, "consecutive_steps": 1}),
-                       "cup put back on the tray (P2)"),
+                       "cup put back on its side of the table (P2)"),
     }
     dag = dag_doc(task, "Hold the light-blue bowl steady with the left hand. With the right hand pick up the green "
                         "cup with red beans, move it above the bowl, tilt it to pour the beans into the bowl, then "
-                        "put the cup back on the tray.",
+                        "put the cup back where it was.",
                   [{"id": s} for s in stages],
-                  runtime_assets=["tablecloth", "distractor_bowl", "empty_cup"],
-                  runtime_nodes=["tablecloth", "tray", "target_bowl", "bean_cup", "distractor_bowl", "empty_cup"],
+                  runtime_assets=["distractor_bowl", "empty_cup"],
+                  runtime_nodes=["target_bowl", "bean_cup", "distractor_bowl", "empty_cup"],
                   runtime_groups=["beans_in_cup"])
     write_task(task, sensors, stages, dag, scene, dropped="@pickable")
-
 
 # ----------------------------------------------------------------------------
 # 2. Fold towel once + put into basket (rigid placeholder towel)

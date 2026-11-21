@@ -6,12 +6,6 @@ graph_task_generator:
         id: runtime
         targets:
           assets:
-          - id: tablecloth_asset
-            target:
-              type: node
-              id: tablecloth
-            selector:
-              type: uniform
           - id: distractor_bowl_asset
             target:
               type: node
@@ -25,18 +19,6 @@ graph_task_generator:
             selector:
               type: uniform
           placements:
-          - id: tablecloth
-            target:
-              type: node
-              id: tablecloth
-            sample:
-              type: inherit
-          - id: tray
-            target:
-              type: node
-              id: tray
-            sample:
-              type: inherit
           - id: target_bowl
             target:
               type: node
@@ -84,14 +66,13 @@ graph_task_generator:
             func: schema_vnext_active_asset_ids_label
             params:
               object_names:
-              - tablecloth
               - distractor_bowl
               - empty_cup
       instruction_component:
         instructions:
         - text: Hold the light-blue bowl steady with the left hand. With the right hand pick up the green cup with
-            red beans, move it above the bowl, tilt it to pour the beans into the bowl, then put the cup back on
-            the tray.
+            red beans, move it above the bowl, tilt it to pour the beans into the bowl, then put the cup back where
+            it was.
           log:
             instruction_variant: direct
       overlay_component:

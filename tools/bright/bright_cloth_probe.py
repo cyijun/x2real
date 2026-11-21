@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Probe: does PhysX particle cloth (GPU dynamics) run in this Isaac Sim 6.0.1 / GB10 build?
+"""Probe: does PhysX cloth (surface deformable, GPU dynamics) run in this Isaac Sim 6.0.1 / GB10 build?
 
 Creates a 30x30 cm towel (particle cloth, 31x31 vertices) above the green-booth table,
 lets it fall for ~3 s, then lifts one edge kinematically by attaching nothing (pure drop),
@@ -55,20 +55,14 @@ px.CreateEnableGPUDynamicsAttr(True)
 px.CreateBroadphaseTypeAttr("GPU")
 px.CreateTimeStepsPerSecondAttr(120)
 
-# particle system
-ps_path = "/World/particleSystem"
-ps = PhysxSchema.PhysxParticleSystem.Define(stage, ps_path)
-ps.CreateSimulationOwnerRel().SetTargets([scene.GetPath()])
-ps.CreateContactOffsetAttr(0.006)
-ps.CreateRestOffsetAttr(0.004)
-ps.CreateParticleContactOffsetAttr(0.006)
-ps.CreateSolidRestOffsetAttr(0.004)
-ps.CreateSolverPositionIterationCountAttr(16)
+# Isaac Sim 6.0 removed PhysxParticleClothAPI; cloth is a PhysX *surface deformable* (GPU only).
+from omni.physx.scripts import deformableUtils, physicsUtils  # noqa: E402
 
-# towel mesh (grid) 30x30 cm, 2 cm above table at table centre
+PhysxSchema.PhysxSceneAPI(scene).GetGpuMaxDeformableSurfaceContactsAttr().Set(1048576)
 n = args.res
 size = 0.30
 table = np.array([0.205, -0.273, -0.2404])
+body = UsdGeom.Xform.Define(stage, "/World/towel")
 pts, idx = [], []
 for j in range(n):
     for i in range(n):
@@ -76,34 +70,44 @@ for j in range(n):
 for j in range(n - 1):
     for i in range(n - 1):
         a = j * n + i
-        idx += [a, a + 1, a + n + 1, a, a + n + 1, a + n]
-mesh = UsdGeom.Mesh.Define(stage, "/World/towel")
+        idx += [a, a + 1, a + n + 1, a + n]
+mesh = UsdGeom.Mesh.Define(stage, "/World/towel/mesh")
 mesh.CreatePointsAttr(Vt.Vec3fArray(pts))
-mesh.CreateFaceVertexCountsAttr(Vt.IntArray([3] * (len(idx) // 3)))
+mesh.CreateFaceVertexCountsAttr(Vt.IntArray([4] * (len(idx) // 4)))
 mesh.CreateFaceVertexIndicesAttr(Vt.IntArray(idx))
 mesh.CreateDoubleSidedAttr(True)
-mesh.AddTranslateOp().Set(Gf.Vec3d(*(table + np.array([0.0, 0.0, 0.06]))))
-mesh.AddRotateXYZOp().Set(Gf.Vec3f(0, 12, 0))
-cloth = PhysxSchema.PhysxParticleClothAPI.Apply(mesh.GetPrim())
-cloth.CreateSelfCollisionAttr(True)
-cloth.CreateSelfCollisionFilterAttr(True)
-cloth.CreateParticleGroupAttr(0)
-PhysxSchema.PhysxParticleAPI(cloth).CreateParticleSystemRel().SetTargets([Sdf.Path(ps_path)])
-api = PhysxSchema.PhysxAutoParticleClothAPI.Apply(mesh.GetPrim())
-api.CreateSpringStretchStiffnessAttr(10000.0)
-api.CreateSpringBendStiffnessAttr(200.0)
-api.CreateSpringShearStiffnessAttr(100.0)
-api.CreateSpringDampingAttr(0.2)
-mass = UsdPhysics.MassAPI.Apply(mesh.GetPrim())
-mass.CreateMassAttr(0.06)
-# blue look
+physicsUtils.setup_transform_as_scale_orient_translate(mesh)
+physicsUtils.set_or_add_translate_op(body, Gf.Vec3f(*[float(v) for v in table + np.array([0.0, 0.0, 0.10])]))
+physicsUtils.set_or_add_orient_op(body, Gf.Quatf(0.9914, Gf.Vec3f(0.0, 0.1305, 0.0)))   # 15 deg tilt
+physicsUtils.set_or_add_scale_op(body, Gf.Vec3f(1.0))
+deformableUtils.create_auto_surface_deformable_hierarchy(
+    stage, root_prim_path=body.GetPath(), simulation_mesh_path="/World/towel/simMesh",
+    cooking_src_mesh_path=mesh.GetPath(), cooking_src_simplification_enabled=False,
+    set_visibility_with_guide_purpose=True)
+bp = body.GetPrim()
+bp.ApplyAPI("PhysxSurfaceDeformableBodyAPI")
+bp.GetAttribute("physxDeformableBody:selfCollision").Set(True)
+bp.GetAttribute("physxDeformableBody:solverPositionIterationCount").Set(16)
+sim_prim = stage.GetPrimAtPath("/World/towel/simMesh")
+sim_prim.ApplyAPI(PhysxSchema.PhysxCollisionAPI)
+PhysxSchema.PhysxCollisionAPI(sim_prim).GetRestOffsetAttr().Set(0.002)
+PhysxSchema.PhysxCollisionAPI(sim_prim).GetContactOffsetAttr().Set(0.006)
+deformableUtils.add_surface_deformable_material(stage, "/World/towelMaterial", dynamic_friction=0.8,
+                                                surface_thickness=0.003, surface_stretch_stiffness=2000.0,
+                                                surface_shear_stiffness=0.5, surface_bend_stiffness=0.05)
+physicsUtils.add_physics_material_to_prim(stage, bp, "/World/towelMaterial")
 mat = UsdShade.Material.Define(stage, "/World/Looks/towel")
 sh = UsdShade.Shader.Define(stage, "/World/Looks/towel/Shader")
 sh.CreateIdAttr("UsdPreviewSurface")
 sh.CreateInput("diffuseColor", Sdf.ValueTypeNames.Color3f).Set(Gf.Vec3f(0.2, 0.45, 0.9))
 mat.CreateSurfaceOutput().ConnectToSource(sh.ConnectableAPI(), "surface")
 UsdShade.MaterialBindingAPI.Apply(mesh.GetPrim()).Bind(mat)
-
+# a rigid box under one half so the towel drapes over an edge (shows bending)
+box = UsdGeom.Cube.Define(stage, "/World/box")
+box.CreateSizeAttr(1.0)
+box.AddTranslateOp().Set(Gf.Vec3d(*[float(v) for v in table + np.array([0.08, 0.0, 0.03])]))
+box.AddScaleOp().Set(Gf.Vec3f(0.12, 0.30, 0.06))
+UsdPhysics.CollisionAPI.Apply(box.GetPrim())
 cam = UsdGeom.Camera.Define(stage, "/World/cam")
 cam.CreateFocalLengthAttr(18.0)
 cam.CreateHorizontalApertureAttr(20.955)
@@ -144,19 +148,15 @@ snap("cloth_after")
 report["wall_s_for_360_updates"] = round(dt, 2)
 report["error"] = err
 try:
-    from isaacsim.core.prims import ClothPrim
-    view = ClothPrim("/World/towel", name="towel_view")
-    view.initialize()
-    wp = view.get_world_positions()
-    wp = np.asarray(wp.cpu() if hasattr(wp, "cpu") else wp).reshape(-1, 3)
-    report["particles"] = int(len(wp))
+    pts_now = np.array(UsdGeom.Mesh(stage.GetPrimAtPath("/World/towel/simMesh")).GetPointsAttr().Get())
+    xf = UsdGeom.Xformable(stage.GetPrimAtPath("/World/towel")).ComputeLocalToWorldTransform(0)
+    wp = np.array([xf.Transform(Gf.Vec3d(*map(float, q))) for q in pts_now])
+    report["sim_points"] = int(len(wp))
     report["z_min_minus_table"] = float(wp[:, 2].min() - table[2])
     report["z_max_minus_table"] = float(wp[:, 2].max() - table[2])
-    report["xy_extent"] = [float(np.ptp(wp[:, 0])), float(np.ptp(wp[:, 1]))]
+    report["note"] = "USD points (may be stale if fabric does not write back); judge by the rendered frames"
 except Exception as exc:  # noqa: BLE001
     report["read_error"] = repr(exc)
-    pts_now = np.array(mesh.GetPointsAttr().Get())
-    report["usd_points_z_span"] = float(np.ptp(pts_now[:, 2])) if len(pts_now) else None
 (OUT / "cloth_probe.json").write_text(json.dumps(report, indent=1))
 print("CLOTH_PROBE", json.dumps(report), flush=True)
 tl.stop()

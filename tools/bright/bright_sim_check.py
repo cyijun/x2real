@@ -192,8 +192,8 @@ else:
     place("stacker", "bright_stacker_base", base_pos, 0)
     peg_world = base_pos + np.array([0.0, 0.10, 0.0])   # local +y peg (asset local y == world y here)
     ring_ids = ["bright_ring_large", "bright_ring_medium", "bright_ring_small"]
-    for k, rid in enumerate(ring_ids):
-        place(f"ring_{k}", rid, peg_world + np.array([0.003, -0.002, 0.14 + 0.05 * k]), 17 * k)
+    # rings are spawned one at a time during the run (see SPAWN): level, 6 mm above the cone tip,
+    # 3.6 mm xy error -- i.e. what a careful top-down placement would do.
     # toolbox with hammer + wrench dropped into their slots (toolbox yaw 0: slots along x, hammer slot -y)
     tb_pos = tab(0.15, 0.30, z0)
     place("toolbox", "bright_toolbox", tb_pos, 0)
@@ -202,9 +202,9 @@ else:
     # vase + two roses held vertical (stem down) above the mouth
     vase_pos = tab(-0.15, 0.25, z0)
     place("vase", "bright_vase_white", vase_pos, 0)
-    down = (math.cos(math.pi / 4), 0.0, math.sin(math.pi / 4), 0.0)  # +X -> -Z  (rotate +90deg about y)
-    place("rose_0", "bright_flower_rose_red", vase_pos + np.array([0.008, 0.0, 0.40]), quat=down)
-    place("rose_1", "bright_flower_rose_pink", vase_pos + np.array([-0.008, 0.006, 0.70]), quat=down)
+    down = (math.cos(math.pi / 4), 0.0, -math.sin(math.pi / 4), 0.0)  # stem-first: authored +X (head) -> +Z
+    place("rose_0", "bright_flower_rose_red", vase_pos + np.array([0.008, 0.0, 0.20]), quat=down)
+
     # beans poured: bowl on table, cup above the bowl tilted 120 deg containing beans -> use cup resting upright,
     # beans dropped into cup first, then cup is kinematically tipped by script.
     bowl_pos = tab(-0.05, -0.20, z0)
@@ -222,6 +222,12 @@ else:
     place("basket", "bright_basket_blue", bk_pos, 90)
     place("towel", "bright_towel_pink", bk_pos + np.array([0, 0, 0.20]), 20)
 
+    # step -> (name, asset, position, yaw, quat): objects added while the simulation runs
+    SPAWN = {5: ("ring_0", ring_ids[0], peg_world + np.array([0.003, -0.002, 0.0015 + 0.126]), 0.0, None),
+             120: ("ring_1", ring_ids[1], peg_world + np.array([0.003, -0.002, 0.0015 + 0.126]), 30.0, None),
+             200: ("ring_2", ring_ids[2], peg_world + np.array([0.003, -0.002, 0.0015 + 0.126]), 60.0, None),
+             150: ("rose_1", "bright_flower_rose_pink", vase_pos + np.array([-0.012, 0.006, 0.20]), 0.0, down)}
+    stage.GetPrimAtPath(cup_path).GetAttribute("physics:kinematicEnabled").Set(True)   # scripted cup
     anns = renderer([HEAD, OVER]) if args.frames or args.video else renderer([OVER])
     warm(10)
     tl = omni.timeline.get_timeline_interface()
@@ -236,6 +242,9 @@ else:
     total = 600  # app updates (~ 5 s at 120 Hz physics if 1 step per update)
     # make the cup kinematic later for the scripted pour
     for step in range(total):
+        if step in SPAWN:
+            _n, _a, _p, _y, _q = SPAWN[step]
+            place(_n, _a, _p, _y, quat=_q)
         if step == 240:
             # scripted pour: switch the cup to kinematic and move it above the bowl, then tilt
             cp = stage.GetPrimAtPath(cup_path)

@@ -19,43 +19,6 @@ background:
   required_surfaces:
   - tabletop
 objects:
-- id: tablecloth
-  asset:
-    type: pool
-    candidates:
-    - id: any
-      assets:
-      - bright_tablecloth_gray_grid
-      - bright_tablecloth_forest_deer
-      - bright_tablecloth_blue_cloud
-      - bright_tablecloth_wood
-  semantic_tags:
-  - background_cloth
-  kinematic: true
-  anchors:
-    local_surfaces:
-      top:
-        center: [0.0, 0.0, 0.0015]
-        x_axis: [-1.0, 0.0, 0.0]
-        y_axis: [0.0, -1.0, 0.0]
-        bounds:
-          x: [-0.32, 0.32]
-          y: [-0.53, 0.53]
-- id: tray
-  asset:
-    type: asset_id
-    id: bright_tray_yellow
-  semantic_tags:
-  - tray
-  anchors:
-    local_surfaces:
-      top:
-        center: [0.0, 0.0, 0.0045]
-        x_axis: [0.0, 1.0, 0.0]
-        y_axis: [-1.0, 0.0, 0.0]
-        bounds:
-          x: [-0.135, 0.135]
-          y: [-0.185, 0.185]
 - id: target_bowl
   asset:
     type: asset_id
@@ -121,65 +84,41 @@ layout:
     tabletop:
       type: ref
       ref: background.tabletop
-    cloth:
-      type: ref
-      ref: tablecloth.top
-    tray_top:
-      type: ref
-      ref: tray.top
     cup_rim:
       type: ref
       ref: bean_cup.rim
   nodes:
-    tablecloth:
-      object: tablecloth
-      placement:
-        type: surface
-        surface: tabletop
-        ranges:
-          x: [0.0, 0.0]
-          y: [0.0, 0.0]
-        yaws: 0.0
-    tray:
-      object: tray
-      placement:
-        type: surface
-        surface: cloth
-        ranges:
-          x: [0.02, 0.08]
-          y: [-0.05, 0.03]
-        yaws: [1.47, 1.67]
     target_bowl:
       object: target_bowl
       placement:
         type: surface
-        surface: tray_top
+        surface: tabletop
         ranges:
-          x: [-0.03, 0.03]
-          y: [-0.095, -0.085]
+          x: [0.04, 0.12]
+          y: [-0.22, -0.14]
     bean_cup:
       object: bean_cup
       placement:
         type: surface
-        surface: tray_top
+        surface: tabletop
         ranges:
-          x: [-0.06, 0.06]
-          y: [0.1, 0.13]
+          x: [0.04, 0.12]
+          y: [0.08, 0.16]
     distractor_bowl:
       object: distractor_bowl
       placement:
         type: surface
-        surface: cloth
+        surface: tabletop
         ranges:
-          x: [-0.16, -0.08]
-          y: [-0.46, -0.4]
+          x: [-0.22, -0.16]
+          y: [-0.36, -0.2]
     empty_cup:
       object: empty_cup
       placement:
         type: surface
-        surface: cloth
+        surface: tabletop
         ranges:
-          x: [-0.12, 0.12]
+          x: [-0.14, 0.1]
           y: [0.3, 0.42]
   groups:
     beans_in_cup:
@@ -198,13 +137,6 @@ layout:
       ignore_intra_group_collision: true
 variants:
   materialization:
-  - id: tablecloth_pick
-    type: asset_pool_choice
-    choices:
-    - id: pick
-      candidate_refs:
-      - tablecloth.any
-      weight: 1.0
   - id: distractor_bowl_pick
     type: asset_pool_choice
     choices:

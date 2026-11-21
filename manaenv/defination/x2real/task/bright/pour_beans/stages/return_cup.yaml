@@ -15,15 +15,14 @@ direct_task_generator:
               consecutive_steps: 10
               min_dot: 0.9
               max_dot: 1.0
-          - on_tray:
+          - home:
               _func: object_position_in_zone
               object_cfg: '@bean_cup'
               consecutive_steps: 10
-              reference_cfg: '@tray'
               velocity_threshold: 0.05
-              reference_footprint_zone: true
-              xy_inset_ratio: 0.05
-              z_range: [-0.02, 0.03]
+              x_range: [0.0, 0.3]
+              y_range: [-0.5, -0.3]
+              z_range: [-0.2604, -0.2104]
           - released:
               _func: object_no_contact_destination
               contact_sensor_cfgs:
@@ -43,7 +42,7 @@ direct_task_generator:
               - bean_8
               - bean_9
               reference_cfg: '@target_bowl'
-              min_count: 4
+              min_count: 5
               xy_distance_threshold: 0.08
               z_min_offset: -0.01
               z_max_offset: 0.09
@@ -53,4 +52,4 @@ direct_task_generator:
       entries:
         progress:
           trigger: success
-          value: cup put back on the tray (P2)
+          value: cup put back on its side of the table (P2)
