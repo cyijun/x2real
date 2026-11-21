@@ -101,9 +101,12 @@ def _require_clean_checkout(
     *,
     ignored_prefixes: tuple[str, ...] = (),
 ) -> None:
-    dirty = _git_output(
-        installer, path, "status", "--porcelain", "--untracked-files=all"
-    )
+    # Do not strip: porcelain status lines start with a significant space
+    # (" M path"), and stripping shifts the path offset of the first line.
+    dirty = subprocess.check_output(
+        ["git", "-C", str(path), "status", "--porcelain", "--untracked-files=all"],
+        text=True,
+    ).rstrip("\n")
     if ignored_prefixes:
         dirty = "\n".join(
             line
