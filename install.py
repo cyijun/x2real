@@ -47,6 +47,9 @@ RESOLVER_DRIFT_PINS = (
 )
 # Left behind by openai>=3; nothing else requires it and it needs idna>=3.18.
 RESOLVER_DRIFT_ORPHANS = ("httpx2",)
+# conda-forge git-lfs (3.8.x) rewrites the tracked LFS hooks under Arena's
+# ``.githooks/`` into its newer format, which is not a user source change.
+ARENA_IGNORED_DIRTY_PREFIXES = (".githooks/",)
 
 
 class Installer:
@@ -146,6 +149,7 @@ def _ensure_checkout(
     path: Path,
     branch: str,
     update: bool,
+    ignored_prefixes: tuple[str, ...] = (),
 ) -> None:
     if path.is_dir() and not any(path.iterdir()):
         if not installer.dry_run:
@@ -181,7 +185,7 @@ def _ensure_checkout(
         raise RuntimeError(
             f"{label} must be on {branch}, got {actual_branch}: {path}"
         )
-    _require_clean_checkout(installer, path, label)
+    _require_clean_checkout(installer, path, label, ignored_prefixes=ignored_prefixes)
 
     if update:
         installer.run("git", "fetch", "origin", branch, cwd=path)
@@ -676,6 +680,7 @@ def main(argv: list[str] | None = None) -> int:
             path=arena_dir,
             branch=X2REAL_BRANCH,
             update=update,
+            ignored_prefixes=ARENA_IGNORED_DIRTY_PREFIXES,
         )
         _ensure_checkout(
             installer,
