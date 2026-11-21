@@ -21,6 +21,13 @@ DEFAULT_ISAACLAB_URL = "https://github.com/X-Square-Robot/IsaacLab.git"
 DEFAULT_ISAACSIM_URL = "https://github.com/X-Square-Robot/IsaacSim.git"
 DEFAULT_ARENA_URL = "https://github.com/X-Square-Robot/IsaacLabArena.git"
 DEFAULT_POLICY_SPACE_URL = "https://github.com/X-Square-Robot/policy-space.git"
+# The public IsaacLab x2real branch still pins Newton to the vendor's internal
+# GitLab, which is unreachable outside their network. Rewrite those pins to the
+# public Newton fork/branch that this installer installs anyway (NEWTON_PIP_SPEC).
+INTERNAL_NEWTON_REF = "git+ssh://git@gitlab.zbl.local:50022/mana/engine/newton.git@publication"
+PUBLIC_NEWTON_REF = "git+https://github.com/X-Square-Robot/Newton.git@x2real"
+ISAACLAB_NEWTON_PIN_FILES = ("pyproject.toml", "tools/wheel_builder/uv-overrides.txt")
+PYTORCH_INDEX_URL = "https://download.pytorch.org/whl"
 
 
 class Installer:
@@ -217,7 +224,7 @@ def _ensure_isaaclab_submodule(
             installer,
             isaaclab_dir,
             "IsaacLab",
-            ignored_prefixes=("newton/",),
+            ignored_prefixes=("newton/", *ISAACLAB_NEWTON_PIN_FILES),
         )
 
     installer.run(
@@ -314,6 +321,45 @@ def _validate_isaacsim_gitlink(
             "IsaacLab's IsaacSim gitlink must track x2real; "
             f".gitmodules contains {configured_branch!r}."
         )
+
+
+def _rewrite_internal_newton_pins(installer: Installer, isaaclab_dir: Path) -> None:
+    """Point IsaacLab's Newton pins at the public fork instead of internal GitLab."""
+    for relative in ISAACLAB_NEWTON_PIN_FILES:
+        path = isaaclab_dir / relative
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8")
+        if INTERNAL_NEWTON_REF not in text:
+            continue
+        print(f"+ rewrite {INTERNAL_NEWTON_REF} -> {PUBLIC_NEWTON_REF} in {path}")
+        if not installer.dry_run:
+            path.write_text(text.replace(INTERNAL_NEWTON_REF, PUBLIC_NEWTON_REF), encoding="utf-8")
+
+
+def _ensure_torchaudio(installer: Installer, python: Path) -> None:
+    """Restore torchaudio when IsaacLab's torch reinstall dropped it.
+
+    IsaacLab uninstalls torch/torchvision/torchaudio and reinstalls only the
+    first two, while isaacsim-core requires torchaudio, so ``pip check`` fails.
+    Install the build matching the installed torch's CUDA tag (cu128 on x86_64,
+    cu130 on aarch64).
+    """
+    probe = subprocess.run(
+        [str(python), "-c",
+         "from importlib.metadata import version, PackageNotFoundError\n"
+         "try:\n    version('torchaudio'); print('present')\n"
+         "except PackageNotFoundError:\n    print(version('torch'))"],
+        capture_output=True, text=True, check=False,
+    )
+    result = probe.stdout.strip()
+    if probe.returncode != 0 or not result or result == "present":
+        return
+    base, _, cuda_tag = result.partition("+")
+    command: list[object] = [python, "-m", "pip", "install", "--no-deps", f"torchaudio=={result}"]
+    if cuda_tag:
+        command += ["--index-url", f"{PYTORCH_INDEX_URL}/{cuda_tag}"]
+    installer.run(*command)
 
 
 def _verify_python(python: Path) -> None:
@@ -420,6 +466,7 @@ def _install_editables(
                 command.extend(("--editable", target))
             installer.run(*command)
     installer.run(python, "-m", "pip", "install", "--editable", ROOT)
+    _ensure_torchaudio(installer, python)
     installer.run(python, "-P", ROOT / "manaenv/scripts/x2real_runtime_wheels.py", "--install")
 
 
@@ -598,6 +645,7 @@ def main(argv: list[str] | None = None) -> int:
             isaaclab_dir=isaaclab_dir,
             isaacsim_url=isaacsim_url,
         )
+        _rewrite_internal_newton_pins(installer, isaaclab_dir)
 
     if args.sources_only:
         print("Dependency source preparation complete.")
