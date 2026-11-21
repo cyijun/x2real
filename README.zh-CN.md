@@ -110,6 +110,8 @@ source ./install.sh
 - 按 [X2Real 依赖配置](.agents/skills/x2real-install/SKILL.md#runtime-dependency-profile) 构建可追溯的本地 Isaac Sim
   兼容 wheel，并要求 `pip check` 通过。
 
+各平台（DGX Spark、x86 服务器、AutoDL 容器、WSL2）的前置条件、已知问题和实测数据见 [分平台安装说明](docs/install-platforms.zh-CN.md)。
+
 ### 2. 准备本地资产
 
 仓库只包含资产 manifest。

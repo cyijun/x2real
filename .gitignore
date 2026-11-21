@@ -44,6 +44,7 @@ logs/
 doc/build/
 # Local Markdown notes; public usage belongs in README and repository skills.
 /docs/**/*.md
+!/docs/install-platforms.zh-CN.md
 
 # ── OS artifacts ───────────────────────────────────────────────
 .DS_Store
