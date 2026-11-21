@@ -14,6 +14,7 @@ import hashlib
 import io
 import json
 import os
+import platform
 import shlex
 import subprocess
 import sys
@@ -25,11 +26,25 @@ from zipfile import ZipFile
 BASE_VERSION = "6.0.1.0"
 LOCAL_VERSION = BASE_VERSION + "+x2real.1"
 PROVENANCE = "MANAENV_COMPAT.json"
-# NVIDIA's CPython 3.12 / manylinux_2_35_x86_64 originals used for this profile.
-SOURCE_SHA256 = {
-    "isaacsim-core": "aadb3c5dffd433d5caec5cf0c4c7a314d30b222997bb8496385baae67dd3367c",
-    "isaacsim-kernel": "618fd6fb09d7d67ca5102251b999bf1a851a8918dadbeea0789e7d4f2a24bbb1",
+# NVIDIA's CPython 3.12 / manylinux_2_35 originals used for this profile, keyed
+# by machine architecture. Hashes match the sha256 published on pypi.nvidia.com.
+# The aarch64 wheels (e.g. DGX Spark / GB10) carry the same Requires-Dist
+# declarations as x86_64, so the OVERRIDES below apply unchanged.
+SOURCE_SHA256_BY_MACHINE = {
+    "x86_64": {
+        "isaacsim-core": "aadb3c5dffd433d5caec5cf0c4c7a314d30b222997bb8496385baae67dd3367c",
+        "isaacsim-kernel": "618fd6fb09d7d67ca5102251b999bf1a851a8918dadbeea0789e7d4f2a24bbb1",
+    },
+    "aarch64": {
+        "isaacsim-core": "db4db05fc2fad7e1497840e3ed604ca8a7e8d9b9bebc83f1aa3bcaee5852fdbc",
+        "isaacsim-kernel": "831740bdb45221eedb8c2bca5daced96a58be69e599913a5eb84e481d5239477",
+    },
 }
+_MACHINE = platform.machine().lower()
+_MACHINE = {"amd64": "x86_64", "arm64": "aarch64"}.get(_MACHINE, _MACHINE)
+if _MACHINE not in SOURCE_SHA256_BY_MACHINE:
+    raise SystemExit(f"Unsupported machine architecture for the X2Real runtime profile: {platform.machine()}")
+SOURCE_SHA256 = SOURCE_SHA256_BY_MACHINE[_MACHINE]
 # Exact versions exercised by this profile. A new profile needs a local version
 # bump and runtime validation; the upstream NVIDIA release remains identifiable.
 OVERRIDES = {
