@@ -589,7 +589,7 @@ BEGIN, END = "# >>> bright2026 begin", "# <<< bright2026 end"
 
 
 def _strip_block(text: str) -> str:
-    return re.sub(rf"\n?{re.escape(BEGIN)}.*?{re.escape(END)}\n?", "\n", text, flags=re.S)
+    return re.sub(rf"[ \t]*{re.escape(BEGIN)}.*?{re.escape(END)}[ \t]*\n", "", text, flags=re.S)
 
 
 def _insert_list_items(text: str, key: str, items_yaml: str) -> str:
