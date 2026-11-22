@@ -25,12 +25,6 @@ graph_task_generator:
               id: stacker
             sample:
               type: inherit
-          - id: distractor_stacker
-            target:
-              type: node
-              id: distractor_stacker
-            sample:
-              type: inherit
           - id: rings_region
             target:
               type: group
@@ -57,8 +51,8 @@ graph_task_generator:
               - tablecloth
       instruction_component:
         instructions:
-        - text: Press the left end of the wooden base with the left hand. With the right hand put the rings onto
-            the right peg from the largest to the smallest.
+        - text: Hold the base of the ring stacker with the left hand. With the right hand put the rings onto the
+            peg from the largest to the smallest.
           log:
             instruction_variant: direct
       overlay_component:

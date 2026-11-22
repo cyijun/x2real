@@ -1,7 +1,7 @@
 include: x2real/task/bright/handover_tools/stages/_stage_base.yaml
 direct_task_generator:
   definition:
-    task_type: bright_handover_tools_hammer_in_slot
+    task_type: bright_handover_tools_wrench_in_box
   component_sections:
     termination_component:
       terms:
@@ -9,22 +9,22 @@ direct_task_generator:
           terms:
           - inside:
               _func: object_position_in_zone
-              object_cfg: '@tool_1'
+              object_cfg: '@tool_2'
               consecutive_steps: 10
               reference_cfg: '@toolbox'
               velocity_threshold: 0.05
               in_reference_frame: true
               x_range: [-0.13, 0.13]
-              y_range: [-0.088, -0.008]
-              z_range: [-0.005, 0.05]
+              y_range: [-0.09, 0.09]
+              z_range: [-0.005, 0.1]
           - free:
               _func: object_no_contact_destination
               contact_sensor_cfgs:
-              - '@tool1_right_contact'
+              - '@tool2_right_contact'
               force_threshold: 0.05
               consecutive_steps: 10
     log_component:
       entries:
         progress:
           trigger: success
-          value: hammer placed in its slot (P2)
+          value: wrench placed in the toolbox (P2)

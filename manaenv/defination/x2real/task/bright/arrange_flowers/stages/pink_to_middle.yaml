@@ -13,14 +13,20 @@ direct_task_generator:
               consecutive_steps: 5
               x_range: [0.0, 0.4]
               y_range: [-0.4, -0.14]
-              z_range: [-0.1904, 0.2596]
+              z_range: [-0.1404, 0.30960000000000004]
           - held:
               _func: object_contact_destination
               contact_sensor_cfgs: '@flower2_left_contact'
               force_threshold: 0.05
               consecutive_steps: 1
+          - untouched:
+              _func: object_no_contact_destination
+              contact_sensor_cfgs:
+              - '@flower2_cloth_contact'
+              force_threshold: 0.05
+              consecutive_steps: 5
     log_component:
       entries:
         progress:
           trigger: success
-          value: pink rose lifted to the table centre (M1)
+          value: pink rose lifted above the table centre, not touching the table (M1)

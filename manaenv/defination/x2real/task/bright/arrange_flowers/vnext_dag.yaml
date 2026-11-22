@@ -12,10 +12,10 @@ graph_task_generator:
               id: tablecloth
             selector:
               type: uniform
-          - id: vase_asset
+          - id: flower_3_asset
             target:
               type: node
-              id: vase
+              id: flower_3
             selector:
               type: uniform
           placements:
@@ -31,22 +31,10 @@ graph_task_generator:
               id: vase
             sample:
               type: inherit
-          - id: flower_1
+          - id: flowers_region
             target:
-              type: node
-              id: flower_1
-            sample:
-              type: inherit
-          - id: flower_2
-            target:
-              type: node
-              id: flower_2
-            sample:
-              type: inherit
-          - id: flower_3
-            target:
-              type: node
-              id: flower_3
+              type: group
+              id: flowers_region
             sample:
               type: inherit
         global:
@@ -67,12 +55,12 @@ graph_task_generator:
             params:
               object_names:
               - tablecloth
-              - vase
+              - flower_3
       instruction_component:
         instructions:
-        - text: With the left hand pick up the red rose by its stem, hand it to the right hand which holds the flower
-            head, and insert the stem into the vase; then do the same with the pink rose. Leave the purple rose
-            on the table.
+        - text: With the left hand pick up the red rose by its stem, lift it above the middle of the table and hand
+            it to the right hand in mid-air (the right hand holds the flower head), then insert the stem into the
+            vase; then do the same with the pink rose. Leave the other flowers.
           log:
             instruction_variant: direct
       overlay_component:

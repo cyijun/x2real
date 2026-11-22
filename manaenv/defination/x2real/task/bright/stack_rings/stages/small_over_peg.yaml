@@ -12,10 +12,10 @@ direct_task_generator:
           reference_cfg: '@destination'
           in_reference_frame: true
           x_range: [-0.02, 0.02]
-          y_range: [0.08, 0.12000000000000001]
-          z_range: [0.06999999999999999, 0.3]
+          y_range: [-0.02, 0.02]
+          z_range: [0.072, 0.35]
     log_component:
       entries:
         progress:
           trigger: success
-          value: small ring aligned above the peg (M1/M3)
+          value: small ring above the peg, hole aligned (M1/M3)

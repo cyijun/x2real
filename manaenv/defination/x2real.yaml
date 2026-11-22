@@ -173,6 +173,7 @@ scene_orders:
 - include: x2real/scene/bright/fold_towel/vnext.yaml
 - include: x2real/scene/bright/stack_rings/vnext.yaml
 - include: x2real/scene/bright/handover_tools/vnext.yaml
+- include: x2real/scene/bright/handover_tools_basket/vnext.yaml
 - include: x2real/scene/bright/arrange_flowers/vnext.yaml
 # <<< bright2026 end
 task_orders:
@@ -232,6 +233,7 @@ task_orders:
 - include: x2real/task/bright/fold_towel/vnext_dag.yaml
 - include: x2real/task/bright/stack_rings/vnext_dag.yaml
 - include: x2real/task/bright/handover_tools/vnext_dag.yaml
+- include: x2real/task/bright/handover_tools_basket/vnext_dag.yaml
 - include: x2real/task/bright/arrange_flowers/vnext_dag.yaml
 # <<< bright2026 end
 assembly_orders:
@@ -1238,6 +1240,19 @@ assembly_orders:
         robot_generator_identity: EX001-6R-G
         board: bright_arm6a_tabletop
 - assembly_generator:
+    name: artixon_arm6a_G_bright_handover_tools_basket_id_env
+    scene_generator_name: bright_handover_tools_basket_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_handover_tools_basket
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
     name: artixon_arm6a_G_bright_arrange_flowers_id_env
     scene_generator_name: bright_arrange_flowers_scene
     robot_generator_name: EX001-6R-G
@@ -2014,6 +2029,16 @@ rollout:
       policy_cfg:
         include: policy/x2real_ps@v1.0.0.yaml
 - env_ref: artixon_arm6a_G_bright_handover_tools_id_env
+  num_episodes: 10
+  episode_length_s: 150
+  max_steps: 4500
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_handover_tools_basket_id_env
   num_episodes: 10
   episode_length_s: 150
   max_steps: 4500

@@ -35,10 +35,13 @@ TASK_DIR = DEF / "x2real" / "task" / "bright"
 BOARD = "bright_arm6a_tabletop"
 CSV = DEF / "x2real" / "task" / f"x2real_{BOARD}_leaderboard.csv"
 ROBOT = "EX001-6R-G"
-TIMEOUTS = {"pour_beans": 120, "fold_towel": 120, "stack_rings": 150, "handover_tools": 150, "arrange_flowers": 150}
+TIMEOUTS = {"pour_beans": 120, "fold_towel": 120, "stack_rings": 150, "handover_tools": 150,
+            "handover_tools_basket": 150, "arrange_flowers": 150}
 TABLE_Z = -0.2404   # env-frame tabletop height
 # runtime asset selectors that must not pick the same candidate in one episode
 DISTINCT = {"towel": "towel_color", "distractor_towel": "towel_color"}
+# non-uniform runtime asset selectors (weights are keyed by pool candidate id)
+SELECTORS = {"basket": {"type": "weighted", "weights": {"green": 1.0, "blue": 0.5, "pink_box": 0.0}}}
 LEFT_GRIPPER = [f"{{ENV_REGEX_NS}}/Robot/left_arm_gripper_{s}_link" for s in ("left", "left_tip", "right", "right_tip")]
 RIGHT_GRIPPER = [f"{{ENV_REGEX_NS}}/Robot/right_arm_gripper_{s}_link" for s in ("left", "left_tip", "right", "right_tip")]
 
@@ -69,13 +72,22 @@ BACKGROUND = {
     "pose": {"position": [-0.452, -0.271, -0.985], "orientation": [0.0, 0.0, -0.704, 0.709]},
     "required_surfaces": ["tabletop"],
 }
-CLOTHS = ["bright_tablecloth_gray_grid", "bright_tablecloth_forest_deer", "bright_tablecloth_blue_cloud",
-          "bright_tablecloth_wood"]
+CLOTHS = ["bright_tablecloth_blue_cloud", "bright_tablecloth_red_check", "bright_tablecloth_forest_deer",
+          "bright_tablecloth_gray_grid"]   # the 4 bought 90x150 cm cloths
 
 
 def pool(obj_id, assets, tags, **extra):
     o = {"id": obj_id, "asset": {"type": "pool", "candidates": [{"id": "any", "assets": list(assets)}]},
          "semantic_tags": list(tags)}
+    o.update(extra)
+    return o
+
+
+def pool_multi(obj_id, candidates, tags, default=None, **extra):
+    """Pool with one candidate id per style, so runtime selectors can weight them (SELECTORS)."""
+    o = {"id": obj_id, "asset": {"type": "pool", "cache_size": len(candidates), "cache_slot_order": "authored",
+                                 "candidates": [{"id": cid, "assets": list(a)} for cid, a in candidates.items()]},
+         "semantic_tags": list(tags), "_default": default or next(iter(candidates))}
     o.update(extra)
     return o
 
@@ -97,6 +109,7 @@ def surf(x, y, yaws=None, surface="cloth", orientation=None):
 
 def scene_doc(task, goal, objects, nodes, groups=None, surfaces=None):
     pools = [o for o in objects if o["asset"]["type"] == "pool"]
+    defaults = {o["id"]: o.pop("_default") for o in pools if "_default" in o}
     nodes = dict(nodes)
     for o in objects:  # group members must still be declared as (placement-less) nodes
         if "instances" not in o and o["id"] not in nodes:
@@ -118,7 +131,11 @@ def scene_doc(task, goal, objects, nodes, groups=None, surfaces=None):
         "variants": {
             "materialization": [
                 {"id": f"{o['id']}_pick", "type": "asset_pool_choice",
-                 "choices": [{"id": "pick", "candidate_refs": [f"{o['id']}.any"], "weight": 1.0}]}
+                 # one choice per candidate (a choice may not bind the same object twice); build-time default
+                 # candidate gets the weight, runtime episodes follow SELECTORS / uniform
+                 "choices": [{"id": f"pick_{c['id']}", "candidate_refs": [f"{o['id']}.{c['id']}"],
+                              "weight": (1.0 if c["id"] == defaults.get(o["id"], c["id"]) else 0.001)}
+                             for c in o["asset"]["candidates"]]}
                 for o in pools],
             "assignments": [],
         },
@@ -221,7 +238,7 @@ def tilt(obj, axis="z", steps=5, **kw):
 
 def dag_doc(task, instruction, nodes, *, runtime_assets, runtime_nodes, runtime_groups=(), lighting=True):
     targets = {
-        "assets": [{"id": f"{n}_asset", "target": {"type": "node", "id": n}, "selector": ({"type": "uniform", "distinct_id": DISTINCT[n]} if n in DISTINCT else {"type": "uniform"})}
+        "assets": [{"id": f"{n}_asset", "target": {"type": "node", "id": n}, "selector": SELECTORS.get(n) or ({"type": "uniform", "distinct_id": DISTINCT[n]} if n in DISTINCT else {"type": "uniform"})}
                    for n in runtime_assets],
         "placements": ([{"id": n, "target": {"type": "node", "id": n}, "sample": {"type": "inherit"}}
                         for n in runtime_nodes] +
@@ -266,7 +283,7 @@ def write_task(task, sensors, stages, dag, scene, *, dropped="@pickable"):
 
 
 # ----------------------------------------------------------------------------
-# 1. Pour beans (left hand steadies the bowl)
+# 1. Pour beans (bowl stays on the table, left hand steadies its rim)
 # ----------------------------------------------------------------------------
 N_BEANS = 9
 
@@ -274,7 +291,7 @@ N_BEANS = 9
 # Pour scene layout notes: ManaEnv's runtime sampler supports only ONE level of object-relative
 # placement.  Beans must sit on the cup ("cup.rim" local surface), so the cup has to be placed directly
 # on the background tabletop -- which means this scene cannot use the tablecloth object (that would make
-# beans a 2nd-level child) nor the tray.  Background variation for this task comes from dome lighting.
+# beans a 2nd-level child).  No tray either (none was bought).  Background variation here = dome lighting.
 CUP_RIM_Z = 0.102
 
 
@@ -288,16 +305,17 @@ def task_pour_beans():
               anchors={"local_surfaces": {"rim": {"center": [0.0, 0.0, CUP_RIM_Z], "x_axis": [1.0, 0.0, 0.0],
                                                   "y_axis": [0.0, 1.0, 0.0],
                                                   "bounds": {"x": [-0.026, 0.026], "y": [-0.026, 0.026]}}}}),
+        # empty-cup distractor: other straw-cup colours; the transparent measuring cup is distractor-only
         pool("empty_cup", ["bright_cup_purple", "bright_cup_pink", "bright_cup_beige", "bright_cup_blue",
                            "bright_measuring_cup_blue"], ["distractor_cup"]),
         {"id": "beans", "asset": {"type": "asset_id", "id": "bright_bean_red"},
          "instances": {"type": "auto", "count": N_BEANS, "template": "bean_{i}", "start_index": 1},
          "spawn_mass": [0.0003, 0.0005], "semantic_tags": ["content", "beans"]},
     ]
-    nodes = {
-        "target_bowl": {"object": "target_bowl", "placement": surf([0.04, 0.12], [-0.22, -0.14], surface="tabletop")},
+    nodes = {   # 20 cm bowls: radius 0.10
+        "target_bowl": {"object": "target_bowl", "placement": surf([0.05, 0.12], [-0.23, -0.15], surface="tabletop")},
         "bean_cup": {"object": "bean_cup", "placement": surf([0.04, 0.12], [0.08, 0.16], surface="tabletop")},
-        "distractor_bowl": {"object": "distractor_bowl", "placement": surf([-0.22, -0.16], [-0.36, -0.20],
+        "distractor_bowl": {"object": "distractor_bowl", "placement": surf([-0.21, -0.17], [-0.36, -0.20],
                                                                           surface="tabletop")},
         "empty_cup": {"object": "empty_cup", "placement": surf([-0.14, 0.10], [0.30, 0.42], surface="tabletop")},
     }
@@ -307,27 +325,29 @@ def task_pour_beans():
                                "min_spacing": 0.003, "jitter": 0.2, "max_attempts": 4000,
                                "ignore_intra_group_collision": True}}
     surfaces = {"cup_rim": {"type": "ref", "ref": "bean_cup.rim"}}
-    scene = scene_doc(task, "Left hand steadies the blue bowl, right hand pours red beans from the green cup into it "
-                            "and puts the cup back", objects, nodes, groups, surfaces)
+    scene = scene_doc(task, "Left hand steadies the light (20 cm, 130 g, low-friction) bowl on the table, right hand "
+                            "pours all red beans from the cup into it and puts the cup back", objects, nodes, groups,
+                      surfaces)
     sensors = {
         "bowl_left_contact": {"type": "contact", "source": "@target_bowl", "against": LEFT_GRIPPER},
         "cup_right_contact": {"type": "contact", "source": "@bean_cup", "against": RIGHT_GRIPPER},
     }
+    # "pour ALL beans into the bowl, none spilled" (external doc) -> every bean inside the bowl
     beans_in_bowl = {"_func": "objects_count_in_relative_zone", "object_names": beans,
-                     "reference_cfg": "@target_bowl", "min_count": (N_BEANS + 1) // 2, "xy_distance_threshold": 0.08,
-                     "z_min_offset": -0.01, "z_max_offset": 0.09, "velocity_threshold": 0.3,
+                     "reference_cfg": "@target_bowl", "min_count": N_BEANS, "xy_distance_threshold": 0.09,
+                     "z_min_offset": -0.01, "z_max_offset": 0.10, "velocity_threshold": 0.3,
                      "consecutive_steps": 10}
     stages = {
-        "hold_bowl": (contact("bowl_left_contact", 0.2, 10), "left hand holds the rim of the blue bowl (C1)"),
+        "hold_bowl": (contact("bowl_left_contact", 0.2, 10), "left hand holds the rim of the target bowl (C1)"),
         "pick_cup": (all_of(right_grasp=contact("cup_right_contact", 0.2, 5),
                             cup_lifted=lifted("@bean_cup", 0.05, sensor="right_gripper_contact")),
                      "right hand picks up the bean cup (G1)"),
-        "cup_over_bowl": (all_of(over=zone("@bean_cup", "@target_bowl", 5, xy_distance_threshold=0.13,
+        "cup_over_bowl": (all_of(over=zone("@bean_cup", "@target_bowl", 5, xy_distance_threshold=0.14,
                                            z_min_offset=0.06, z_max_offset=0.30),
                                  bowl_held=contact("bowl_left_contact", 0.1, 1)),
                           "cup moved above the bowl (M1)"),
-        "pour": (beans_in_bowl, "beans poured into the bowl (L3)"),
-        # "back to its original place" ~ upright, on the table, on the right half (y<-0.273 world), released
+        "pour": (all_of(all_beans=beans_in_bowl, bowl_held=contact("bowl_left_contact", 0.1, 1)),
+                 "all beans poured into the bowl while the left hand holds it (L3)"),
         "return_cup": (all_of(upright=tilt("@bean_cup", "z", 10, min_dot=0.9, max_dot=1.0),
                               home=zone("@bean_cup", None, 10, vel=0.05, x_range=[0.0, 0.30],
                                         y_range=[-0.50, -0.30], z_range=[TABLE_Z - 0.02, TABLE_Z + 0.03]),
@@ -335,28 +355,33 @@ def task_pour_beans():
                               beans_kept={**beans_in_bowl, "consecutive_steps": 1}),
                        "cup put back on its side of the table (P2)"),
     }
-    dag = dag_doc(task, "Hold the light-blue bowl steady with the left hand. With the right hand pick up the green "
-                        "cup with red beans, move it above the bowl, tilt it to pour the beans into the bowl, then "
-                        "put the cup back where it was.",
+    dag = dag_doc(task, "Hold the light-blue bowl steady on the table with the left hand. With the right hand pick up "
+                        "the green cup with red beans, move it above the bowl, tilt it to pour all the beans into the "
+                        "bowl without spilling, then put the cup back where it was.",
                   [{"id": s} for s in stages],
                   runtime_assets=["distractor_bowl", "empty_cup"],
                   runtime_nodes=["target_bowl", "bean_cup", "distractor_bowl", "empty_cup"],
                   runtime_groups=["beans_in_cup"])
     write_task(task, sensors, stages, dag, scene, dropped="@pickable")
 
+
 # ----------------------------------------------------------------------------
 # 2. Fold towel once + put into basket (rigid placeholder towel)
 # ----------------------------------------------------------------------------
+TOWELS = ["bright_towel_blue", "bright_towel_pink", "bright_towel_yellow", "bright_towel_green",
+          "bright_towel_purple"]
+
 
 def task_fold_towel():
     task = "fold_towel"
-    towels = ["bright_towel_blue", "bright_towel_pink", "bright_towel_yellow", "bright_towel_green",
-              "bright_towel_purple"]
     objects = [
         tablecloth(),
-        pool("towel", towels, ["pickable", "towel", "cloth_placeholder"]),
-        pool("basket", ["bright_basket_green", "bright_basket_blue"], ["container"]),
-        pool("distractor_towel", towels, ["distractor"]),
+        pool("towel", TOWELS, ["pickable", "towel", "cloth_placeholder"]),
+        # basket: green (default), blue (colour variant), pink box (style variant, weight 0 = off: its 24x16.8 cm
+        # inner floor is shorter than the 30 cm folded towel; enable in SELECTORS when the team decides)
+        pool_multi("basket", {"green": ["bright_basket_green"], "blue": ["bright_basket_blue"],
+                              "pink_box": ["bright_bin_pink"]}, ["container"], default="green"),
+        pool("distractor_towel", TOWELS, ["distractor"]),
     ]
     nodes = {
         "tablecloth": TABLECLOTH_NODE,
@@ -370,18 +395,18 @@ def task_fold_towel():
         "towel_left_contact": {"type": "contact", "source": "@towel", "against": LEFT_GRIPPER},
         "towel_right_contact": {"type": "contact", "source": "@towel", "against": RIGHT_GRIPPER},
     }
+    both = ["left_gripper_contact", "right_gripper_contact"]
     stages = {
         "grasp_corners": (all_of(left=contact("towel_left_contact", 0.1, 5), right=contact("towel_right_contact", 0.1, 5)),
                           "both grippers pinch the near corners (M3)"),
         "fold_lift": (all_of(left=contact("towel_left_contact", 0.1, 3), right=contact("towel_right_contact", 0.1, 3),
-                             raised=lifted("@towel", 0.03, sensor=["left_gripper_contact", "right_gripper_contact"])),
+                             raised=lifted("@towel", 0.03, sensor=both)),
                       "corners lifted and carried away from the robot (D3; rigid towel proxy)"),
         "release": (all_of(flat=tilt("@towel", "z", 10, min_dot=0.9, max_dot=1.0),
                            down=zone("@towel", None, 10, vel=0.05, z_range=[TABLE_Z - 0.02, TABLE_Z + 0.03]),
                            free=no_contact(["towel_left_contact", "towel_right_contact"], 0.05, 10)),
                     "towel put down and released (P2)"),
-        "pick_folded": (all_of(raised=lifted("@towel", 0.05, sensor=["left_gripper_contact", "right_gripper_contact"])),
-                        "folded towel picked up (G1)"),
+        "pick_folded": (all_of(raised=lifted("@towel", 0.05, sensor=both)), "folded towel picked up (G1)"),
         "into_basket": (all_of(inside=zone("@towel", "@container", 10, vel=0.05, reference_footprint_zone=True,
                                            xy_inset_ratio=0.05, z_range=[-0.02, 0.12]),
                                free=no_contact(["towel_left_contact", "towel_right_contact"], 0.05, 10)),
@@ -396,176 +421,201 @@ def task_fold_towel():
 
 
 # ----------------------------------------------------------------------------
-# 3. Stack rings large -> small onto the right peg while the left hand holds the base
+# 3. Stack rings large -> small onto the single peg of the round Montessori stacker
 # ----------------------------------------------------------------------------
-PEG_Y = 0.10      # target peg in base-local +y
-BASE_H = 0.02
-RING_T = 0.02
+BASE_H = 0.022    # keep in sync with STACK in gen_bright_assets.py
+RING_T = 0.020
 
 
 def task_stack_rings():
     task = "stack_rings"
     objects = [
         tablecloth(),
-        fixed("stacker", "bright_stacker_base", ["destination", "stacker"]),
+        fixed("stacker", "bright_stacker_round", ["destination", "stacker"]),
         fixed("ring_large", "bright_ring_large", ["pickable", "ring_1"]),
         fixed("ring_medium", "bright_ring_medium", ["pickable", "ring_2"]),
         fixed("ring_small", "bright_ring_small", ["pickable", "ring_3"]),
-        fixed("distractor_stacker", "bright_stacker_round", ["distractor"]),
+        fixed("ring_extra", "bright_ring_extra", ["distractor"]),   # look-alike ring from the same set, not used
     ]
     nodes = {
         "tablecloth": TABLECLOTH_NODE,
-        # world-frame yaw ~pi so the base-local +y (red-capped) peg sits on the robot's right
-        "stacker": {"object": "stacker", "placement": surf([-0.06, -0.01], [-0.04, 0.04], yaws=[3.06, 3.22])},
-        "distractor_stacker": {"object": "distractor_stacker", "placement": surf([-0.20, -0.14], [-0.44, -0.32])},
+        "stacker": {"object": "stacker", "placement": surf([-0.02, 0.04], [-0.05, 0.03])},
     }
-    groups = {"rings_region": slot_group(["ring_large", "ring_medium", "ring_small"],
-                                         [([0.10, 0.22], [0.05, 0.13]), ([0.10, 0.22], [0.17, 0.25]),
-                                          ([0.10, 0.22], [0.29, 0.37])], yaws=[-3.14, 3.14])}
-    scene = scene_doc(task, "Hold the long base with the left hand and stack the three rings large-to-small on the "
-                            "right peg", objects, nodes, groups)
+    groups = {"rings_region": slot_group(["ring_large", "ring_medium", "ring_small", "ring_extra"],
+                                         [([0.13, 0.22], [0.10, 0.16]), ([0.13, 0.22], [0.22, 0.28]),
+                                          ([0.13, 0.22], [0.34, 0.40]), ([-0.18, -0.10], [0.16, 0.30])],
+                                         yaws=[-3.14, 3.14])}
+    scene = scene_doc(task, "Hold the round stacker base with the left hand and stack three rings large-to-small on "
+                            "its single peg", objects, nodes, groups)
     sensors = {"base_left_contact": {"type": "contact", "source": "@stacker", "against": LEFT_GRIPPER}}
     for k in (1, 2, 3):
         sensors[f"ring{k}_right_contact"] = {"type": "contact", "source": f"@ring_{k}", "against": RIGHT_GRIPPER}
-    stages = {"press_base": (contact("base_left_contact", 0.5, 10), "left hand presses the base end (C1)")}
+    stages = {"press_base": (contact("base_left_contact", 0.5, 10), "left hand holds the stacker base (C1)")}
     for k, name in ((1, "large"), (2, "medium"), (3, "small")):
         ring = f"@ring_{k}"
         z_on = BASE_H + RING_T * (k - 1)
         stages[f"pick_{name}"] = (all_of(grasp=contact(f"ring{k}_right_contact", 0.1, 3),
                                          raised=lifted(ring, 0.03, sensor="right_gripper_contact")),
-                                  f"right hand picks the {name} ring (G1)")
+                                  f"right hand picks the {name} ring from above (G1)")
         stages[f"{name}_over_peg"] = (zone(ring, "@destination", 3, in_reference_frame=True,
-                                           x_range=[-0.02, 0.02], y_range=[PEG_Y - 0.02, PEG_Y + 0.02],
-                                           z_range=[z_on + 0.01, 0.30]),
-                                      f"{name} ring aligned above the peg (M1/M3)")
+                                           x_range=[-0.02, 0.02], y_range=[-0.02, 0.02],
+                                           z_range=[z_on + 0.01, 0.35]),
+                                      f"{name} ring above the peg, hole aligned (M1/M3)")
         stages[f"{name}_on_peg"] = (all_of(on_peg=zone(ring, "@destination", 10, vel=0.05, in_reference_frame=True,
-                                                       x_range=[-0.012, 0.012],
-                                                       y_range=[PEG_Y - 0.012, PEG_Y + 0.012],
+                                                       x_range=[-0.012, 0.012], y_range=[-0.012, 0.012],
                                                        z_range=[z_on - 0.008, z_on + 0.008]),
                                            released=no_contact([f"ring{k}_right_contact"], 0.05, 10)),
-                                    f"{name} ring dropped onto the peg (P3)")
-    dag = dag_doc(task, "Press the left end of the wooden base with the left hand. With the right hand put the rings "
-                        "onto the right peg from the largest to the smallest.",
+                                    f"{name} ring put onto the peg (P3)")
+    dag = dag_doc(task, "Hold the base of the ring stacker with the left hand. With the right hand put the rings onto "
+                        "the peg from the largest to the smallest.",
                   [{"id": s} for s in stages], runtime_assets=["tablecloth"],
-                  runtime_nodes=["tablecloth", "stacker", "distractor_stacker"], runtime_groups=["rings_region"])
+                  runtime_nodes=["tablecloth", "stacker"], runtime_groups=["rings_region"])
     write_task(task, sensors, stages, dag, scene)
 
 
 # ----------------------------------------------------------------------------
-# 4. Hand over tools: left picks, hands to right in the middle, right places into slot
+# 4. Hand over tools (mid-air) and put them into the toolbox (or the basket variant)
 # ----------------------------------------------------------------------------
-SLOT_Y = 0.048
+HANDOVER_MIN_Z = 0.05   # C2 = mid-air handover: tool root >= 5 cm above the table, not touching the cloth
+CARRY_MIN_Z = 0.10      # M1 "lift to ~15 cm above the table centre": >= 10 cm accepted
+CONTAINERS = {
+    # name: (asset, scene placement, (x, y) half-extents of the inside in the container frame, inside z max)
+    "toolbox": ("bright_toolbox", {"x": [-0.04, 0.04], "y": [0.24, 0.32], "yaws": [-0.1, 0.1]}, (0.13, 0.09), 0.10),
+    "basket": ("bright_basket_green", {"x": [-0.12, -0.04], "y": [0.22, 0.30], "yaws": [1.47, 1.67]}, (0.16, 0.115),
+               0.09),
+}
 
 
-def task_handover_tools():
-    task = "handover_tools"
+def airborne_handover(k, prefix, extra_free=()):
+    """C2: right hand holds, left hand released, object in the air and touching nothing but the gripper."""
+    obj = f"@{prefix}_{k}"
+    return all_of(right=contact(f"{prefix}{k}_right_contact", 0.05, 5),
+                  left_free=no_contact([f"{prefix}{k}_left_contact"], 0.05, 5),
+                  airborne=zone(obj, None, 5, z_range=[TABLE_Z + HANDOVER_MIN_Z, TABLE_Z + 0.6]),
+                  untouched=no_contact([f"{prefix}{k}_cloth_contact", *extra_free], 0.05, 5))
+
+
+def task_handover_tools(container="toolbox"):
+    task = "handover_tools" if container == "toolbox" else f"handover_tools_{container}"
+    asset, place, (hx, hy), zmax = CONTAINERS[container]
     objects = [
         tablecloth(),
-        fixed("toolbox", "bright_toolbox", ["container", "toolbox"]),
+        fixed("box", asset, ["container", "toolbox"]),
         fixed("hammer", "bright_hammer", ["pickable", "tool_1"]),
         fixed("wrench", "bright_wrench", ["pickable", "tool_2"]),
         fixed("screwdriver", "bright_screwdriver", ["distractor"]),
+        fixed("saw", "bright_saw", ["distractor"]),
+        fixed("gear", "bright_gear", ["distractor"]),
     ]
     nodes = {
         "tablecloth": TABLECLOTH_NODE,
-        "toolbox": {"object": "toolbox", "placement": surf([-0.04, 0.04], [0.24, 0.32], yaws=[-0.1, 0.1])},
+        "box": {"object": "box", "placement": surf(place["x"], place["y"], yaws=place["yaws"])},
+        "gear": {"object": "gear", "placement": surf([-0.20, -0.14], [-0.30, -0.18], yaws=[-3.14, 3.14])},
     }
-    groups = {"tools_region": slot_group(["hammer", "wrench", "screwdriver"],
-                                         [([0.06, 0.16], [-0.44, -0.38]), ([0.06, 0.16], [-0.31, -0.25]),
-                                          ([0.06, 0.16], [-0.18, -0.12])], yaws=[-0.15, 0.15])}
-    scene = scene_doc(task, "Left hand picks a tool, hands it over at the table centre, right hand puts it into the "
-                            "matching toolbox slot", objects, nodes, groups)
+    groups = {"tools_region": slot_group(["hammer", "wrench", "screwdriver", "saw"],
+                                         [([0.06, 0.16], [-0.45, -0.43]), ([0.06, 0.16], [-0.35, -0.33]),
+                                          ([0.06, 0.16], [-0.25, -0.23]), ([0.06, 0.16], [-0.15, -0.13])],
+                                         yaws=[-0.08, 0.08])}
+    where = "toolbox" if container == "toolbox" else "green basket"
+    scene = scene_doc(task, f"Left hand picks a tool, hands it to the right hand in mid-air above the table centre, "
+                            f"right hand puts it into the {where}", objects, nodes, groups)
     sensors = {}
     for k in (1, 2):
         sensors[f"tool{k}_left_contact"] = {"type": "contact", "source": f"@tool_{k}", "against": LEFT_GRIPPER}
         sensors[f"tool{k}_right_contact"] = {"type": "contact", "source": f"@tool_{k}", "against": RIGHT_GRIPPER}
+        sensors[f"tool{k}_cloth_contact"] = {"type": "contact", "source": f"@tool_{k}", "against": "@background_cloth"}
     stages = {}
-    for k, name, slot in ((1, "hammer", [-SLOT_Y - 0.04, -SLOT_Y + 0.04]), (2, "wrench", [SLOT_Y - 0.04, SLOT_Y + 0.04])):
+    for k, name in ((1, "hammer"), (2, "wrench")):
         tool = f"@tool_{k}"
         stages[f"pick_{name}"] = (all_of(grasp=contact(f"tool{k}_left_contact", 0.1, 3),
                                          raised=lifted(tool, 0.04, sensor="left_gripper_contact")),
                                   f"left hand picks the {name} (G1)")
-        # table middle (env frame): world x 0.05..0.40, y -0.40..-0.14 (table centre y=-0.273), lifted
+        # table centre (env frame): world x 0.0..0.40, y -0.40..-0.14 (table centre y = -0.273), >= 10 cm up
         stages[f"{name}_to_middle"] = (all_of(mid=zone(tool, None, 5, x_range=[0.0, 0.40], y_range=[-0.40, -0.14],
-                                                       z_range=[TABLE_Z + 0.05, TABLE_Z + 0.45]),
-                                              held=contact(f"tool{k}_left_contact", 0.1, 1)),
-                                       f"{name} carried to the handover point (M1)")
-        stages[f"{name}_handover"] = (all_of(right=contact(f"tool{k}_right_contact", 0.1, 5),
-                                             left_free=no_contact([f"tool{k}_left_contact"], 0.05, 5),
-                                             airborne=zone(tool, None, 5, z_range=[TABLE_Z + 0.03, TABLE_Z + 0.5])),
-                                      f"right hand takes the {name}, left releases (C2)")
-        stages[f"{name}_over_slot"] = (zone(tool, "@toolbox", 3, in_reference_frame=True, x_range=[-0.12, 0.12],
-                                            y_range=slot, z_range=[0.04, 0.30]),
-                                       f"{name} aligned above its slot (M3)")
-        stages[f"{name}_in_slot"] = (all_of(inside=zone(tool, "@toolbox", 10, vel=0.05, in_reference_frame=True,
-                                                        x_range=[-0.13, 0.13], y_range=slot, z_range=[-0.005, 0.05]),
-                                            free=no_contact([f"tool{k}_right_contact"], 0.05, 10)),
-                                     f"{name} placed in its slot (P2)")
-    dag = dag_doc(task, "With the left hand pick up the hammer, hand it to the right hand at the middle of the table, "
-                        "and put it into the red-labelled slot of the toolbox; then do the same with the wrench and "
-                        "the blue-labelled slot.",
+                                                       z_range=[TABLE_Z + CARRY_MIN_Z, TABLE_Z + 0.50]),
+                                              held=contact(f"tool{k}_left_contact", 0.1, 1),
+                                              untouched=no_contact([f"tool{k}_cloth_contact"], 0.05, 5)),
+                                       f"{name} lifted above the table centre, not touching the table (M1)")
+        stages[f"{name}_handover"] = (airborne_handover(k, "tool"),
+                                      f"right hand takes the {name} in mid-air, left releases (C2)")
+        stages[f"{name}_over_box"] = (zone(tool, "@toolbox", 3, in_reference_frame=True, x_range=[-hx, hx],
+                                           y_range=[-hy, hy], z_range=[0.04, 0.35]),
+                                      f"{name} aligned above the {where} (M3)")
+        stages[f"{name}_in_box"] = (all_of(inside=zone(tool, "@toolbox", 10, vel=0.05, in_reference_frame=True,
+                                                       x_range=[-hx, hx], y_range=[-hy, hy], z_range=[-0.005, zmax]),
+                                           free=no_contact([f"tool{k}_right_contact"], 0.05, 10)),
+                                    f"{name} placed in the {where} (P2)")
+    dag = dag_doc(task, f"With the left hand pick up the hammer, lift it above the middle of the table and hand it to "
+                        f"the right hand in mid-air, then put it into the {where}; then do the same with the wrench.",
                   [{"id": s} for s in stages], runtime_assets=["tablecloth"],
-                  runtime_nodes=["tablecloth", "toolbox"], runtime_groups=["tools_region"])
+                  runtime_nodes=["tablecloth", "box", "gear"], runtime_groups=["tools_region"])
     write_task(task, sensors, stages, dag, scene)
 
 
+def task_handover_tools_basket():
+    task_handover_tools("basket")
+
+
 # ----------------------------------------------------------------------------
-# 5. Arrange flowers: left picks the stem, right takes the head, inserts into vase
+# 5. Arrange flowers: left picks the stem, mid-air handover to the right (holds the head), insert into vase
 # ----------------------------------------------------------------------------
 
 def task_arrange_flowers():
     task = "arrange_flowers"
     objects = [
         tablecloth(),
-        pool("vase", ["bright_vase_white", "bright_vase_celadon"], ["container", "vase"]),
+        fixed("vase", "bright_vase_white", ["container", "vase"]),
         fixed("flower_1", "bright_flower_rose_red", ["pickable", "flower_1"]),
         fixed("flower_2", "bright_flower_rose_pink", ["pickable", "flower_2"]),
-        fixed("flower_3", "bright_flower_rose_purple", ["distractor"]),
+        pool("flower_3", ["bright_flower_rose_purple", "bright_flower_rose_orange"], ["distractor"]),
+        fixed("lily", "bright_flower_lily_white", ["distractor"]),
     ]
-    head_away = [0.0, 0.0, 0.0, 1.0]   # orientations are world-frame: authored +X head already points away (world +x)
     nodes = {
         "tablecloth": TABLECLOTH_NODE,
         "vase": {"object": "vase", "placement": surf([-0.06, 0.04], [0.18, 0.30])},
     }
-    for k, yr in ((1, [-0.46, -0.38]), (2, [-0.33, -0.25]), (3, [-0.20, -0.12])):
-        nodes[f"flower_{k}"] = {"object": f"flower_{k}", "placement": surf([-0.03, 0.07], yr, yaws=[-0.15, 0.15],
-                                                                          orientation=head_away)}
-    groups = None
-    scene = scene_doc(task, "Insert the red and the pink crochet roses stem-first into the vase", objects, nodes,
-                      groups)
+    # flowers lie along world +x (head away from the robot, yaw 0 is world-frame); 4 slots on the left
+    groups = {"flowers_region": slot_group(["flower_1", "flower_2", "flower_3", "lily"],
+                                           [([-0.03, 0.07], [-0.46, -0.42]), ([-0.03, 0.07], [-0.35, -0.31]),
+                                            ([-0.03, 0.07], [-0.24, -0.20]), ([-0.03, 0.07], [-0.13, -0.09])],
+                                           yaws=[-0.12, 0.12])}
+    scene = scene_doc(task, "Insert the red and the pink crochet roses stem-first into the vase (mid-air handover)",
+                      objects, nodes, groups)
     sensors = {}
     for k in (1, 2):
         sensors[f"flower{k}_left_contact"] = {"type": "contact", "source": f"@flower_{k}", "against": LEFT_GRIPPER}
         sensors[f"flower{k}_right_contact"] = {"type": "contact", "source": f"@flower_{k}", "against": RIGHT_GRIPPER}
         sensors[f"flower{k}_vase_contact"] = {"type": "contact", "source": f"@flower_{k}", "against": "@vase"}
+        sensors[f"flower{k}_cloth_contact"] = {"type": "contact", "source": f"@flower_{k}",
+                                               "against": "@background_cloth"}
     stages = {}
     for k, name in ((1, "red"), (2, "pink")):
         fl = f"@flower_{k}"
         stages[f"pick_{name}"] = (all_of(grasp=contact(f"flower{k}_left_contact", 0.05, 3),
                                          raised=lifted(fl, 0.04, sensor="left_gripper_contact")),
-                                  f"left hand picks the {name} rose by the stem (G1)")
+                                  f"left hand picks the {name} rose by the stem from above (G1)")
         stages[f"{name}_to_middle"] = (all_of(mid=zone(fl, None, 5, x_range=[0.0, 0.40], y_range=[-0.40, -0.14],
-                                                       z_range=[TABLE_Z + 0.05, TABLE_Z + 0.50]),
-                                              held=contact(f"flower{k}_left_contact", 0.05, 1)),
-                                       f"{name} rose lifted to the table centre (M1)")
-        stages[f"{name}_handover"] = (all_of(right=contact(f"flower{k}_right_contact", 0.05, 5),
-                                             left_free=no_contact([f"flower{k}_left_contact"], 0.05, 5)),
-                                      f"right hand takes the {name} rose head, left releases (C2)")
+                                                       z_range=[TABLE_Z + CARRY_MIN_Z, TABLE_Z + 0.55]),
+                                              held=contact(f"flower{k}_left_contact", 0.05, 1),
+                                              untouched=no_contact([f"flower{k}_cloth_contact"], 0.05, 5)),
+                                       f"{name} rose lifted above the table centre, not touching the table (M1)")
+        stages[f"{name}_handover"] = (airborne_handover(k, "flower"),
+                                      f"right hand takes the {name} rose head in mid-air, left releases (C2)")
         stages[f"{name}_over_vase"] = (all_of(above=zone(fl, "@vase", 3, xy_distance_threshold=0.05,
                                                          z_min_offset=0.10, z_max_offset=0.45),
                                               vertical=tilt(fl, "x", 3, min_abs_dot=0.8)),
-                                       f"{name} stem vertical above the vase mouth (M3)")
+                                       f"{name} stem bottom above the vase mouth (M3)")
         stages[f"{name}_inserted"] = (all_of(touch=contact(f"flower{k}_vase_contact", 0.01, 5),
                                              inside=zone(fl, "@vase", 5, vel=0.5, reference_footprint_zone=True,
                                                          xy_inset_ratio=0.1, z_range=[-0.03, 0.35]),
                                              upright=tilt(fl, "x", 5, min_abs_dot=0.6),
                                              free=no_contact([f"flower{k}_right_contact"], 0.05, 5)),
-                                      f"{name} rose inserted and released (P1)")
-    dag = dag_doc(task, "With the left hand pick up the red rose by its stem, hand it to the right hand which holds "
-                        "the flower head, and insert the stem into the vase; then do the same with the pink rose. "
-                        "Leave the purple rose on the table.",
-                  [{"id": s} for s in stages], runtime_assets=["tablecloth", "vase"],
-                  runtime_nodes=["tablecloth", "vase", "flower_1", "flower_2", "flower_3"])
+                                      f"{name} rose inserted upright and released (P3)")
+    dag = dag_doc(task, "With the left hand pick up the red rose by its stem, lift it above the middle of the table "
+                        "and hand it to the right hand in mid-air (the right hand holds the flower head), then insert "
+                        "the stem into the vase; then do the same with the pink rose. Leave the other flowers.",
+                  [{"id": s} for s in stages], runtime_assets=["tablecloth", "flower_3"],
+                  runtime_nodes=["tablecloth", "vase"], runtime_groups=["flowers_region"])
     write_task(task, sensors, stages, dag, scene)
 
 
@@ -574,6 +624,7 @@ TASKS = {
     "fold_towel": task_fold_towel,
     "stack_rings": task_stack_rings,
     "handover_tools": task_handover_tools,
+    "handover_tools_basket": task_handover_tools_basket,
     "arrange_flowers": task_arrange_flowers,
 }
 

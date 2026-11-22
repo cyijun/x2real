@@ -70,9 +70,9 @@ graph_task_generator:
               - empty_cup
       instruction_component:
         instructions:
-        - text: Hold the light-blue bowl steady with the left hand. With the right hand pick up the green cup with
-            red beans, move it above the bowl, tilt it to pour the beans into the bowl, then put the cup back where
-            it was.
+        - text: Hold the light-blue bowl steady on the table with the left hand. With the right hand pick up the
+            green cup with red beans, move it above the bowl, tilt it to pour all the beans into the bowl without
+            spilling, then put the cup back where it was.
           log:
             instruction_variant: direct
       overlay_component:

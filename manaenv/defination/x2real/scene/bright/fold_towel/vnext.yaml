@@ -24,10 +24,10 @@ objects:
     candidates:
     - id: any
       assets:
-      - bright_tablecloth_gray_grid
-      - bright_tablecloth_forest_deer
       - bright_tablecloth_blue_cloud
-      - bright_tablecloth_wood
+      - bright_tablecloth_red_check
+      - bright_tablecloth_forest_deer
+      - bright_tablecloth_gray_grid
   semantic_tags:
   - background_cloth
   kinematic: true
@@ -58,11 +58,18 @@ objects:
 - id: basket
   asset:
     type: pool
+    cache_size: 3
+    cache_slot_order: authored
     candidates:
-    - id: any
+    - id: green
       assets:
       - bright_basket_green
+    - id: blue
+      assets:
       - bright_basket_blue
+    - id: pink_box
+      assets:
+      - bright_bin_pink
   semantic_tags:
   - container
 - id: distractor_towel
@@ -128,28 +135,36 @@ variants:
   - id: tablecloth_pick
     type: asset_pool_choice
     choices:
-    - id: pick
+    - id: pick_any
       candidate_refs:
       - tablecloth.any
       weight: 1.0
   - id: towel_pick
     type: asset_pool_choice
     choices:
-    - id: pick
+    - id: pick_any
       candidate_refs:
       - towel.any
       weight: 1.0
   - id: basket_pick
     type: asset_pool_choice
     choices:
-    - id: pick
+    - id: pick_green
       candidate_refs:
-      - basket.any
+      - basket.green
       weight: 1.0
+    - id: pick_blue
+      candidate_refs:
+      - basket.blue
+      weight: 0.001
+    - id: pick_pink_box
+      candidate_refs:
+      - basket.pink_box
+      weight: 0.001
   - id: distractor_towel_pick
     type: asset_pool_choice
     choices:
-    - id: pick
+    - id: pick_any
       candidate_refs:
       - distractor_towel.any
       weight: 1.0

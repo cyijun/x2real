@@ -10,7 +10,7 @@ direct_task_generator:
           - right:
               _func: object_contact_destination
               contact_sensor_cfgs: '@tool1_right_contact'
-              force_threshold: 0.1
+              force_threshold: 0.05
               consecutive_steps: 5
           - left_free:
               _func: object_no_contact_destination
@@ -22,9 +22,15 @@ direct_task_generator:
               _func: object_position_in_zone
               object_cfg: '@tool_1'
               consecutive_steps: 5
-              z_range: [-0.2104, 0.2596]
+              z_range: [-0.1904, 0.3596]
+          - untouched:
+              _func: object_no_contact_destination
+              contact_sensor_cfgs:
+              - '@tool1_cloth_contact'
+              force_threshold: 0.05
+              consecutive_steps: 5
     log_component:
       entries:
         progress:
           trigger: success
-          value: right hand takes the hammer, left releases (C2)
+          value: right hand takes the hammer in mid-air, left releases (C2)

@@ -1,21 +1,21 @@
-include: x2real/task/bright/handover_tools/stages/_stage_base.yaml
+include: x2real/task/bright/handover_tools_basket/stages/_stage_base.yaml
 direct_task_generator:
   definition:
-    task_type: bright_handover_tools_wrench_over_slot
+    task_type: bright_handover_tools_basket_hammer_over_box
   component_sections:
     termination_component:
       terms:
         success:
           _func: object_position_in_zone
-          object_cfg: '@tool_2'
+          object_cfg: '@tool_1'
           consecutive_steps: 3
           reference_cfg: '@toolbox'
           in_reference_frame: true
-          x_range: [-0.12, 0.12]
-          y_range: [0.008, 0.088]
-          z_range: [0.04, 0.3]
+          x_range: [-0.16, 0.16]
+          y_range: [-0.115, 0.115]
+          z_range: [0.04, 0.35]
     log_component:
       entries:
         progress:
           trigger: success
-          value: wrench aligned above its slot (M3)
+          value: hammer aligned above the green basket (M3)

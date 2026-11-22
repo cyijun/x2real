@@ -22,4 +22,4 @@ direct_task_generator:
       entries:
         progress:
           trigger: success
-          value: left hand picks the red rose by the stem (G1)
+          value: left hand picks the red rose by the stem from above (G1)

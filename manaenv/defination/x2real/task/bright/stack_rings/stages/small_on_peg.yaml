@@ -15,8 +15,8 @@ direct_task_generator:
               velocity_threshold: 0.05
               in_reference_frame: true
               x_range: [-0.012, 0.012]
-              y_range: [0.08800000000000001, 0.112]
-              z_range: [0.052, 0.068]
+              y_range: [-0.012, 0.012]
+              z_range: [0.054, 0.07]
           - released:
               _func: object_no_contact_destination
               contact_sensor_cfgs:
@@ -27,4 +27,4 @@ direct_task_generator:
       entries:
         progress:
           trigger: success
-          value: small ring dropped onto the peg (P3)
+          value: small ring put onto the peg (P3)

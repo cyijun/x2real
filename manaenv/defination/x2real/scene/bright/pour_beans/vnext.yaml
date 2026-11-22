@@ -3,8 +3,8 @@ definition:
   metadata:
     name: bright_pour_beans
     source: bright/pour_beans
-    semantic_goal: Left hand steadies the blue bowl, right hand pours red beans from the green cup into it and puts
-      the cup back
+    semantic_goal: Left hand steadies the light (20 cm, 130 g, low-friction) bowl on the table, right hand pours
+      all red beans from the cup into it and puts the cup back
 render_settings:
   gen_method: 0
   tags: green_booth
@@ -94,8 +94,8 @@ layout:
         type: surface
         surface: tabletop
         ranges:
-          x: [0.04, 0.12]
-          y: [-0.22, -0.14]
+          x: [0.05, 0.12]
+          y: [-0.23, -0.15]
     bean_cup:
       object: bean_cup
       placement:
@@ -110,7 +110,7 @@ layout:
         type: surface
         surface: tabletop
         ranges:
-          x: [-0.22, -0.16]
+          x: [-0.21, -0.17]
           y: [-0.36, -0.2]
     empty_cup:
       object: empty_cup
@@ -140,14 +140,14 @@ variants:
   - id: distractor_bowl_pick
     type: asset_pool_choice
     choices:
-    - id: pick
+    - id: pick_any
       candidate_refs:
       - distractor_bowl.any
       weight: 1.0
   - id: empty_cup_pick
     type: asset_pool_choice
     choices:
-    - id: pick
+    - id: pick_any
       candidate_refs:
       - empty_cup.any
       weight: 1.0

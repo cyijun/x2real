@@ -26,4 +26,4 @@ direct_task_generator:
       entries:
         progress:
           trigger: success
-          value: red stem vertical above the vase mouth (M3)
+          value: red stem bottom above the vase mouth (M3)

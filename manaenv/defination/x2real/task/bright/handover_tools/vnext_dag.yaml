@@ -19,10 +19,16 @@ graph_task_generator:
               id: tablecloth
             sample:
               type: inherit
-          - id: toolbox
+          - id: box
             target:
               type: node
-              id: toolbox
+              id: box
+            sample:
+              type: inherit
+          - id: gear
+            target:
+              type: node
+              id: gear
             sample:
               type: inherit
           - id: tools_region
@@ -51,9 +57,8 @@ graph_task_generator:
               - tablecloth
       instruction_component:
         instructions:
-        - text: With the left hand pick up the hammer, hand it to the right hand at the middle of the table, and
-            put it into the red-labelled slot of the toolbox; then do the same with the wrench and the blue-labelled
-            slot.
+        - text: With the left hand pick up the hammer, lift it above the middle of the table and hand it to the
+            right hand in mid-air, then put it into the toolbox; then do the same with the wrench.
           log:
             instruction_variant: direct
       overlay_component:
@@ -72,11 +77,11 @@ graph_task_generator:
   - id: hammer_handover
     include: x2real/task/bright/handover_tools/stages/hammer_handover.yaml
     score: 2
-  - id: hammer_over_slot
-    include: x2real/task/bright/handover_tools/stages/hammer_over_slot.yaml
+  - id: hammer_over_box
+    include: x2real/task/bright/handover_tools/stages/hammer_over_box.yaml
     score: 2
-  - id: hammer_in_slot
-    include: x2real/task/bright/handover_tools/stages/hammer_in_slot.yaml
+  - id: hammer_in_box
+    include: x2real/task/bright/handover_tools/stages/hammer_in_box.yaml
     score: 2
   - id: pick_wrench
     include: x2real/task/bright/handover_tools/stages/pick_wrench.yaml
@@ -87,11 +92,11 @@ graph_task_generator:
   - id: wrench_handover
     include: x2real/task/bright/handover_tools/stages/wrench_handover.yaml
     score: 2
-  - id: wrench_over_slot
-    include: x2real/task/bright/handover_tools/stages/wrench_over_slot.yaml
+  - id: wrench_over_box
+    include: x2real/task/bright/handover_tools/stages/wrench_over_box.yaml
     score: 2
-  - id: wrench_in_slot
-    include: x2real/task/bright/handover_tools/stages/wrench_in_slot.yaml
+  - id: wrench_in_box
+    include: x2real/task/bright/handover_tools/stages/wrench_in_box.yaml
     score: 2
   edges:
   - src: pick_hammer
@@ -99,16 +104,16 @@ graph_task_generator:
   - src: hammer_to_middle
     dst: hammer_handover
   - src: hammer_handover
-    dst: hammer_over_slot
-  - src: hammer_over_slot
-    dst: hammer_in_slot
-  - src: hammer_in_slot
+    dst: hammer_over_box
+  - src: hammer_over_box
+    dst: hammer_in_box
+  - src: hammer_in_box
     dst: pick_wrench
   - src: pick_wrench
     dst: wrench_to_middle
   - src: wrench_to_middle
     dst: wrench_handover
   - src: wrench_handover
-    dst: wrench_over_slot
-  - src: wrench_over_slot
-    dst: wrench_in_slot
+    dst: wrench_over_box
+  - src: wrench_over_box
+    dst: wrench_in_box

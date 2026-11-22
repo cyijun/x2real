@@ -6,26 +6,33 @@ direct_task_generator:
     termination_component:
       terms:
         success:
-          _func: objects_count_in_relative_zone
-          object_names:
-          - bean_1
-          - bean_2
-          - bean_3
-          - bean_4
-          - bean_5
-          - bean_6
-          - bean_7
-          - bean_8
-          - bean_9
-          reference_cfg: '@target_bowl'
-          min_count: 5
-          xy_distance_threshold: 0.08
-          z_min_offset: -0.01
-          z_max_offset: 0.09
-          velocity_threshold: 0.3
-          consecutive_steps: 10
+          terms:
+          - all_beans:
+              _func: objects_count_in_relative_zone
+              object_names:
+              - bean_1
+              - bean_2
+              - bean_3
+              - bean_4
+              - bean_5
+              - bean_6
+              - bean_7
+              - bean_8
+              - bean_9
+              reference_cfg: '@target_bowl'
+              min_count: 9
+              xy_distance_threshold: 0.09
+              z_min_offset: -0.01
+              z_max_offset: 0.1
+              velocity_threshold: 0.3
+              consecutive_steps: 10
+          - bowl_held:
+              _func: object_contact_destination
+              contact_sensor_cfgs: '@bowl_left_contact'
+              force_threshold: 0.1
+              consecutive_steps: 1
     log_component:
       entries:
         progress:
           trigger: success
-          value: beans poured into the bowl (L3)
+          value: all beans poured into the bowl while the left hand holds it (L3)

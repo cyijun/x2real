@@ -50,6 +50,10 @@ direct_task_generator:
           - '{ENV_REGEX_NS}/Robot/right_arm_gripper_left_tip_link'
           - '{ENV_REGEX_NS}/Robot/right_arm_gripper_right_link'
           - '{ENV_REGEX_NS}/Robot/right_arm_gripper_right_tip_link'
+      - tool1_cloth_contact:
+          type: contact
+          source: '@tool_1'
+          against: '@background_cloth'
       - tool2_left_contact:
           type: contact
           source: '@tool_2'
@@ -58,3 +62,7 @@ direct_task_generator:
           type: contact
           source: '@tool_2'
           against: *id002
+      - tool2_cloth_contact:
+          type: contact
+          source: '@tool_2'
+          against: '@background_cloth'

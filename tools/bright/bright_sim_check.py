@@ -156,7 +156,7 @@ if args.mode == "layout":
         ("bowl_blue", "bright_bowl_blue", 0.05, -0.20, 0), ("bowl_pink", "bright_bowl_pink", -0.15, -0.30, 0),
         ("cup_green", "bright_cup_green", -0.12, -0.08, 0), ("cup_purple", "bright_cup_purple", 0.15, -0.05, 0),
         ("mcup", "bright_measuring_cup_blue", 0.22, -0.18, 0),
-        ("stacker", "bright_stacker_base", 0.05, 0.05, 0),
+        ("stacker", "bright_stacker_round", 0.05, 0.05, 0),
         ("ring_l", "bright_ring_large", -0.12, 0.10, 0), ("ring_m", "bright_ring_medium", -0.12, 0.20, 0),
         ("ring_s", "bright_ring_small", -0.05, 0.25, 0),
         ("vase", "bright_vase_white", 0.20, 0.25, 0),
@@ -189,16 +189,16 @@ else:
     tests = {}
     # stacker: base on table, rings released above the +y end peg (base along table y -> world -y)
     base_pos = tab(0.05, 0.0, z0)
-    place("stacker", "bright_stacker_base", base_pos, 0)
-    peg_world = base_pos + np.array([0.0, 0.10, 0.0])   # local +y peg (asset local y == world y here)
+    place("stacker", "bright_stacker_round", base_pos, 0)
+    peg_world = base_pos.copy()   # single central peg
     ring_ids = ["bright_ring_large", "bright_ring_medium", "bright_ring_small"]
     # rings are spawned one at a time during the run (see SPAWN): level, 6 mm above the cone tip,
     # 3.6 mm xy error -- i.e. what a careful top-down placement would do.
     # toolbox with hammer + wrench dropped into their slots (toolbox yaw 0: slots along x, hammer slot -y)
     tb_pos = tab(0.15, 0.30, z0)
     place("toolbox", "bright_toolbox", tb_pos, 0)
-    place("hammer", "bright_hammer", tb_pos + np.array([0.0, -0.048, 0.09]), 0)
-    place("wrench", "bright_wrench", tb_pos + np.array([0.0, 0.048, 0.09]), 0)
+    place("hammer", "bright_hammer", tb_pos + np.array([0.0, -0.05, 0.075]), 0)
+    place("wrench", "bright_wrench", tb_pos + np.array([0.0, 0.05, 0.075]), 0)
     # vase + two roses held vertical (stem down) above the mouth
     vase_pos = tab(-0.15, 0.25, z0)
     place("vase", "bright_vase_white", vase_pos, 0)
@@ -223,9 +223,9 @@ else:
     place("towel", "bright_towel_pink", bk_pos + np.array([0, 0, 0.20]), 20)
 
     # step -> (name, asset, position, yaw, quat): objects added while the simulation runs
-    SPAWN = {5: ("ring_0", ring_ids[0], peg_world + np.array([0.003, -0.002, 0.0015 + 0.126]), 0.0, None),
-             120: ("ring_1", ring_ids[1], peg_world + np.array([0.003, -0.002, 0.0015 + 0.126]), 30.0, None),
-             200: ("ring_2", ring_ids[2], peg_world + np.array([0.003, -0.002, 0.0015 + 0.126]), 60.0, None),
+    SPAWN = {5: ("ring_0", ring_ids[0], peg_world + np.array([0.003, -0.002, 0.0015 + 0.142]), 0.0, None),
+             120: ("ring_1", ring_ids[1], peg_world + np.array([0.003, -0.002, 0.0015 + 0.142]), 30.0, None),
+             200: ("ring_2", ring_ids[2], peg_world + np.array([0.003, -0.002, 0.0015 + 0.142]), 60.0, None),
              150: ("rose_1", "bright_flower_rose_pink", vase_pos + np.array([-0.012, 0.006, 0.20]), 0.0, down)}
     stage.GetPrimAtPath(cup_path).GetAttribute("physics:kinematicEnabled").Set(True)   # scripted cup
     anns = renderer([HEAD, OVER]) if args.frames or args.video else renderer([OVER])

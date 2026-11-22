@@ -1,7 +1,7 @@
-include: x2real/task/bright/handover_tools/stages/_stage_base.yaml
+include: x2real/task/bright/handover_tools_basket/stages/_stage_base.yaml
 direct_task_generator:
   definition:
-    task_type: bright_handover_tools_wrench_in_slot
+    task_type: bright_handover_tools_basket_wrench_in_box
   component_sections:
     termination_component:
       terms:
@@ -14,9 +14,9 @@ direct_task_generator:
               reference_cfg: '@toolbox'
               velocity_threshold: 0.05
               in_reference_frame: true
-              x_range: [-0.13, 0.13]
-              y_range: [0.008, 0.088]
-              z_range: [-0.005, 0.05]
+              x_range: [-0.16, 0.16]
+              y_range: [-0.115, 0.115]
+              z_range: [-0.005, 0.09]
           - free:
               _func: object_no_contact_destination
               contact_sensor_cfgs:
@@ -27,4 +27,4 @@ direct_task_generator:
       entries:
         progress:
           trigger: success
-          value: wrench placed in its slot (P2)
+          value: wrench placed in the green basket (P2)

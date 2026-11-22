@@ -12,7 +12,7 @@ direct_task_generator:
               object_cfg: '@bean_cup'
               consecutive_steps: 5
               reference_cfg: '@target_bowl'
-              xy_distance_threshold: 0.13
+              xy_distance_threshold: 0.14
               z_min_offset: 0.06
               z_max_offset: 0.3
           - bowl_held:

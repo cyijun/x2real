@@ -54,6 +54,10 @@ direct_task_generator:
           type: contact
           source: '@flower_1'
           against: '@vase'
+      - flower1_cloth_contact:
+          type: contact
+          source: '@flower_1'
+          against: '@background_cloth'
       - flower2_left_contact:
           type: contact
           source: '@flower_2'
@@ -66,3 +70,7 @@ direct_task_generator:
           type: contact
           source: '@flower_2'
           against: '@vase'
+      - flower2_cloth_contact:
+          type: contact
+          source: '@flower_2'
+          against: '@background_cloth'

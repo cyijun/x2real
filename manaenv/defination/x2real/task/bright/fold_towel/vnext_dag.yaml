@@ -24,7 +24,11 @@ graph_task_generator:
               type: node
               id: basket
             selector:
-              type: uniform
+              type: weighted
+              weights:
+                green: 1.0
+                blue: 0.5
+                pink_box: 0.0
           - id: distractor_towel_asset
             target:
               type: node

@@ -14,4 +14,4 @@ direct_task_generator:
       entries:
         progress:
           trigger: success
-          value: left hand presses the base end (C1)
+          value: left hand holds the stacker base (C1)

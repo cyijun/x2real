@@ -14,4 +14,4 @@ direct_task_generator:
       entries:
         progress:
           trigger: success
-          value: left hand holds the rim of the blue bowl (C1)
+          value: left hand holds the rim of the target bowl (C1)

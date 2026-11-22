@@ -18,8 +18,19 @@ direct_task_generator:
               - '@flower1_left_contact'
               force_threshold: 0.05
               consecutive_steps: 5
+          - airborne:
+              _func: object_position_in_zone
+              object_cfg: '@flower_1'
+              consecutive_steps: 5
+              z_range: [-0.1904, 0.3596]
+          - untouched:
+              _func: object_no_contact_destination
+              contact_sensor_cfgs:
+              - '@flower1_cloth_contact'
+              force_threshold: 0.05
+              consecutive_steps: 5
     log_component:
       entries:
         progress:
           trigger: success
-          value: right hand takes the red rose head, left releases (C2)
+          value: right hand takes the red rose head in mid-air, left releases (C2)

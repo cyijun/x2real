@@ -22,4 +22,4 @@ direct_task_generator:
       entries:
         progress:
           trigger: success
-          value: right hand picks the small ring (G1)
+          value: right hand picks the small ring from above (G1)

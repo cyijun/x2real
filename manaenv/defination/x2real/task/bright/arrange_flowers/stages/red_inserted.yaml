@@ -38,4 +38,4 @@ direct_task_generator:
       entries:
         progress:
           trigger: success
-          value: red rose inserted and released (P1)
+          value: red rose inserted upright and released (P3)

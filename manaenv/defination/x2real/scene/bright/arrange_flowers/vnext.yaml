@@ -3,7 +3,7 @@ definition:
   metadata:
     name: bright_arrange_flowers
     source: bright/arrange_flowers
-    semantic_goal: Insert the red and the pink crochet roses stem-first into the vase
+    semantic_goal: Insert the red and the pink crochet roses stem-first into the vase (mid-air handover)
 render_settings:
   gen_method: 0
   tags: green_booth
@@ -24,10 +24,10 @@ objects:
     candidates:
     - id: any
       assets:
-      - bright_tablecloth_gray_grid
-      - bright_tablecloth_forest_deer
       - bright_tablecloth_blue_cloud
-      - bright_tablecloth_wood
+      - bright_tablecloth_red_check
+      - bright_tablecloth_forest_deer
+      - bright_tablecloth_gray_grid
   semantic_tags:
   - background_cloth
   kinematic: true
@@ -42,12 +42,8 @@ objects:
           y: [-0.53, 0.53]
 - id: vase
   asset:
-    type: pool
-    candidates:
-    - id: any
-      assets:
-      - bright_vase_white
-      - bright_vase_celadon
+    type: asset_id
+    id: bright_vase_white
   semantic_tags:
   - container
   - vase
@@ -67,8 +63,18 @@ objects:
   - flower_2
 - id: flower_3
   asset:
+    type: pool
+    candidates:
+    - id: any
+      assets:
+      - bright_flower_rose_purple
+      - bright_flower_rose_orange
+  semantic_tags:
+  - distractor
+- id: lily
+  asset:
     type: asset_id
-    id: bright_flower_rose_purple
+    id: bright_flower_lily_white
   semantic_tags:
   - distractor
 layout:
@@ -99,48 +105,76 @@ layout:
           y: [0.18, 0.3]
     flower_1:
       object: flower_1
-      placement:
-        type: surface
-        surface: cloth
-        ranges:
-          x: [-0.03, 0.07]
-          y: [-0.46, -0.38]
-        orientation: &id001 [0.0, 0.0, 0.0, 1.0]
-        yaws: [-0.15, 0.15]
     flower_2:
       object: flower_2
-      placement:
-        type: surface
-        surface: cloth
-        ranges:
-          x: [-0.03, 0.07]
-          y: [-0.33, -0.25]
-        orientation: *id001
-        yaws: [-0.15, 0.15]
     flower_3:
       object: flower_3
-      placement:
-        type: surface
-        surface: cloth
-        ranges:
-          x: [-0.03, 0.07]
-          y: [-0.2, -0.12]
-        orientation: *id001
-        yaws: [-0.15, 0.15]
+    lily:
+      object: lily
+  groups:
+    flowers_region:
+      type: slot
+      nodes:
+      - flower_1
+      - flower_2
+      - flower_3
+      - lily
+      slots:
+        slot_0:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [-0.03, 0.07]
+            y: [-0.46, -0.42]
+          yaws: &id001 [-0.12, 0.12]
+        slot_1:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [-0.03, 0.07]
+            y: [-0.35, -0.31]
+          yaws: *id001
+        slot_2:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [-0.03, 0.07]
+            y: [-0.24, -0.2]
+          yaws: *id001
+        slot_3:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [-0.03, 0.07]
+            y: [-0.13, -0.09]
+          yaws: *id001
+      assignments:
+        mode: permutation
+        nodes:
+        - flower_1
+        - flower_2
+        - flower_3
+        - lily
+        slots:
+        - slot_0
+        - slot_1
+        - slot_2
+        - slot_3
+      default_assignment: perm_0
 variants:
   materialization:
   - id: tablecloth_pick
     type: asset_pool_choice
     choices:
-    - id: pick
+    - id: pick_any
       candidate_refs:
       - tablecloth.any
       weight: 1.0
-  - id: vase_pick
+  - id: flower_3_pick
     type: asset_pool_choice
     choices:
-    - id: pick
+    - id: pick_any
       candidate_refs:
-      - vase.any
+      - flower_3.any
       weight: 1.0
   assignments: []
