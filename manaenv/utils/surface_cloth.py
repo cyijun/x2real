@@ -42,6 +42,8 @@ GRIPPER_FINGER_BODIES = [
     for side in ("left", "right")
 ]
 
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 # Physical profiles.  ``bright_towel_30``: 30 x 30 cm double-layer microfiber towel, ~70 g,
 # ~5 mm thick, soft in bending, nearly inextensible.
 PROFILES: dict[str, dict[str, Any]] = {
@@ -92,6 +94,34 @@ PROFILES: dict[str, dict[str, Any]] = {
 }
 
 
+# ``bright_fleece_30``: the cloth actually bought for the event, a 30 x 30 cm double-layer coral-fleece
+# cleaning cloth with black binding (~50 g, ~6 mm thick, much stiffer in bending than the thin towel).
+# Parameters and their sources / calibration: sim-assets/FLEECE_CLOTH.md.  Note (Omni Physics docs):
+# surface_stretch/shear stiffness are not used for in-plane elasticity; bending comes only from
+# surface_bend_stiffness [Pa], scaled by surface_thickness**3.
+PROFILES["bright_fleece_30"] = {
+    **PROFILES["bright_towel_30"],
+    "usd_asset": os.path.join(_REPO_ROOT, "assets", "bright_fleece", "towels", "bright_fleece_cloth.usd"),
+    "mass": 0.05,
+    "material": {
+        **PROFILES["bright_towel_30"]["material"],
+        "static_friction": 0.6,
+        "dynamic_friction": 0.6,
+        "surface_thickness": 0.006,
+        # cantilever probe (5 cm overhang, 32 deg droop): bending length 2.9 cm, inside the 2-3 cm
+        # estimated for a double-layer coral-fleece cloth; 300 Pa -> ~2.7 cm (less reliable), 3000 Pa -> 4.4 cm
+        "surface_bend_stiffness": 1000.0,
+        "bend_damping": 0.05,     # no measurable effect in the cantilever probe (1.0 gave identical results)
+    },
+    # vertex damping 1.0 /s settles the cantilever (0.2 keeps swinging +-40 deg); stands in for air drag and
+    # pile friction. Needs 480 Hz physics (MANA_CLOTH_TIMESTEP=runtime/timestep/cloth_480hz.yaml).
+    "body": {**PROFILES["bright_towel_30"]["body"], "linear_damping": 1.0},
+    "rest_offset": 0.003,     # half the cloth thickness: two layers rest one thickness apart
+    "contact_offset": 0.006,
+    "lift_z": 0.004,
+}
+
+
 def _iter_tags(asset: Any) -> list[str]:
     tags: list[str] = []
     for source in (
@@ -131,6 +161,7 @@ def find_cloth_proxies(scene: Any) -> list[tuple[str, str]]:
             ),
             None,
         )
+        profile = os.environ.get("MANA_CLOTH_PROFILE") or profile   # A/B override for experiments
         if profile not in PROFILES:
             raise ValueError(
                 f"cloth proxy {name!r}: unknown or missing {PROFILE_TAG_PREFIX}<profile> tag ({tags})"
@@ -611,17 +642,50 @@ def install_substep_point_grasp(env: Any, cloth_name: str, profile_name: str) ->
         return True
     original = cloth.write_data_to_sim
 
+    counter = {"n": 0}
+
     def _write_data_to_sim():
         original()
         try:
             _substep_point_grasp(env, cloth_name, prof)
         except Exception as exc:  # noqa: BLE001 - never kill the physics loop
             manaprint(f"WARNING: surface cloth point grasp failed: {exc!r}")
+        counter["n"] += 1
+        if os.environ.get("MANA_CLOTH_TRACE") and counter["n"] % SHAPE_TRACE_EVERY == 0:
+            try:
+                _shape_trace(env, cloth_name)
+            except Exception as exc:  # noqa: BLE001 - trace only
+                manaprint(f"WARNING: surface cloth shape trace failed: {exc!r}")
 
     cloth.write_data_to_sim = _write_data_to_sim
     cloth._mana_point_grasp_installed = True
     manaprint(f"INFO: surface cloth {cloth_name!r}: per-sub-step point grasp installed")
     return True
+
+
+SHAPE_TRACE_EVERY = int(os.environ.get("MANA_CLOTH_SHAPE_EVERY", "120"))   # physics sub-steps
+
+
+def _shape_trace(env: Any, cloth_name: str) -> None:
+    """Stage-independent half-fold shape record (env 0): corner pairs, fold-line / open-edge spans, heights."""
+    st = cloth_state(env, cloth_name)
+    if "corners" not in st or "crease" not in st:
+        return
+    p = cloth_points_env(env, cloth_name)[0]
+    c = p[st["corners"][0]]
+    ends = p[st["crease"][0, 1:]]
+    rest_fp = st.get("rest_footprint", {}).get(0)
+    rec = {
+        "pair": [float(torch.linalg.norm(c[0] - c[2])), float(torch.linalg.norm(c[1] - c[3]))],
+        "crease_len": float(torch.linalg.norm(ends[0] - ends[1])),
+        "open_len": float(torch.linalg.norm(c[2] - c[3])),
+        "zmin": float(p[:, 2].min()), "zmax": float(p[:, 2].max()),
+        "footprint_ratio": footprint_cells(p) / rest_fp if rest_fp else None,
+        "speed_max": float(torch.linalg.norm(cloth_velocities(env, cloth_name)[0], dim=-1).max()),
+        "self_collision": st.get("self_collision", {}).get(0, True),
+        "crease_mid": [round(float(v), 4) for v in p[st["crease"][0, 0]]],
+    }
+    _grasp_trace(env, cloth_name, {"event": "shape", **rec})
 
 
 def _grasp_trace(env: Any, cloth_name: str, rec: dict) -> None:
@@ -633,7 +697,8 @@ def _grasp_trace(env: Any, cloth_name: str, rec: dict) -> None:
     step = int(as_torch(env.episode_length_buf)[0].item()) if hasattr(env, "episode_length_buf") else -1
     with open(path, "a") as fh:
         fh.write(json.dumps({"tag": "grasp", "cloth": cloth_name, "step": step, **rec}) + "\n")
-    manaprint(f"INFO: surface cloth grasp {rec}")
+    if rec.get("event") != "shape":
+        manaprint(f"INFO: surface cloth grasp {rec}")
 
 
 def _substep_point_grasp(env: Any, cloth_name: str, prof: Mapping[str, Any]) -> None:

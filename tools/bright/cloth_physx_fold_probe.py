@@ -21,6 +21,7 @@ from pathlib import Path
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--out", default="/tmp/cloth_physx_fold")
+ap.add_argument("--profile", default="bright_towel_30", help="surface_cloth.PROFILES entry")
 ap.add_argument("--set", action="append", default=[], help="profile override key.sub=value (json value)")
 ap.add_argument("--lift", type=float, default=0.13, help="arc height of the near corners [m]")
 ap.add_argument("--margin", type=float, default=0.01, help="land the near corners this far short of the far corners")
@@ -37,6 +38,11 @@ ap.add_argument("--regrasp-layers", default="both", choices=["both", "top"])
 ap.add_argument("--patch-r", type=float, default=0.019)
 ap.add_argument("--lift-h", type=float, default=0.25)
 ap.add_argument("--lift-s", type=float, default=2.5, help="regrasp lift duration [s]")
+ap.add_argument("--cantilever", type=float, default=0.0,
+                help="bending-length test instead of the fold: clamp the flat towel 0.3 m above the table with "
+                     "this overhang [m] free, settle --settle-s and report the Peirce bending length")
+ap.add_argument("--hang-at", type=float, default=-1.0, help="regrasp time [s] at which the HANG metrics are taken")
+ap.add_argument("--frames-every", type=int, default=0, help="with --render: save a frame every k regrasp steps")
 ap.add_argument("--regrasp-path", default="",
                 help="'dx,dy,dz,T;...' smoothed waypoints (offsets from the grasp point, segment durations); "
                      "replaces the default lift/carry, then hold 1 s and release")
@@ -65,7 +71,7 @@ from manaenv.utils.tensor_utils import as_torch  # noqa: E402
 
 OUT = Path(args.out)
 OUT.mkdir(parents=True, exist_ok=True)
-prof = copy.deepcopy(SC.PROFILES["bright_towel_30"])
+prof = copy.deepcopy(SC.PROFILES[args.profile])
 for kv in args.set:
     key, val = kv.split("=", 1)
     d = prof
@@ -101,12 +107,12 @@ if args.render:
     stage = omni.usd.get_context().get_stage()
     cam = UsdGeom.Camera.Define(stage, "/World/cam")
     cam.CreateFocalLengthAttr(18.0)
-    eye, tgt = Gf.Vec3d(-0.45, -0.35, 0.40), Gf.Vec3d(0.0, 0.0, 0.0)
+    eye, tgt = Gf.Vec3d(-0.50, -0.62, 0.42), Gf.Vec3d(0.06, 0.0, 0.12)
     m = Gf.Matrix4d().SetLookAt(eye, tgt, Gf.Vec3d(0, 0, 1)).GetInverse()
     cam.AddTranslateOp().Set(eye)
     q = m.ExtractRotationQuat()
     cam.AddOrientOp().Set(Gf.Quatf(q.GetReal(), *q.GetImaginary()))
-    rp = rep.create.render_product("/World/cam", (640, 400))
+    rp = rep.create.render_product("/World/cam", (640, 480))
     cam_ann = rep.AnnotatorRegistry.get_annotator("rgb")
     cam_ann.attach([rp])
 
@@ -157,6 +163,49 @@ def metrics():
 frames = []
 
 
+def cantilever_test():
+    """ASTM D1388-style cantilever: clamp the rest-grid strip behind the overhang, report droop and bending length."""
+    sp = float(pos0[1, 0] - pos0[0, 0]) if n > 1 else 0.0125       # vertex spacing along local x (I)
+    spacing = float(torch.linalg.norm(pos0[1] - pos0[0]))
+    k_free = max(1, int(round(args.cantilever / spacing)))       # free rows at the far side
+    clamp = torch.nonzero(I <= (n - 1 - k_free)).flatten()
+    edge = torch.nonzero(I == (n - 1 - k_free)).flatten()
+    tip = torch.nonzero(I == n - 1).flatten()
+    L = k_free * spacing
+    lift = torch.tensor([0.0, 0.0, 0.30], device=pos0.device)
+    base = pos0 + lift
+    state = torch.zeros((1, V, 6), device=pos0.device)
+    state[0, :, :3] = base
+    cloth.write_nodal_state_to_sim_index(state)
+    steps_c = int(args.settle_s / dt)
+    hist = []
+    for k in range(steps_c):
+        p = as_torch(cloth.data.nodal_pos_w)
+        v = as_torch(cloth.data.nodal_vel_w)
+        st_ = torch.cat([p[0], v[0]], dim=-1).unsqueeze(0).clone()
+        st_[0, clamp, :3] = base[clamp]
+        st_[0, clamp, 3:] = 0.0
+        cloth.write_nodal_state_to_sim_index(st_)
+        sim.step(render=bool(cam_ann) and args.frames_every and k % args.frames_every == 0)
+        cloth.update(dt)
+        if cam_ann is not None and args.frames_every and k % args.frames_every == 0:
+            snap(f"c{k:05d}")
+        if k % 24 == 0 or k == steps_c - 1:
+            p = as_torch(cloth.data.nodal_pos_w)[0]
+            e, t = p[edge].mean(0), p[tip].mean(0)
+            dx, dz = float(t[0] - e[0]), float(e[2] - t[2])
+            theta = math.atan2(dz, dx)
+            c = L * (math.cos(theta / 2) / (8 * math.tan(theta))) ** (1 / 3) if 0.01 < theta < 1.55 else float("nan")
+            vmax = float(torch.linalg.norm(as_torch(cloth.data.nodal_vel_w)[0], dim=-1).max())
+            hist.append({"t": round(k * dt, 3), "theta_deg": round(math.degrees(theta), 2), "bending_length_m": c,
+                         "tip_drop_m": dz, "speed_max": vmax})
+    res = {"profile": prof, "args": vars(args), "overhang_m": L, "final": hist[-1], "log": hist, "frames": frames}
+    (OUT / "result.json").write_text(json.dumps(res, indent=1))
+    print("CANTILEVER", json.dumps({"overhang_m": L, **hist[-1]}), flush=True)
+    app.close()
+    os._exit(0)
+
+
 def snap(tag):
     if cam_ann is None:
         return
@@ -169,6 +218,8 @@ def snap(tag):
         frames.append(tag)
 
 
+if args.cantilever > 0:
+    cantilever_test()
 log = []
 t_settle0 = 0.8
 t_arc = args.arc_s
@@ -282,6 +333,7 @@ if args.regrasp:
         return torch.tensor([0.0, -0.30 * smooth(tt / T_carry), args.lift_h], device=p.device)
 
     n2 = int((T_lift + T_carry + T_hold + T_rel) / dt)
+    hang = None
     for k in range(n2):
         tt = k * dt
         if tt < T_lift + T_carry + T_hold:
@@ -293,8 +345,20 @@ if args.regrasp:
             state[0, patch, :3] = base + off
             state[0, patch, 3:] = vel
             cloth.write_nodal_state_to_sim_index(state)
-        sim.step(render=False)
+        render_now = bool(cam_ann) and args.frames_every > 0 and k % args.frames_every == 0
+        sim.step(render=render_now)
         cloth.update(dt)
+        if render_now:
+            snap(f"r{k:05d}")
+        if hang is None and tt >= (args.hang_at if args.hang_at > 0 else T_lift + T_carry + T_hold - dt):
+            pp = as_torch(cloth.data.nodal_pos_w)[0]
+            g = base.mean(0) + roff(tt)
+            ends = [pp[n // 2], pp[(n - 1) * n + n // 2]]
+            ang = [math.degrees(math.atan2(float(g[2] - e_[2]), float(torch.linalg.norm(e_[:2] - g[:2])))) for e_ in ends]
+            hang = {"crease_len": float(torch.linalg.norm(ends[0] - ends[1])), "droop_deg": ang,
+                    "lowest_below_grip": float(g[2] - pp[:, 2].min()),
+                    "speed_max": float(torch.linalg.norm(as_torch(cloth.data.nodal_vel_w)[0], dim=-1).max())}
+            print("HANG", json.dumps(hang), flush=True)
         if k % 24 == 0 or k == n2 - 1:
             pp = as_torch(cloth.data.nodal_pos_w)[0]
             vv = torch.linalg.norm(as_torch(cloth.data.nodal_vel_w)[0], dim=-1)
@@ -309,7 +373,7 @@ if args.regrasp:
              "crease_len": float(torch.linalg.norm(pp[ce[0]] - pp[ce[1]])),
              "open_len": float(torch.linalg.norm(c["fl"] - c["fr"])),
              "height": float(pp[:, 2].max()), "speed_max": float(torch.linalg.norm(as_torch(cloth.data.nodal_vel_w)[0], dim=-1).max())}
-    regrasp_log.append({"t": -1, "zmin": 0, "zmax": 0, "speed_max": 0, "speed_p95": 0, "place": place})
+    regrasp_log.append({"t": -1, "zmin": 0, "zmax": 0, "speed_max": 0, "speed_p95": 0, "place": place, "hang": hang})
     print("REGRASP patch", len(patch), json.dumps(regrasp_log[-2]), "PLACE", json.dumps(place), flush=True)
 wall = time.time() - wall0
 final = log[-1]

@@ -591,7 +591,8 @@ def build_run_suite_document(
         scene_runtime = scene_factory.get("scene_runtime") if isinstance(scene_factory, dict) else None
         if not isinstance(scene_runtime, dict):
             raise ValueError(f"{board.board_id} requires scene_factory.scene_runtime")
-        scene_runtime["include"] = _BOARD_TIMESTEP[board.board_id]
+        # MANA_CLOTH_TIMESTEP overrides the board rate (e.g. runtime/timestep/cloth_480hz.yaml for stiff cloth)
+        scene_runtime["include"] = os.environ.get("MANA_CLOTH_TIMESTEP") or _BOARD_TIMESTEP[board.board_id]
     cases_by_env = {case.env: case for case in cases}
     assembly_orders = [
         order

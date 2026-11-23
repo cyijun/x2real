@@ -1,0 +1,6 @@
+# 480 Hz physics, 30 Hz control/render (decimation 16). Needed by the stiff coral-fleece profile
+# (surface_cloth.PROFILES["bright_fleece_30"]): at 240 Hz the pinned fold-line patch diverges when the
+# stiff cloth touches the table (sim-assets/FLEECE_CLOTH.md). Select with MANA_CLOTH_TIMESTEP.
+sim_fps: 480
+render_decremental: 16
+simulation_decimation: 16
