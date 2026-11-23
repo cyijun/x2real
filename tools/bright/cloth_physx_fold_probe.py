@@ -36,6 +36,11 @@ ap.add_argument("--regrasp", action="store_true", help="after the fold, pick the
 ap.add_argument("--regrasp-layers", default="both", choices=["both", "top"])
 ap.add_argument("--patch-r", type=float, default=0.019)
 ap.add_argument("--lift-h", type=float, default=0.25)
+ap.add_argument("--lift-s", type=float, default=2.5, help="regrasp lift duration [s]")
+ap.add_argument("--regrasp-at", default="edge", choices=["edge", "center", "corners2"],
+                help="edge: middle of the shared edge; center: towel centre; corners2: two patches at the ends of the shared edge")
+ap.add_argument("--regrasp-usd", action="append", default=[],
+                help="USD attribute override applied to the towel prims right before the regrasp, attr=json")
 args = ap.parse_args()
 
 from isaaclab.app import AppLauncher  # noqa: E402
@@ -215,18 +220,41 @@ for step in range(steps):
 regrasp_log = []
 if args.regrasp:
     p = as_torch(cloth.data.nodal_pos_w)[0]
-    far_mid = (p[n - 1] + p[n * n - 1]) / 2
-    target = far_mid.clone()
-    target[0] -= 0.02
-    near_xy = torch.linalg.norm(p[:, :2] - target[:2], dim=-1) < 0.02
-    target[2] = p[near_xy, 2].max() if near_xy.any() else target[2]
-    nearest = int(torch.argmin(torch.linalg.norm(p - target, dim=-1)))
-    sel = torch.linalg.norm(p - p[nearest], dim=-1) < args.patch_r
-    if args.regrasp_layers == "top":
-        sel &= p[:, 2] > p[nearest, 2] - 0.002
+    if args.regrasp_at == "edge":
+        targets = [(p[n - 1] + p[n * n - 1]) / 2 + torch.tensor([-0.02, 0.0, 0.0], device=p.device)]
+    elif args.regrasp_at == "center":
+        targets = [p.mean(0)]
+    else:
+        inward = torch.nn.functional.normalize(p[n * n - 1] - p[n - 1], dim=0) * 0.03
+        targets = [p[n - 1] + inward + torch.tensor([-0.02, 0.0, 0.0], device=p.device),
+                   p[n * n - 1] - inward + torch.tensor([-0.02, 0.0, 0.0], device=p.device)]
+    sel = torch.zeros(p.shape[0], dtype=torch.bool, device=p.device)
+    for target in targets:
+        target = target.clone()
+        near_xy = torch.linalg.norm(p[:, :2] - target[:2], dim=-1) < 0.02
+        target[2] = p[near_xy, 2].max() if near_xy.any() else target[2]
+        nearest = int(torch.argmin(torch.linalg.norm(p - target, dim=-1)))
+        one = torch.linalg.norm(p - p[nearest], dim=-1) < args.patch_r
+        if args.regrasp_layers == "top":
+            one &= p[:, 2] > p[nearest, 2] - 0.002
+        sel |= one
     patch = torch.nonzero(sel).flatten()
     base = p[patch].clone()
-    T_lift, T_carry, T_hold, T_rel = 2.5, 2.5, 1.0, 2.0
+    if args.regrasp_usd:
+        import omni.usd
+        from pxr import Usd
+        stage = omni.usd.get_context().get_stage()
+        for kv in args.regrasp_usd:
+            attr, val = kv.split("=", 1)
+            hit = 0
+            for prim in Usd.PrimRange(stage.GetPrimAtPath("/World/towel")):
+                a = prim.GetAttribute(attr)
+                if a and a.IsValid():
+                    a.Set(json.loads(val)); hit += 1
+            print("REGRASP_USD", attr, val, "prims", hit, flush=True)
+        for _ in range(2):
+            sim.step(render=False); cloth.update(dt)
+    T_lift, T_carry, T_hold, T_rel = args.lift_s, 2.5, 1.0, 2.0
 
     def roff(tt):
         if tt < T_lift:

@@ -76,6 +76,12 @@ PROFILES: dict[str, dict[str, Any]] = {
         # Override with MANA_CLOTH_GRASP.
         "grasp": "point_substep",
         "grasp_write": "state",
+        # PhysX surface-deformable self-collision diverges (NaN within ~1 s) when a pinch that holds
+        # *both layers* of the folded towel lifts it (standalone probe: cloth_physx_fold_probe.py
+        # --regrasp, 11 of 13 configurations).  With this set, a capture whose patch spans vertices far
+        # apart in the rest mesh (= several layers) switches the towel's self-collision off until the
+        # next reset.  The first fold (single-layer corner pinches) keeps self-collision on.
+        "multilayer_grasp_disables_self_collision": True,
         # towel colours bought for the event (tint of the bordered microfiber texture)
         "tints": {
             "blue": (0.2, 0.45, 0.9),
@@ -351,6 +357,8 @@ def reset_surface_cloth_to_proxy(
         st["point_grips"] = [[{}, {}] for _ in range(env.num_envs)]
     for e in env_ids.tolist():
         st["point_grips"][e] = [{}, {}]
+        if prof.get("body", {}).get("self_collision") and not st.get("self_collision", {}).get(e, True):
+            set_self_collision(env, cloth_name, e, True)
     install_substep_point_grasp(env, cloth_name, profile_name)
     local = st["local"][env_ids]
     ppos = as_torch(proxy.data.root_pos_w)[env_ids].to(device)
@@ -402,6 +410,7 @@ def reset_surface_cloth_to_proxy(
             robot_quat=as_torch(env.scene["robot"].data.root_quat_w)[
                 env_id : env_id + 1
             ],
+            objects=_rigid_object_poses(env, env_id),
         )
         tints = prof.get("tints") or {}
         if tints:
@@ -410,6 +419,20 @@ def reset_surface_cloth_to_proxy(
             st["tint"][env_id] = pick
             _set_tint(env, cloth_name, env_id, tints[pick])
     st["reset_count"] = int(st.get("reset_count", 0)) + 1
+
+
+def _rigid_object_poses(env: Any, env_id: int) -> dict[str, list[float]]:
+    """Env-frame ``[x, y, z, qx, qy, qz, qw]`` of every rigid object (for the reset trace only)."""
+    out: dict[str, list[float]] = {}
+    try:
+        for name, obj in getattr(env.scene, "rigid_objects", {}).items():
+            pos = as_torch(obj.data.root_pos_w)[env_id] - env.scene.env_origins[env_id]
+            quat = as_torch(obj.data.root_quat_w)[env_id]
+            out[str(name)] = [round(float(v), 5) for v in torch.cat([pos, quat]).tolist()]
+    except Exception as exc:  # noqa: BLE001 - trace only
+        out["_error"] = [0.0]
+        manaprint(f"WARNING: surface cloth reset trace: {exc!r}")
+    return out
 
 
 def describe_profile(profile_name: str) -> str:
@@ -528,6 +551,29 @@ GRASP_PATCH_RADIUS = 0.019  # captured patch: every vertex within this distance 
 # Driving a single vertex is not an option: the probe blows up (NaN) when only one vertex is held.
 
 
+SELF_COLLISION_ATTR = "physxDeformableBody:selfCollision"
+
+
+def set_self_collision(env: Any, cloth_name: str, env_id: int, enabled: bool) -> int:
+    """Set the PhysX self-collision flag of one env's cloth at runtime; returns the prims changed."""
+    import omni.usd
+    from pxr import Usd
+
+    stage = omni.usd.get_context().get_stage()
+    root = stage.GetPrimAtPath(f"/World/envs/env_{env_id}/{cloth_name}")
+    hits = 0
+    if root.IsValid():
+        for prim in Usd.PrimRange(root):
+            attr = prim.GetAttribute(SELF_COLLISION_ATTR)
+            if attr and attr.IsValid():
+                if bool(attr.Get()) != bool(enabled):
+                    attr.Set(bool(enabled))
+                hits += 1
+    st = cloth_state(env, cloth_name)
+    st.setdefault("self_collision", {})[env_id] = bool(enabled)
+    return hits
+
+
 def _grasp_mode(prof: Mapping[str, Any]) -> str:
     return os.environ.get("MANA_CLOTH_GRASP", str(prof.get("grasp", "point")))
 
@@ -615,6 +661,16 @@ def _substep_point_grasp(env: Any, cloth_name: str, prof: Mapping[str, Any]) -> 
                     g["vertices"] = verts
                     g["offset"] = (pos[e, verts] - mid).clone()
                 rec = {"env": e, "arm": arm, "event": "close", "captured": int(len(verts)), "nearest_m": round(d0, 4)}
+                if len(verts) and "local" in st:
+                    rest = st["local"][e, verts, :2]
+                    spread = float(torch.cdist(rest, rest).max())
+                    rec["rest_spread_m"] = round(spread, 4)
+                    if (
+                        spread > 2.0 * GRASP_PATCH_RADIUS + 0.01
+                        and prof.get("multilayer_grasp_disables_self_collision")
+                        and st.get("self_collision", {}).get(e, True)
+                    ):
+                        rec["self_collision_off"] = set_self_collision(env, cloth_name, e, False)
                 st.setdefault("grasp_log", []).append(rec)
                 _grasp_trace(env, cloth_name, rec)
             if g.get("vertices") is not None:

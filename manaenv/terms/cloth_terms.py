@@ -218,14 +218,27 @@ def cloth_lifted_off_table(
     table_z: float | None = None,
     min_height: float = 0.02,
     min_fraction: float = 0.9,
+    max_hold_dist: float = 0.05,
+    max_reach: float = 0.5,
     consecutive_steps: int = 5,
+    robot: str = "robot",
 ) -> torch.Tensor:
-    """[SKILL pick cloth] At least ``min_fraction`` of the cloth vertices are ``min_height`` above the table."""
+    """[SKILL pick cloth] At least ``min_fraction`` of the cloth vertices are ``min_height`` above the table,
+    while a gripper is on the cloth (fingertip midpoint within ``max_hold_dist`` of a vertex).
+
+    Sanity guard: every vertex must be finite and within ``max_reach`` of the nearest fingertip
+    midpoint, so a diverging cloth (vertices thrown upward by a solver blow-up) does not score.
+    """
     cloth = _resolve_name(cloth)
     pts = cloth_points_env(env, cloth)
     frac = (pts[..., 2] > _support_z(env, cloth, table_z)[:, None] + min_height).float().mean(dim=1)
-    ok = frac >= min_fraction
-    _trace(env, cloth, "lifted", frac=frac, ok=ok)
+    finite = torch.isfinite(pts).all(dim=-1).all(dim=-1)
+    safe = torch.nan_to_num(pts, nan=1e3, posinf=1e3, neginf=-1e3)
+    dist = torch.cdist(_pinch_points_env(env, robot), safe)  # (E, 2, V)
+    held = dist.min(dim=-1).values.min(dim=-1).values < max_hold_dist
+    reach = dist.min(dim=1).values.max(dim=-1).values
+    ok = (frac >= min_fraction) & finite & held & (reach < max_reach)
+    _trace(env, cloth, "lifted", frac=frac, held=held, reach=reach, ok=ok)
     return _apply_consecutive_filter(
         env, ok, int(consecutive_steps), f"_mana_cloth_lifted_{cloth}_{min_height}"
     )
