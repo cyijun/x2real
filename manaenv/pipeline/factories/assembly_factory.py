@@ -684,6 +684,13 @@ class AssembledEnvironment:
     def _apply_task_runtime_env_overrides(self, env_cfg: Any) -> None:
         """Apply task runtime requirements and global reset ordering to the final env cfg."""
         self._apply_task_runtime_event_terms(env_cfg)
+        from manaenv.utils.surface_cloth import attach_surface_cloths
+
+        from types import SimpleNamespace
+
+        cloth_events = SimpleNamespace()
+        if attach_surface_cloths(self.scene, env_cfg, device=self.runtime_cfg.device, events=cloth_events):
+            env_cfg.events = _merge_task_runtime_event_terms(env_cfg.events, cloth_events)
         if hasattr(env_cfg, "events"):
             env_cfg.events = _order_reset_event_terms(getattr(env_cfg, "events", None))
 

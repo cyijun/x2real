@@ -849,8 +849,8 @@ def gen_flower(root: Path, color_name: str, head_color, stem_len=0.20):
            stem_diameter_m=2 * rs, head_diameter_m=2 * hr, authored_axis="+X (stem base at origin, head at +X)")
 
 
-def gen_tablecloth(root: Path, name: str, texture: str, tile_m: float, color=(1, 1, 1), size=(0.68, 1.10)):
-    aid = f"bright_tablecloth_{name}"
+def gen_tablecloth(root: Path, name: str, texture: str, tile_m: float, color=(1, 1, 1), size=(0.68, 1.10), *, cloth_support=False):
+    aid = f"bright_tablecloth_{name}" + ("_clothbox" if cloth_support else "")
     path = root / "tablecloths" / f"{aid}.usd"
     st = new_stage(path, mass=1.0, kinematic=True)
     pm = physics_material(st, static=0.6, dynamic=0.5)
@@ -859,7 +859,16 @@ def gen_tablecloth(root: Path, name: str, texture: str, tile_m: float, color=(1,
     p, c, i, _ = box_mesh((0, 0, T / 2), (size[0], size[1], T))
     uv = [((pp[0] + size[0] / 2) / tile_m, (pp[1] + size[1] / 2) / tile_m) for pp in p]
     add_mesh(st, "/World/visual/cloth", p, c, i, uv, mat=look, smooth=False)
-    add_convex(st, "cloth", box_pts((0, 0, T / 2), (size[0], size[1], T)), pm)
+    if cloth_support:
+        box = UsdGeom.Cube.Define(st, "/World/collision/cloth")
+        box.CreateSizeAttr(1.0)
+        box.AddTranslateOp().Set((0.0, 0.0, T - 0.003))
+        box.AddScaleOp().Set((size[0], size[1], 0.006))
+        box.CreatePurposeAttr(UsdGeom.Tokens.guide)
+        UsdPhysics.CollisionAPI.Apply(box.GetPrim())
+        _bind(box.GetPrim(), pm, "physics")
+    else:
+        add_convex(st, "cloth", box_pts((0, 0, T / 2), (size[0], size[1], T)), pm)
     finish(st, aid, path, mass_kg=1.0, kinematic=True, friction=[0.6, 0.5], collision="thin box",
            texture=texture, tile_m=tile_m, note="kinematic tabletop overlay; real cloth is 90x150 cm")
 
@@ -885,6 +894,90 @@ def gen_towel(root: Path, color_name: str, color, size=0.30):
     add_convex(st, "towel", box_pts((0, 0, T / 2), (size, size, T)), pm)
     finish(st, aid, path, mass_kg=mass, friction=[0.9, 0.8], color=color,
            collision="thin box (RIGID PLACEHOLDER - cannot fold)", texture=TOWEL)
+
+
+# Real-cloth towel (PhysX surface deformable, GPU only).  The USD holds only the textured triangle grid;
+# ManaEnv (manaenv/utils/surface_cloth.py) applies the surface-deformable body + material when it spawns
+# it, and places it on the invisible, collision-free layout proxy below at every reset.
+TOWEL_BORDERED = "microfiber_towel_bordered.png"
+CLOTH_RES = 25          # vertices per side (1.25 cm spacing for 30 cm)
+
+
+def make_bordered_towel_texture(root: Path, size_m=0.30, border_m=0.006, px=2048):
+    """Microfiber texture (tiled 2x2 = 15 cm tiles, as on the rigid towel) with the black binding baked in."""
+    from PIL import Image, ImageDraw
+    tex = root / TEX_DIR_NAME
+    src = tex / TOWEL
+    if src.is_file():
+        tile = Image.open(src).convert("RGB").resize((px // 2, px // 2), Image.LANCZOS)
+        img = Image.new("RGB", (px, px))
+        for a in (0, px // 2):
+            for b in (0, px // 2):
+                img.paste(tile, (a, b))
+    else:
+        img = Image.new("RGB", (px, px), (235, 235, 235))
+    w = max(2, int(round(px * border_m / size_m)))
+    d = ImageDraw.Draw(img)
+    for box in ((0, 0, px, w), (0, px - w, px, px), (0, 0, w, px), (px - w, 0, px, px)):
+        d.rectangle(box, fill=(8, 8, 9))
+    img.save(tex / TOWEL_BORDERED)
+
+
+def gen_towel_cloth(root: Path, size=0.30, res=CLOTH_RES):
+    aid = "bright_towel_cloth"
+    path = root / "towels" / f"{aid}.usd"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        path.unlink()
+    st = Usd.Stage.CreateNew(str(path))
+    UsdGeom.SetStageMetersPerUnit(st, 1.0)
+    UsdGeom.SetStageUpAxis(st, UsdGeom.Tokens.z)
+    st.SetMetadata("kilogramsPerUnit", 1.0)
+    world = UsdGeom.Xform.Define(st, "/World")
+    st.SetDefaultPrim(world.GetPrim())
+    UsdGeom.Scope.Define(st, "/World/Looks")
+    # white base, tinted per episode (diffuse_tint) by the reset event; black binding stays black
+    look = omnipbr(st, "towel", color=(0.2, 0.45, 0.9), texture=tex_or_none(root, TOWEL_BORDERED),
+                   tint=(0.2, 0.45, 0.9), roughness=1.0)
+    n = int(res)
+    pts, uv = [], []
+    for j in range(n):          # vertex index = j * n + i ; i along local +x, j along local +y
+        for i in range(n):
+            pts.append((size * (i / (n - 1) - 0.5), size * (j / (n - 1) - 0.5), 0.0))
+            uv.append((i / (n - 1), j / (n - 1)))
+    counts, idx = [], []
+    for j in range(n - 1):
+        for i in range(n - 1):
+            a = j * n + i
+            b, c, d = a + 1, a + n + 1, a + n
+            if (i + j) % 2 == 0:     # alternate the diagonal so the grid has no preferred shear direction
+                idx += [a, b, c, a, c, d]
+            else:
+                idx += [a, b, d, b, c, d]
+            counts += [3, 3]
+    add_mesh(st, "/World/towel", pts, counts, idx, uv, mat=look, smooth=False)
+    st.GetRootLayer().Save()
+    record(aid, path, size_m=[size, size, 0.0], vertices=n * n, triangles=len(counts), texture=TOWEL_BORDERED,
+           collision="PhysX surface deformable (applied at spawn by manaenv/utils/surface_cloth.py)",
+           note="real cloth; GPU PhysX only (board bright_arm6a_cloth)")
+
+
+def gen_cloth_supports(root):
+    for style, tile in [("gray_grid", .48), ("forest_deer", .50), ("blue_cloud", .40), ("red_check", .58)]:
+        gen_tablecloth(root, style, f"tablecloth_{style}.png", tile, cloth_support=True)
+
+
+def gen_towel_proxy(root: Path, size=0.30, T=0.006):
+    """Invisible, collision-free kinematic plate: gives the layout solver the towel footprint."""
+    aid = "bright_towel_proxy"
+    path = root / "towels" / f"{aid}.usd"
+    st = new_stage(path, mass=0.06, kinematic=True)
+    # A mesh with points and an extent but no faces supplies a layout footprint
+    # without rendering or generating contacts. Invisible meshes are excluded by BBoxCache.
+    points, _, _, _ = box_mesh((0, 0, T / 2), (size, size, T))
+    mesh = add_mesh(st, "/World/visual/proxy", points, [], [], None, smooth=False)
+    mesh.CreateExtentAttr([(-size/2, -size/2, 0), (size/2, size/2, T)])
+    finish(st, aid, path, mass_kg=0.06, kinematic=True, collision="none (layout proxy for bright_towel_cloth)")
 
 
 def gen_bean(root: Path):
@@ -919,8 +1012,20 @@ def gen_bean(root: Path):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--asset-root", default=os.environ.get("MANAENV_ASSET_ROOT", "x2real-assets"))
+    ap.add_argument("--only-cloth", action="store_true", help="only (re)generate the real-cloth towel assets")
     args = ap.parse_args()
     root = Path(args.asset_root).resolve() / "bright"
+    if args.only_cloth:
+        man = root / "asset_manifest.json"
+        if man.is_file():
+            MANIFEST.update(json.loads(man.read_text()))
+        make_bordered_towel_texture(root)
+        gen_towel_cloth(root)
+        gen_towel_proxy(root)
+        gen_cloth_supports(root)
+        man.write_text(json.dumps(MANIFEST, indent=1))
+        print("wrote cloth towel assets under", root)
+        return
     (root / TEX_DIR_NAME).mkdir(parents=True, exist_ok=True)
     make_procedural_textures(root / TEX_DIR_NAME)
     # drop USDs of props that were removed from the plan (stale files would stay registered)
@@ -970,6 +1075,10 @@ def main():
               "green": (0.45, 0.8, 0.35), "purple": (0.6, 0.45, 0.85)}
     for n, c in towels.items():
         gen_towel(root, n, c)
+    make_bordered_towel_texture(root)
+    gen_towel_cloth(root)
+    gen_towel_proxy(root)
+    gen_cloth_supports(root)
     gen_bean(root)
     (root / "asset_manifest.json").write_text(json.dumps(MANIFEST, indent=1))
     print(f"wrote {len(MANIFEST)} assets under {root}")

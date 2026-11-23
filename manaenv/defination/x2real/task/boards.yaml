@@ -85,4 +85,17 @@ boards:
     - benchmark
     case_count: 6
     save_path: ./outputs/x2real_eval/bright_arm6a_tabletop/benchmark
+  bright_arm6a_cloth:
+    robot: artixon_arm6a
+    grippers:
+    - G
+    num_episodes: 10
+    num_parallel_envs: 1
+    leaderboard_csv: x2real/task/x2real_bright_arm6a_cloth_leaderboard.csv
+    suite: x2real.yaml
+    scoring: id_only
+    capabilities:
+    - benchmark
+    case_count: 1
+    save_path: ./outputs/x2real_eval/bright_arm6a_cloth/benchmark
   # <<< bright2026 end

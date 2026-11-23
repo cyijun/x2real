@@ -34,8 +34,13 @@ SCENE_DIR = DEF / "x2real" / "scene" / "bright"
 TASK_DIR = DEF / "x2real" / "task" / "bright"
 BOARD = "bright_arm6a_tabletop"
 CSV = DEF / "x2real" / "task" / f"x2real_{BOARD}_leaderboard.csv"
+# Second board: tasks with a real (PhysX surface-deformable) cloth. GPU PhysX runtime, see
+# _GPU_PHYSX_BOARDS in manaenv/scripts/x2real_eval.py.
+CLOTH_BOARD = "bright_arm6a_cloth"
+CLOTH_CSV = DEF / "x2real" / "task" / f"x2real_{CLOTH_BOARD}_leaderboard.csv"
+CLOTH_TASKS = ("fold_towel_cloth",)
 ROBOT = "EX001-6R-G"
-TIMEOUTS = {"pour_beans": 120, "fold_towel": 120, "stack_rings": 150, "handover_tools": 150,
+TIMEOUTS = {"pour_beans": 120, "fold_towel": 120, "fold_towel_cloth": 120, "stack_rings": 150, "handover_tools": 150,
             "handover_tools_basket": 150, "arrange_flowers": 150}
 TABLE_Z = -0.2404   # env-frame tabletop height
 # runtime asset selectors that must not pick the same candidate in one episode
@@ -372,11 +377,13 @@ TOWELS = ["bright_towel_blue", "bright_towel_pink", "bright_towel_yellow", "brig
           "bright_towel_purple"]
 
 
-def task_fold_towel():
-    task = "fold_towel"
+def task_fold_towel(task="fold_towel"):
+    deformable = task == "fold_towel_cloth"
     objects = [
         tablecloth(),
-        pool("towel", TOWELS, ["pickable", "towel", "cloth_placeholder"]),
+        (fixed("towel", "bright_towel_proxy", ["pickable", "towel", "surface_cloth_proxy",
+                                             "cloth_profile=bright_towel_30"], kinematic=True)
+         if deformable else pool("towel", TOWELS, ["pickable", "towel", "cloth_placeholder"])),
         # basket: green (default), blue (colour variant), pink box (style variant, weight 0 = off: its 24x16.8 cm
         # inner floor is shorter than the 30 cm folded towel; enable in SELECTORS when the team decides)
         pool_multi("basket", {"green": ["bright_basket_green"], "blue": ["bright_basket_blue"],
@@ -390,6 +397,12 @@ def task_fold_towel():
         "distractor_towel": {"object": "distractor_towel",
                              "placement": surf([-0.18, -0.08], [-0.42, -0.28], yaws=[-0.5, 0.5])},
     }
+    if deformable:
+        objects[0]["asset"]["candidates"][0]["assets"] = [asset + "_clothbox" for asset in CLOTHS]
+        # Keep three 30 cm-class props in separated y bands within the 106 cm cloth.
+        nodes["towel"]["placement"] = surf([0.035, 0.085], [-0.008, 0.008], yaws=[-0.035, 0.035])
+        nodes["basket"]["placement"] = surf([-0.11, -0.07], [0.339, 0.348], yaws=1.5708)
+        nodes["distractor_towel"]["placement"] = surf([-0.13, -0.09], [-0.35, -0.34], yaws=[-0.04, 0.04])
     scene = scene_doc(task, "Fold the towel in half away from the robot, then put it into the basket", objects, nodes)
     sensors = {
         "towel_left_contact": {"type": "contact", "source": "@towel", "against": LEFT_GRIPPER},
@@ -412,12 +425,31 @@ def task_fold_towel():
                                free=no_contact(["towel_left_contact", "towel_right_contact"], 0.05, 10)),
                         "towel dropped into the basket (P1)"),
     }
+    if deformable:
+        sensors = {}
+        def cloth_term(name, **params):
+            return all_of(shape={"_func": "manaenv.terms.cloth_terms." + name, "cloth": "towel_cloth", **params})
+        stages = {
+            "grasp_corners": (cloth_term("cloth_corners_held", table_z=TABLE_Z), "Both near corners pinched and raised"),
+            "fold_lift": (cloth_term("cloth_corners_held", table_z=TABLE_Z, min_lift=0.06, far_max_lift=0.04),
+                          "Near edge raised with far edge on the table"),
+            "release": (cloth_term("cloth_folded_in_half", table_z=TABLE_Z), "Released half fold settled on table"),
+            "pick_folded": (cloth_term("cloth_lifted_off_table", table_z=TABLE_Z), "Towel lifted again"),
+            "into_basket": (cloth_term("cloth_in_container", container_cfg="@container", xy_inset=0.008),
+                            "Towel released and settled in basket"),
+        }
     dag = dag_doc(task, "Grasp the two near corners of the towel with both hands, fold it once away from you, put it "
                         "down, then pick the folded towel up and drop it into the basket.",
                   [{"id": s} for s in stages],
-                  runtime_assets=["tablecloth", "towel", "basket", "distractor_towel"],
+                  runtime_assets=(["tablecloth", "basket", "distractor_towel"] if deformable else
+                                  ["tablecloth", "towel", "basket", "distractor_towel"]),
                   runtime_nodes=["tablecloth", "towel", "basket", "distractor_towel"])
     write_task(task, sensors, stages, dag, scene, dropped="@pickable")
+
+
+def task_fold_towel_cloth():
+    """Generate the GPU PhysX cloth variant."""
+    task_fold_towel("fold_towel_cloth")
 
 
 # ----------------------------------------------------------------------------
@@ -622,6 +654,7 @@ def task_arrange_flowers():
 TASKS = {
     "pour_beans": task_pour_beans,
     "fold_towel": task_fold_towel,
+    "fold_towel_cloth": lambda: task_fold_towel_cloth(),
     "stack_rings": task_stack_rings,
     "handover_tools": task_handover_tools,
     "handover_tools_basket": task_handover_tools_basket,
@@ -631,6 +664,10 @@ TASKS = {
 
 def env_name(task):
     return f"artixon_arm6a_G_bright_{task}_id_env"
+
+
+def board_of(task):
+    return CLOTH_BOARD if task in CLOTH_TASKS else BOARD
 
 
 # ----------------------------------------------------------------------------
@@ -667,7 +704,7 @@ def register(tasks):
         "name": env_name(t), "scene_generator_name": f"bright_{t}_scene", "robot_generator_name": ROBOT,
         "task_generator_name": f"bright_{t}", "num_envs": 1,
         "metadata": {"x2real": {"embodiment": "artixon_arm6a", "capabilities": ["benchmark"],
-                                "robot_generator_identity": ROBOT, "board": BOARD}}}} for t in tasks],
+                                "robot_generator_identity": ROBOT, "board": board_of(t)}}}} for t in tasks],
         sort_keys=False, Dumper=_Dumper)
     roll = yaml.dump([{"env_ref": env_name(t), "num_episodes": 10, "episode_length_s": TIMEOUTS[t],
                        "max_steps": TIMEOUTS[t] * 30, "num_parallel_envs": 1, "show_evaluation_overlay": True,
@@ -681,14 +718,20 @@ def register(tasks):
 
     boards = DEF / "x2real" / "task" / "boards.yaml"
     btext = _strip_block(boards.read_text()).rstrip("\n") + "\n"
-    btext += (f"  {BEGIN}\n  {BOARD}:\n    robot: artixon_arm6a\n    grippers:\n    - G\n    num_episodes: 10\n"
-              f"    num_parallel_envs: 1\n    leaderboard_csv: x2real/task/{CSV.name}\n    suite: x2real.yaml\n"
-              f"    scoring: id_only\n    capabilities:\n    - benchmark\n    case_count: {len(tasks)}\n"
-              f"    save_path: ./outputs/x2real_eval/{BOARD}/benchmark\n  {END}\n")
+    btext += f"  {BEGIN}\n"
+    for board, csv, btasks in ((BOARD, CSV, [t for t in tasks if board_of(t) == BOARD]),
+                               (CLOTH_BOARD, CLOTH_CSV, [t for t in tasks if board_of(t) == CLOTH_BOARD])):
+        if not btasks:
+            continue
+        btext += (f"  {board}:\n    robot: artixon_arm6a\n    grippers:\n    - G\n    num_episodes: 10\n"
+                  f"    num_parallel_envs: 1\n    leaderboard_csv: x2real/task/{csv.name}\n    suite: x2real.yaml\n"
+                  f"    scoring: id_only\n    capabilities:\n    - benchmark\n    case_count: {len(btasks)}\n"
+                  f"    save_path: ./outputs/x2real_eval/{board}/benchmark\n")
+        rows = ["subcategory,task,x2real_package,n_id,id_envs,id_timeout_s"]
+        rows += [f"bright2026,{t},bright/{t},1,{env_name(t)},{TIMEOUTS[t]}" for t in btasks]
+        csv.write_text("\n".join(rows) + "\n")
+    btext += f"  {END}\n"
     boards.write_text(btext)
-    rows = ["subcategory,task,x2real_package,n_id,id_envs,id_timeout_s"]
-    rows += [f"bright2026,{t},bright/{t},1,{env_name(t)},{TIMEOUTS[t]}" for t in tasks]
-    CSV.write_text("\n".join(rows) + "\n")
 
 
 def main():
@@ -701,7 +744,7 @@ def main():
         print("wrote", t)
     if not a.no_register:
         register(list(TASKS))
-        print("registered board", BOARD, "with", len(TASKS), "cases")
+        print("registered boards", BOARD, CLOTH_BOARD, "with", len(TASKS), "cases")
 
 
 if __name__ == "__main__":

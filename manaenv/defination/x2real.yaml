@@ -171,6 +171,7 @@ scene_orders:
 # >>> bright2026 begin
 - include: x2real/scene/bright/pour_beans/vnext.yaml
 - include: x2real/scene/bright/fold_towel/vnext.yaml
+- include: x2real/scene/bright/fold_towel_cloth/vnext.yaml
 - include: x2real/scene/bright/stack_rings/vnext.yaml
 - include: x2real/scene/bright/handover_tools/vnext.yaml
 - include: x2real/scene/bright/handover_tools_basket/vnext.yaml
@@ -231,6 +232,7 @@ task_orders:
 # >>> bright2026 begin
 - include: x2real/task/bright/pour_beans/vnext_dag.yaml
 - include: x2real/task/bright/fold_towel/vnext_dag.yaml
+- include: x2real/task/bright/fold_towel_cloth/vnext_dag.yaml
 - include: x2real/task/bright/stack_rings/vnext_dag.yaml
 - include: x2real/task/bright/handover_tools/vnext_dag.yaml
 - include: x2real/task/bright/handover_tools_basket/vnext_dag.yaml
@@ -1214,6 +1216,19 @@ assembly_orders:
         robot_generator_identity: EX001-6R-G
         board: bright_arm6a_tabletop
 - assembly_generator:
+    name: artixon_arm6a_G_bright_fold_towel_cloth_id_env
+    scene_generator_name: bright_fold_towel_cloth_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_fold_towel_cloth
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_cloth
+- assembly_generator:
     name: artixon_arm6a_G_bright_stack_rings_id_env
     scene_generator_name: bright_stack_rings_scene
     robot_generator_name: EX001-6R-G
@@ -2009,6 +2024,16 @@ rollout:
       policy_cfg:
         include: policy/x2real_ps@v1.0.0.yaml
 - env_ref: artixon_arm6a_G_bright_fold_towel_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_fold_towel_cloth_id_env
   num_episodes: 10
   episode_length_s: 120
   max_steps: 3600

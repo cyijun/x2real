@@ -89,7 +89,10 @@ _EXPECTED_BOARD_COUNTS = {
 # Local extension boards (BRIGHT 2026 hackathon tasks); not part of the 73 formal cases.
 _EXTENSION_BOARD_COUNTS = {
     "bright_arm6a_tabletop": 6,
+    "bright_arm6a_cloth": 1,
 }
+# Extension boards whose scenes need GPU PhysX (surface-deformable cloth): synchronous GPU runtime.
+_GPU_PHYSX_BOARDS = {"bright_arm6a_cloth": "runtime/solver/physx_gpu_sync.yaml"}
 _BOARD_ALIASES = {
     "ex001_tabletop": "artixon_arm6a_tabletop",
     "ex001_challenge": "artixon_arm6a_challenge",
@@ -573,6 +576,13 @@ def build_run_suite_document(
         if not isinstance(runtime, dict):
             raise ValueError("arx_r5_tabletop requires pipeline.pipeline_runtime")
         runtime["include"] = "runtime/solver/physx_cpu.yaml"
+        runtime["kit_render_mode"] = "sync"
+    elif board.board_id in _GPU_PHYSX_BOARDS:
+        pipeline = document.get("pipeline")
+        runtime = pipeline.get("pipeline_runtime") if isinstance(pipeline, dict) else None
+        if not isinstance(runtime, dict):
+            raise ValueError(f"{board.board_id} requires pipeline.pipeline_runtime")
+        runtime["include"] = _GPU_PHYSX_BOARDS[board.board_id]
         runtime["kit_render_mode"] = "sync"
     cases_by_env = {case.env: case for case in cases}
     assembly_orders = [
