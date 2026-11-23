@@ -362,7 +362,7 @@ def gen_bowl(root: Path, color_name: str, color):
     st = new_stage(path, mass=mass)
     pm = physics_material(st, static=0.25, dynamic=0.2, combine="min")   # smooth PP: slides easily -> one hand must hold it
     # final (2026-11-22 PDF): wheat-straw bowl, rim diameter 20 cm, height 10 cm, light matte colour
-    R, H, rf, t, tb = 0.100, 0.0985, 0.045, 0.0035, 0.005
+    R, H, rf, t, tb = 0.100, 0.0985, 0.042, 0.0035, 0.005   # foot 8.4 cm: seller spec image lu_1747_1 (measured)
     zf = 0.008  # foot height
     n_band = 6
     outer = [(rf * 0.92, 0.0), (rf, 0.0), (rf, zf)]
@@ -398,9 +398,10 @@ def gen_bowl(root: Path, color_name: str, color):
            collision="foot cylinder + 20x6 convex wall pieces", texture=STRAW)
 
 
-def gen_cup(root: Path, color_name: str, color, *, aid=None, r_bot=0.0325, r_top=0.039, H=0.105, mass=0.045,
+def gen_cup(root: Path, color_name: str, color, *, aid=None, r_bot=0.027, r_top=0.039, H=0.105, mass=0.045,
             glass=False, texture=STRAW):
-    # final (PDF): wheat-straw cup 350 ml, mouth 7.8 cm, height 10.5 cm (bottom 6.5 cm inferred; inner volume ~352 ml)
+    # final (PDF): wheat-straw cup 350 ml, mouth 7.8 cm, height 10.5 cm; bottom 5.4 cm measured on the seller's spec
+    # image lu_1747_5 (5.3-5.5 cm)
     aid = aid or f"bright_cup_{color_name}"
     path = root / "tableware" / f"{aid}.usd"
     st = new_stage(path, mass=mass)
@@ -539,8 +540,8 @@ def gen_toolbox(root: Path):
     pm = physics_material(st, static=0.7, dynamic=0.6)
     wood = omnipbr(st, "wood", color=(0.88, 0.75, 0.56), texture=tex_or_none(root, BEECH), roughness=0.7)
     L, W, endH = 0.207, 0.127, 0.127          # from the PDF
-    H, te, ts, tb = 0.075, 0.012, 0.008, 0.008  # side-wall height and board thicknesses: inferred from the photo
-    slot_w, slot_z0, slot_z1 = 0.060, 0.090, 0.112   # oblong handle slot in each end panel (inferred)
+    H, te, ts, tb = 0.065, 0.010, 0.008, 0.008  # side wall ~6-6.5 cm, end board ~1 cm: measured on seller image lu_1747_3
+    slot_w, slot_z0, slot_z1 = 0.060, 0.090, 0.110   # handle slot ~6 x 2 cm, top 1.5-2 cm below the rim (lu_1747_3)
     boxes = [((0, 0, tb / 2), (L - 2 * te, W, tb)),                       # bottom (between the end panels)
              ((0, W / 2 - ts / 2, H / 2), (L - 2 * te, ts, H)),           # side +y
              ((0, -W / 2 + ts / 2, H / 2), (L - 2 * te, ts, H))]          # side -y
@@ -602,8 +603,8 @@ def gen_hammer(root: Path):
     pm = physics_material(st, static=0.6, dynamic=0.5)
     wood = omnipbr(st, "wood", color=(0.88, 0.72, 0.52), texture=tex_or_none(root, BEECH), roughness=0.6)
     grey = omnipbr(st, "grey_plastic", color=(0.42, 0.44, 0.47), roughness=0.4)
-    total, head_len, rh = 0.165, 0.075, 0.016        # along X, head length along Y, head radius
-    r_handle0, r_handle1 = 0.0115, 0.0095             # handle tapers toward the head
+    total, head_len, rh = 0.165, 0.075, 0.0125       # along X; head 7.5 (labelled), face ~2.5 cm (lu_1747_3, measured)
+    r_handle0, r_handle1 = 0.0080, 0.0072             # handle ~1.5 cm (measured), slight taper toward the head
     x0 = -total / 2
     zc = rh                                           # handle/head axis height when lying
     hl = total - rh                                   # handle runs into the head centre
@@ -656,7 +657,7 @@ def gen_screwdriver(root: Path):
     pm = physics_material(st, static=0.6, dynamic=0.5)
     red = omnipbr(st, "red_paint", color=(0.93, 0.30, 0.12), roughness=0.35)
     wood = omnipbr(st, "wood", color=(0.88, 0.72, 0.52), texture=tex_or_none(root, BEECH), roughness=0.6)
-    rh, lh, rs, ls = 0.0075, 0.075, 0.004, 0.075          # 15 cm total, 1.5 cm handle diameter
+    rh, lh, rs, ls = 0.0075, 0.090, 0.00425, 0.060        # 15 cm total, handle 1.5 (label) x 9, shaft 0.85 x 6 exposed
     x0 = -(lh + ls) / 2
     handle = lathe([(0, 0), (rh * 0.6, 0), (rh * 0.92, 0.004), (rh, 0.012), (rh, lh), (0, lh)], 24, 1, 5)
     add_mesh(st, "/World/visual/handle", *transform(handle, rot_y(math.pi / 2), (x0, 0, rh)), mat=red)
@@ -688,9 +689,9 @@ def gen_screw_twister(root: Path):
     red = omnipbr(st, "red_paint", color=(0.85, 0.07, 0.08), roughness=0.3)
     grey = omnipbr(st, "grey_thread", color=(0.62, 0.62, 0.60), roughness=0.55)
     wood = omnipbr(st, "wood", color=(0.88, 0.72, 0.52), texture=tex_or_none(root, BEECH), roughness=0.6)
-    r_hub, l_hub = 0.015, 0.030          # hub cylinder (coaxial with the rod)
-    r_rod, l_rod, pitch = 0.0065, 0.065, 0.006
-    r_dowel, r_ball, span = 0.0045, 0.011, 0.085
+    r_hub, l_hub = 0.014, 0.0375         # hub cylinder (coaxial with the rod): ~2.8 x 3.5-4 cm (lu_1747_3, measured)
+    r_rod, l_rod, pitch = 0.00525, 0.0575, 0.006   # thread ~1.0-1.1 cm major diameter, 9.5 cm overall
+    r_dowel, r_ball, span = 0.0035, 0.0115, 0.085  # cross dowel 0.6-0.8, balls 2.2-2.4, 8.5 cm span (label)
     total = l_hub + l_rod                # 9.5 cm along X
     x0 = -total / 2
     zc = r_hub                           # axis height when lying on the hub
@@ -816,13 +817,59 @@ def gen_lily(root: Path):
 
 
 # Montessori ring stacker, final (PDF 2026-11-22): round base diameter 8 cm, whole set 12.5 cm high, 5 rings,
-# beech + sapele, unpainted, two tones.  Everything except the base diameter and the total height is INFERRED from
-# the product photo (gu_1804_ring.jpg, silhouette widths relative to the 8 cm base): base 2.5 cm high, 5 rings
-# 1.7 cm thick (OD 7.0/6.3/5.6/4.8/4.0 cm), peg 1.5 cm diameter reaching 10 cm above the base (round top =
-# the knob), ring hole 2.3 cm (4 mm radial clearance -- 3 mm jammed in the previous physics test).
-# 2.5 + 5 x 1.7 + 1.5 (knob above the top ring) = 12.5 cm.
-STACK = {"base_r": 0.040, "base_h": 0.025, "peg_r": 0.0075, "peg_h": 0.100, "ring_id": 0.023, "ring_t": 0.017}
+# beech + sapele, unpainted, two tones.  Same product as Amazon B0DWJYN55J (Adena / Yunhe Xinqiao Toys): base 8 x 1.8
+# cm (listing drawing); peg ~1.5 cm, hole ~1.6-1.75 cm, rings 1.8-2.0 cm thick (measured on the listing's part
+# photos); ring ODs from our spec photo gu_1804_ring.jpg.  See ASSETS.md section 2 for sources and confidence.
+# Used: peg + round knob 1.5 cm, hole 1.7 cm (1 mm per side), rings 1.9 cm, peg 10.7 cm above the base:
+# 1.8 + 10.7 = 12.5 cm (5 x 1.9 = 9.5 + 1.2 cm knob above the top ring).
+# Collision recipe ("plan A" of the research in ASSETS.md 4.2): 48 convex sectors per ring with the collision bore
+# 0.25 mm/side looser than the visual one and a 1.5 mm x 45 deg lead-in at both faces, a 48-gon inscribed peg,
+# contactOffset 4 mm / restOffset 0, maxDepenetrationVelocity 1 m/s, 32 position iterations, and a low-friction
+# (0.3, combine=min) material on the peg + knob only.
+STACK = {"base_r": 0.040, "base_h": 0.018, "peg_r": 0.0075, "peg_h": 0.107, "ring_id": 0.017, "ring_t": 0.019,
+         "segments": 48, "peg_segments": 48, "contact_offset": 0.004, "rest_offset": 0.0, "hole_chamfer": 0.0015,
+         "coll_hole_extra": 0.00025, "peg_friction": 0.3, "max_depenetration": 1.0, "position_iterations": 32}
 RING_ODS = [0.070, 0.063, 0.056, 0.048, 0.040]    # ring 1 (largest, bottom) .. ring 5 (smallest, top)
+
+
+def set_collision_offsets(stage, contact_offset, rest_offset):
+    """PhysxCollisionAPI contact/rest offset on every collider under /World/collision (None = PhysX default)."""
+    if contact_offset is None and rest_offset is None:
+        return
+    for prim in Usd.PrimRange(stage.GetPrimAtPath("/World/collision")):
+        if not prim.HasAPI(UsdPhysics.CollisionAPI):
+            continue
+        prim.AddAppliedSchema("PhysxCollisionAPI")
+        if contact_offset is not None:
+            prim.CreateAttribute("physxCollision:contactOffset", Sdf.ValueTypeNames.Float).Set(float(contact_offset))
+        if rest_offset is not None:
+            prim.CreateAttribute("physxCollision:restOffset", Sdf.ValueTypeNames.Float).Set(float(rest_offset))
+
+
+def set_body_solver(stage, max_depenetration=None, position_iterations=None):
+    """PhysxRigidBodyAPI on /World: max depenetration velocity and solver position iterations (None = default)."""
+    if max_depenetration is None and position_iterations is None:
+        return
+    prim = stage.GetPrimAtPath("/World")
+    prim.AddAppliedSchema("PhysxRigidBodyAPI")
+    if max_depenetration is not None:
+        prim.CreateAttribute("physxRigidBody:maxDepenetrationVelocity", Sdf.ValueTypeNames.Float).Set(
+            float(max_depenetration))
+    if position_iterations is not None:
+        prim.CreateAttribute("physxRigidBody:solverPositionIterationCount", Sdf.ValueTypeNames.Int).Set(
+            int(position_iterations))
+
+
+def peg_material(stage, friction):
+    """Separate low-friction material for the peg/knob colliders (combine=min, so ring-peg friction = this value)."""
+    mat = UsdShade.Material.Define(stage, "/World/Looks/PegPhysicsMaterial")
+    api = UsdPhysics.MaterialAPI.Apply(mat.GetPrim())
+    api.CreateStaticFrictionAttr(float(friction))
+    api.CreateDynamicFrictionAttr(float(friction))
+    api.CreateRestitutionAttr(0.05)
+    mat.GetPrim().AddAppliedSchema("PhysxMaterialAPI")
+    mat.GetPrim().CreateAttribute("physxMaterial:frictionCombineMode", Sdf.ValueTypeNames.Token).Set("min")
+    return mat
 
 
 def gen_stacker(root: Path):
@@ -837,18 +884,25 @@ def gen_stacker(root: Path):
     wood = omnipbr(st, "wood", color=(0.85, 0.7, 0.5), texture=tex_or_none(root, BEECH), roughness=0.65)
     base = lathe([(0, 0), (Rb - 0.004, 0), (Rb - 0.0012, 0.0012), (Rb, 0.004), (Rb, Hb - 0.004), (Rb - 0.0012, Hb - 0.0012),
                   (Rb - 0.004, Hb), (0, Hb)], 64, 2, 6)
-    dome = [(pr * math.cos(a), Hb + ph - pr + pr * math.sin(a)) for a in np.linspace(0, math.pi / 2, 7)]
-    peg = lathe([(0, Hb), (pr, Hb)] + dome, 32, 1, 6)
+    # knob = hemispherical end of the peg (same 1.6 cm diameter, as in the photo)
+    dome = [(pr * math.cos(a), Hb + ph - pr + pr * math.sin(a)) for a in np.linspace(0, math.pi / 2, 9)]
+    peg = lathe([(0, Hb), (pr, Hb)] + dome, 48, 1, 6)
     add_mesh(st, "/World/visual/base", *merge(base, peg), mat=wood)
+    n = S["peg_segments"]
     add_convex(st, "base", cyl_pts(Rb, 0, Rb, Hb, n=32), pm)
-    add_convex(st, "peg", cyl_pts(pr, Hb, pr, Hb + ph - pr, n=16), pm)
+    pmp = peg_material(st, S["peg_friction"]) if S.get("peg_friction") is not None else pm
+    add_convex(st, "peg", cyl_pts(pr, Hb, pr, Hb + ph - pr, n=n), pmp)   # inscribed polygon: never fatter than pr
     domep = []
     for (r, z) in dome:
-        for k in range(12):
-            th = 2 * math.pi * k / 12
+        for k in range(n):
+            th = 2 * math.pi * k / n
             domep.append((r * math.cos(th), r * math.sin(th), z))
-    add_convex(st, "dome", domep, pm)
-    finish(st, aid, path, mass_kg=mass, friction=[0.7, 0.6], collision="base disk + peg cylinder + dome",
+    add_convex(st, "dome", domep, pmp)
+    set_collision_offsets(st, S["contact_offset"], S["rest_offset"])
+    set_body_solver(st, S.get("max_depenetration"), S.get("position_iterations"))
+    finish(st, aid, path, mass_kg=mass, friction=[0.7, 0.6],
+           collision=f"base disk + {n}-gon peg + {n}-gon hemispherical knob (peg/knob friction "
+                     f"{S.get('peg_friction')}, min); contactOffset {S['contact_offset']}, restOffset {S['rest_offset']}",
            texture=BEECH, base_diameter_m=2 * Rb, base_height_m=Hb, peg_diameter_m=2 * pr, peg_height_above_base_m=ph,
            note="PDF: base diameter 8 cm, set height 12.5 cm; base height / peg size inferred from the photo")
     # --- legacy long three-peg base (five_tasks draft); not used by any scene any more, kept for reference
@@ -868,6 +922,24 @@ def gen_stacker(root: Path):
            note="legacy three-peg base, unused")
 
 
+def ring_collision(stage, pmat, r_in, r_out, T, segments, chamfer=0.0):
+    """Annulus of convex sectors; with chamfer > 0 the bore gets a 45-degree lead-in of that size at both faces
+    (three z-layers per sector, each still convex)."""
+    if chamfer <= 0.0:
+        annulus_collision(stage, pmat, r_in, r_out, 0.0, T, segments=segments)
+        return
+    layers = [((0.0, r_in + chamfer), (chamfer, r_in)), ((chamfer, r_in), (T - chamfer, r_in)),
+              ((T - chamfer, r_in), (T, r_in + chamfer))]
+    for li, ((z0, ri0), (z1, ri1)) in enumerate(layers):
+        for s in range(segments):
+            pts = []
+            for th in (2 * math.pi * s / segments, 2 * math.pi * (s + 1) / segments):
+                c, sn = math.cos(th), math.sin(th)
+                pts += [(ri0 * c, ri0 * sn, z0), (ri1 * c, ri1 * sn, z1), (r_out * c, r_out * sn, z0),
+                        (r_out * c, r_out * sn, z1)]
+            add_convex(stage, f"ring_{li}_{s}", pts, pmat)
+
+
 def gen_ring(root: Path, size_name: str, r_out: float, texture: str, color):
     aid = f"bright_ring_{size_name}"
     path = root / "stacker" / f"{aid}.usd"
@@ -877,12 +949,20 @@ def gen_ring(root: Path, size_name: str, r_out: float, texture: str, color):
     st = new_stage(path, mass=mass)
     pm = physics_material(st, static=0.45, dynamic=0.35)   # sanded unpainted wood
     look = omnipbr(st, "wood", color=color, texture=tex_or_none(root, texture), roughness=0.55)
-    b = 0.003
-    prof = [(r_in + b, 0), (r_out - b, 0), (r_out, b), (r_out, T - b), (r_out - b, T), (r_in + b, T), (r_in, T - b),
-            (r_in, b), (r_in + b, 0)]
+    b, bi = 0.003, max(STACK.get("hole_chamfer", 0.0), 0.0005)   # outer edge rounded 3 mm, bore lead-in
+    prof = [(r_in + bi, 0), (r_out - b, 0), (r_out, b), (r_out, T - b), (r_out - b, T), (r_in + bi, T), (r_in, T - bi),
+            (r_in, bi), (r_in + bi, 0)]
     add_mesh(st, "/World/visual/ring", *lathe(prof, 64, 6, 8), mat=look)
-    annulus_collision(st, pm, r_in, r_out, 0.0, T, segments=24)
-    finish(st, aid, path, mass_kg=mass, friction=[0.45, 0.35], collision="24 convex annular sectors", texture=texture,
+    nseg = STACK["segments"]
+    # flat chords: put the chord mid-points (apothem) at r_in + extra so the polygonal bore is never tighter
+    r_coll = (r_in + STACK.get("coll_hole_extra", 0.0)) / math.cos(math.pi / nseg) if STACK.get("coll_hole_extra") \
+        is not None else r_in
+    ring_collision(st, pm, r_coll, r_out, T, nseg, STACK.get("hole_chamfer", 0.0))
+    set_collision_offsets(st, STACK["contact_offset"], STACK["rest_offset"])
+    set_body_solver(st, STACK.get("max_depenetration"), STACK.get("position_iterations"))
+    finish(st, aid, path, mass_kg=mass, friction=[0.45, 0.35],
+           collision=f"{nseg} convex annular sectors; contactOffset {STACK['contact_offset']}, "
+                     f"restOffset {STACK['rest_offset']}", texture=texture,
            outer_diameter_m=2 * r_out, inner_diameter_m=2 * r_in, thickness_m=T,
            note="inner diameter / thickness inferred -> measure on arrival")
 
@@ -898,7 +978,7 @@ def gen_vase(root: Path, color_name: str, color):
     pm = physics_material(st, static=0.7, dynamic=0.6)
     look = omnipbr(st, "bisque", color=color, roughness=0.9)
     t, tb, H = 0.005, 0.015, 0.195
-    outer_b = [(0.045, 0.0), (0.046, 0.012), (0.060, 0.035), (0.068, 0.060), (0.064, 0.088), (0.052, 0.110),
+    outer_b = [(0.045, 0.0), (0.046, 0.012), (0.058, 0.035), (0.065, 0.060), (0.062, 0.088), (0.051, 0.110),
                (0.0405, 0.128), (0.0375, 0.140), (0.043, 0.158), (0.052, 0.176), (0.0575, H)]
     inner_b = [(r - t, max(z, tb)) for r, z in outer_b]
     n_out = len(outer_b)
@@ -916,7 +996,7 @@ def gen_vase(root: Path, color_name: str, color):
     finish(st, aid, path, mass_kg=mass, friction=[0.7, 0.6], color=color,
            collision=f"bottom + 20x{n_out - 2} convex wall pieces", mouth_outer_diameter_m=0.115,
            mouth_inner_diameter_m=round(2 * (0.0575 - t), 4), neck_inner_diameter_m=round(2 * (0.0375 - t), 4),
-           max_diameter_m=0.136, height_m=H)
+           max_diameter_m=0.130, height_m=H)
 
 
 def gen_flower(root: Path, color_name: str, head_color, stem_len=0.25, head_d=0.09):

@@ -71,6 +71,10 @@ px.CreateBroadphaseTypeAttr("MBP")
 px.CreateEnableCCDAttr(True)
 px.CreateTimeStepsPerSecondAttr(120)
 px.CreateSolverTypeAttr("TGS")
+# same as the eval (manaenv runtime/solver/physx_cpu_async.yaml): >= 32 position / 4 velocity iterations and
+# swept + speculative CCD on every dynamic rigid body (authored in place())
+px.CreateMinPositionIterationCountAttr(32)
+px.CreateMinVelocityIterationCountAttr(4)
 
 
 def find(asset_id: str) -> str:
@@ -92,6 +96,10 @@ def place(name: str, asset_id: str, pos, yaw_deg: float = 0.0, quat=None, physic
     x.AddOrientOp().Set(Gf.Quatf(*[float(v) for v in quat]))
     if not physics:
         x.GetPrim().GetAttribute("physics:rigidBodyEnabled").Set(False)
+    else:
+        rb = PhysxSchema.PhysxRigidBodyAPI.Apply(x.GetPrim())
+        rb.CreateEnableCCDAttr(True)
+        rb.CreateEnableSpeculativeCCDAttr(True)
     return prim_path
 
 
@@ -187,13 +195,13 @@ else:
     place("tablecloth", "bright_tablecloth_blue_cloud", tab(0, 0, 0.0), 0)
     z0 = 0.0015
     tests = {}
-    # stacker (8 cm base, peg top 12.5 cm): 5 rings released level ~5 mm above the peg top, 3.6 mm xy error,
+    # stacker (8 cm base, peg top 12.5 cm): 5 rings released level ~5 mm above the knob, 3.6 mm xy error,
     # largest first -- what a careful top-down placement would do
     base_pos = tab(0.05, 0.0, z0)
     place("stacker", "bright_stacker_round", base_pos, 0)
     peg_world = base_pos.copy()   # single central peg
     ring_ids = [f"bright_ring_{k}" for k in range(1, 6)]
-    PEG_TOP = 0.125
+    PEG_TOP = 0.125   # base 1.8 + peg 10.7 cm
     # open toolbox (yaw 0: long side along world x); tools released lying along the box, ~3 cm above the side walls
     tb_pos = tab(0.15, 0.30, z0)
     place("toolbox", "bright_toolbox", tb_pos, 0)
@@ -296,7 +304,7 @@ else:
         x, y, z, w = q
         res[f"ring_{k + 1}"] = {"xy_off_from_peg": round(float(np.linalg.norm(p[:2] - peg_xy)), 4),
                                 "z_above_table": round(float(p[2] - (TABLE[2] + z0)), 4),
-                                "expected_z": round(0.025 + 0.017 * k, 4),
+                                "expected_z": round(0.018 + 0.019 * k, 4),
                                 "tilt_dot_up": round(float(1 - 2 * (x * x + y * y)), 4)}
     for t, _, _ in TOOL_DROPS:
         p, q = pose(t)

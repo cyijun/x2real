@@ -548,9 +548,12 @@ def task_fold_towel():
 # ----------------------------------------------------------------------------
 # 3. Stack rings large -> small onto the single peg (5 rings; 1..5 per instruction)
 # ----------------------------------------------------------------------------
-BASE_H = 0.025    # keep in sync with STACK in gen_bright_assets.py
-RING_T = 0.017
-PEG_TOP = 0.125   # base 2.5 cm + peg 10 cm (whole set 12.5 cm)
+BASE_H = 0.018    # keep in sync with STACK in gen_bright_assets.py
+RING_T = 0.019
+PEG_TOP = 0.125   # base 1.8 cm + peg 10.7 cm (whole set 12.5 cm)
+# ring hole vs peg: 1 mm per side; the drop test (ASSETS.md 4.2) seats every ring released level or 5 deg tilted
+# with <= 4 mm horizontal offset, so "aligned" (M3) and "on peg" (P3) use a +-4 mm box around the peg axis
+ALIGN_TOL = 0.004
 N_RINGS = 5
 # rings scattered on the side opposite to the base (authored: base left of centre, rings on the right)
 RING_SLOTS = [((0.13, 0.17), (0.08, 0.12)), ((0.13, 0.17), (0.20, 0.24)), ((0.13, 0.17), (0.32, 0.36)),
@@ -585,12 +588,12 @@ def task_stack_rings(n=N_RINGS, suffix=""):
                                               hands=split_hands("base", p)),
                                         f"ring {k} lifted >= 20 mm above the peg top (M1)")
         stages[f"ring{k}_aligned"] = (every(aligned=zone(ring, "@destination", 3, in_reference_frame=True,
-                                                         x_range=[-0.012, 0.012], y_range=[-0.012, 0.012],
+                                                         x_range=[-ALIGN_TOL, ALIGN_TOL], y_range=[-ALIGN_TOL, ALIGN_TOL],
                                                          z_range=[PEG_TOP - 0.04, PEG_TOP + 0.04]),
                                             hands=split_hands("base", p)),
                                       f"ring {k} hole aligned with the peg tip (M3)")
         stages[f"ring{k}_on_peg"] = (every(on_peg=zone(ring, "@destination", 10, vel=0.05, in_reference_frame=True,
-                                                       x_range=[-0.012, 0.012], y_range=[-0.012, 0.012],
+                                                       x_range=[-ALIGN_TOL, ALIGN_TOL], y_range=[-ALIGN_TOL, ALIGN_TOL],
                                                        z_range=[z_on - 0.008, z_on + 0.008]),
                                            released=no_contact([f"{p}_left_contact", f"{p}_right_contact"], 0.05, 10),
                                            base_held=held_by_any("base", 0.1, 1)),

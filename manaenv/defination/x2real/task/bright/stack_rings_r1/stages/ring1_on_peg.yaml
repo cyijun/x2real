@@ -15,9 +15,9 @@ direct_task_generator:
               reference_cfg: '@destination'
               velocity_threshold: 0.05
               in_reference_frame: true
-              x_range: [-0.012, 0.012]
-              y_range: [-0.012, 0.012]
-              z_range: [0.017, 0.033]
+              x_range: [-0.004, 0.004]
+              y_range: [-0.004, 0.004]
+              z_range: [0.009999999999999998, 0.026]
           - released:
               _func: object_no_contact_destination
               contact_sensor_cfgs:
