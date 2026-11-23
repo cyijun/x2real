@@ -6,18 +6,19 @@ direct_task_generator:
     termination_component:
       terms:
         success:
+          _combine: and
           terms:
           - above:
               _func: object_position_in_zone
-              object_cfg: '@flower_2'
+              object_cfg: '@flower_pink'
               consecutive_steps: 3
               reference_cfg: '@vase'
               xy_distance_threshold: 0.05
-              z_min_offset: 0.1
+              z_min_offset: 0.15
               z_max_offset: 0.45
           - vertical:
               _func: object_tilt_in_range
-              object_cfg: '@flower_2'
+              object_cfg: '@flower_pink'
               axis: x
               velocity_threshold: 0.5
               consecutive_steps: 3
@@ -26,4 +27,4 @@ direct_task_generator:
       entries:
         progress:
           trigger: success
-          value: pink stem bottom above the vase mouth (M3)
+          value: flesh-pink stem bottom above the vase mouth (M3)

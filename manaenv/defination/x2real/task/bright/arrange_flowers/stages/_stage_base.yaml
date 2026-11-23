@@ -1,9 +1,9 @@
 direct_task_generator:
   definition:
     gen_method: 0
-    episode_length_s: 150.0
+    episode_length_s: 360.0
     num_episodes: 10
-    max_steps_per_episode: 4500
+    max_steps_per_episode: 10800
   component_sections:
     termination_component:
       terms:
@@ -34,43 +34,91 @@ direct_task_generator:
         tags: bright_arrange_flowers_scene
     sensor_component:
       sensors:
-      - flower1_left_contact:
+      - flower_purple_left_contact:
           type: contact
-          source: '@flower_1'
+          source: '@flower_purple'
           against: &id001
           - '{ENV_REGEX_NS}/Robot/left_arm_gripper_left_link'
           - '{ENV_REGEX_NS}/Robot/left_arm_gripper_left_tip_link'
           - '{ENV_REGEX_NS}/Robot/left_arm_gripper_right_link'
           - '{ENV_REGEX_NS}/Robot/left_arm_gripper_right_tip_link'
-      - flower1_right_contact:
+      - flower_purple_right_contact:
           type: contact
-          source: '@flower_1'
+          source: '@flower_purple'
           against: &id002
           - '{ENV_REGEX_NS}/Robot/right_arm_gripper_left_link'
           - '{ENV_REGEX_NS}/Robot/right_arm_gripper_left_tip_link'
           - '{ENV_REGEX_NS}/Robot/right_arm_gripper_right_link'
           - '{ENV_REGEX_NS}/Robot/right_arm_gripper_right_tip_link'
-      - flower1_vase_contact:
+      - flower_purple_vase_contact:
           type: contact
-          source: '@flower_1'
+          source: '@flower_purple'
           against: '@vase'
-      - flower1_cloth_contact:
+      - flower_purple_cloth_contact:
           type: contact
-          source: '@flower_1'
+          source: '@flower_purple'
           against: '@background_cloth'
-      - flower2_left_contact:
+      - flower_blue_left_contact:
           type: contact
-          source: '@flower_2'
+          source: '@flower_blue'
           against: *id001
-      - flower2_right_contact:
+      - flower_blue_right_contact:
           type: contact
-          source: '@flower_2'
+          source: '@flower_blue'
           against: *id002
-      - flower2_vase_contact:
+      - flower_blue_vase_contact:
           type: contact
-          source: '@flower_2'
+          source: '@flower_blue'
           against: '@vase'
-      - flower2_cloth_contact:
+      - flower_blue_cloth_contact:
           type: contact
-          source: '@flower_2'
+          source: '@flower_blue'
+          against: '@background_cloth'
+      - flower_yellow_left_contact:
+          type: contact
+          source: '@flower_yellow'
+          against: *id001
+      - flower_yellow_right_contact:
+          type: contact
+          source: '@flower_yellow'
+          against: *id002
+      - flower_yellow_vase_contact:
+          type: contact
+          source: '@flower_yellow'
+          against: '@vase'
+      - flower_yellow_cloth_contact:
+          type: contact
+          source: '@flower_yellow'
+          against: '@background_cloth'
+      - flower_red_left_contact:
+          type: contact
+          source: '@flower_red'
+          against: *id001
+      - flower_red_right_contact:
+          type: contact
+          source: '@flower_red'
+          against: *id002
+      - flower_red_vase_contact:
+          type: contact
+          source: '@flower_red'
+          against: '@vase'
+      - flower_red_cloth_contact:
+          type: contact
+          source: '@flower_red'
+          against: '@background_cloth'
+      - flower_pink_left_contact:
+          type: contact
+          source: '@flower_pink'
+          against: *id001
+      - flower_pink_right_contact:
+          type: contact
+          source: '@flower_pink'
+          against: *id002
+      - flower_pink_vase_contact:
+          type: contact
+          source: '@flower_pink'
+          against: '@vase'
+      - flower_pink_cloth_contact:
+          type: contact
+          source: '@flower_pink'
           against: '@background_cloth'

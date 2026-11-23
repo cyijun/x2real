@@ -1,0 +1,89 @@
+include: x2real/task/bright/arrange_flowers/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_arrange_flowers_purple_handover
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          _combine: and
+          terms:
+          - swap:
+              _combine: or
+              terms:
+              - left_to_right:
+                  _combine: and
+                  terms:
+                  - left_gave:
+                      _combine: and
+                      terms:
+                      - left_had:
+                          _func: object_contact_destination
+                          contact_sensor_cfgs: '@flower_purple_left_contact'
+                          force_threshold: 0.05
+                          consecutive_steps: 1
+                      - right_had_not:
+                          _func: object_no_contact_destination
+                          contact_sensor_cfgs:
+                          - '@flower_purple_right_contact'
+                          force_threshold: 0.05
+                          consecutive_steps: 1
+                      _latch: true
+                  - right_holds:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@flower_purple_right_contact'
+                      force_threshold: 0.05
+                      consecutive_steps: 5
+                  - left_released:
+                      _func: object_no_contact_destination
+                      contact_sensor_cfgs:
+                      - '@flower_purple_left_contact'
+                      force_threshold: 0.05
+                      consecutive_steps: 5
+              - right_to_left:
+                  _combine: and
+                  terms:
+                  - right_gave:
+                      _combine: and
+                      terms:
+                      - right_had:
+                          _func: object_contact_destination
+                          contact_sensor_cfgs: '@flower_purple_right_contact'
+                          force_threshold: 0.05
+                          consecutive_steps: 1
+                      - left_had_not:
+                          _func: object_no_contact_destination
+                          contact_sensor_cfgs:
+                          - '@flower_purple_left_contact'
+                          force_threshold: 0.05
+                          consecutive_steps: 1
+                      _latch: true
+                  - left_holds:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@flower_purple_left_contact'
+                      force_threshold: 0.05
+                      consecutive_steps: 5
+                  - right_released:
+                      _func: object_no_contact_destination
+                      contact_sensor_cfgs:
+                      - '@flower_purple_right_contact'
+                      force_threshold: 0.05
+                      consecutive_steps: 5
+          - airborne:
+              _func: object_position_in_zone
+              object_cfg: '@flower_purple'
+              consecutive_steps: 5
+              x_range: [-0.05, 0.45]
+              y_range: [-0.45, -0.1]
+              z_range: [-0.1904, 0.1096]
+          - untouched:
+              _func: object_no_contact_destination
+              contact_sensor_cfgs:
+              - '@flower_purple_cloth_contact'
+              force_threshold: 0.05
+              consecutive_steps: 5
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: the other hand takes the deep purple rose (head) in mid-air, the giver releases (C2)

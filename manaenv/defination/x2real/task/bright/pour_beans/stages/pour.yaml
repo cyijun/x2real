@@ -6,6 +6,7 @@ direct_task_generator:
     termination_component:
       terms:
         success:
+          _combine: and
           terms:
           - all_beans:
               _func: objects_count_in_relative_zone
@@ -26,13 +27,37 @@ direct_task_generator:
               z_max_offset: 0.1
               velocity_threshold: 0.3
               consecutive_steps: 10
-          - bowl_held:
-              _func: object_contact_destination
-              contact_sensor_cfgs: '@bowl_left_contact'
-              force_threshold: 0.1
-              consecutive_steps: 1
+          - hands:
+              _combine: or
+              terms:
+              - bowl_left__cup_right:
+                  _combine: and
+                  terms:
+                  - bowl_left:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@bowl_left_contact'
+                      force_threshold: 0.1
+                      consecutive_steps: 1
+                  - cup_right:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@cup_right_contact'
+                      force_threshold: 0.1
+                      consecutive_steps: 1
+              - bowl_right__cup_left:
+                  _combine: and
+                  terms:
+                  - bowl_right:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@bowl_right_contact'
+                      force_threshold: 0.1
+                      consecutive_steps: 1
+                  - cup_left:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@cup_left_contact'
+                      force_threshold: 0.1
+                      consecutive_steps: 1
     log_component:
       entries:
         progress:
           trigger: success
-          value: all beans poured into the bowl while the left hand holds it (L3)
+          value: all beans poured into the bowl while the other hand holds it (L3)

@@ -1,9 +1,9 @@
 direct_task_generator:
   definition:
     gen_method: 0
-    episode_length_s: 150.0
+    episode_length_s: 260.0
     num_episodes: 10
-    max_steps_per_episode: 4500
+    max_steps_per_episode: 7800
   component_sections:
     termination_component:
       terms:
@@ -37,24 +37,56 @@ direct_task_generator:
       - base_left_contact:
           type: contact
           source: '@stacker'
-          against:
+          against: &id001
           - '{ENV_REGEX_NS}/Robot/left_arm_gripper_left_link'
           - '{ENV_REGEX_NS}/Robot/left_arm_gripper_left_tip_link'
           - '{ENV_REGEX_NS}/Robot/left_arm_gripper_right_link'
           - '{ENV_REGEX_NS}/Robot/left_arm_gripper_right_tip_link'
-      - ring1_right_contact:
+      - base_right_contact:
           type: contact
-          source: '@ring_1'
-          against: &id001
+          source: '@stacker'
+          against: &id002
           - '{ENV_REGEX_NS}/Robot/right_arm_gripper_left_link'
           - '{ENV_REGEX_NS}/Robot/right_arm_gripper_left_tip_link'
           - '{ENV_REGEX_NS}/Robot/right_arm_gripper_right_link'
           - '{ENV_REGEX_NS}/Robot/right_arm_gripper_right_tip_link'
+      - ring1_left_contact:
+          type: contact
+          source: '@ring_1'
+          against: *id001
+      - ring1_right_contact:
+          type: contact
+          source: '@ring_1'
+          against: *id002
+      - ring2_left_contact:
+          type: contact
+          source: '@ring_2'
+          against: *id001
       - ring2_right_contact:
           type: contact
           source: '@ring_2'
+          against: *id002
+      - ring3_left_contact:
+          type: contact
+          source: '@ring_3'
           against: *id001
       - ring3_right_contact:
           type: contact
           source: '@ring_3'
+          against: *id002
+      - ring4_left_contact:
+          type: contact
+          source: '@ring_4'
           against: *id001
+      - ring4_right_contact:
+          type: contact
+          source: '@ring_4'
+          against: *id002
+      - ring5_left_contact:
+          type: contact
+          source: '@ring_5'
+          against: *id001
+      - ring5_right_contact:
+          type: contact
+          source: '@ring_5'
+          against: *id002

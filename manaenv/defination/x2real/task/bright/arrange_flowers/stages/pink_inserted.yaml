@@ -6,15 +6,16 @@ direct_task_generator:
     termination_component:
       terms:
         success:
+          _combine: and
           terms:
           - touch:
               _func: object_contact_destination
-              contact_sensor_cfgs: '@flower2_vase_contact'
+              contact_sensor_cfgs: '@flower_pink_vase_contact'
               force_threshold: 0.01
               consecutive_steps: 5
           - inside:
               _func: object_position_in_zone
-              object_cfg: '@flower_2'
+              object_cfg: '@flower_pink'
               consecutive_steps: 5
               reference_cfg: '@vase'
               velocity_threshold: 0.5
@@ -23,7 +24,7 @@ direct_task_generator:
               z_range: [-0.03, 0.35]
           - upright:
               _func: object_tilt_in_range
-              object_cfg: '@flower_2'
+              object_cfg: '@flower_pink'
               axis: x
               velocity_threshold: 0.5
               consecutive_steps: 5
@@ -31,11 +32,12 @@ direct_task_generator:
           - free:
               _func: object_no_contact_destination
               contact_sensor_cfgs:
-              - '@flower2_right_contact'
+              - '@flower_pink_left_contact'
+              - '@flower_pink_right_contact'
               force_threshold: 0.05
               consecutive_steps: 5
     log_component:
       entries:
         progress:
           trigger: success
-          value: pink rose inserted upright and released (P3)
+          value: flesh-pink rose inserted and released, stays in the vase (P3)

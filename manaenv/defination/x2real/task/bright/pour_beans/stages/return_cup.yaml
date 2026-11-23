@@ -6,6 +6,7 @@ direct_task_generator:
     termination_component:
       terms:
         success:
+          _combine: and
           terms:
           - upright:
               _func: object_tilt_in_range
@@ -15,17 +16,24 @@ direct_task_generator:
               consecutive_steps: 10
               min_dot: 0.9
               max_dot: 1.0
-          - home:
+          - on_table:
               _func: object_position_in_zone
               object_cfg: '@bean_cup'
               consecutive_steps: 10
               velocity_threshold: 0.05
-              x_range: [0.0, 0.3]
-              y_range: [-0.5, -0.3]
               z_range: [-0.2604, -0.2104]
+          - home:
+              _combine: not
+              terms:
+              - moved:
+                  _func: any_object_displaced_from_anchor
+                  object_cfgs: '@bean_cup'
+                  xy_only: true
+                  min_displacement: 0.03
           - released:
               _func: object_no_contact_destination
               contact_sensor_cfgs:
+              - '@cup_left_contact'
               - '@cup_right_contact'
               force_threshold: 0.05
               consecutive_steps: 10
@@ -52,4 +60,4 @@ direct_task_generator:
       entries:
         progress:
           trigger: success
-          value: cup put back on its side of the table (P2)
+          value: cup put back upright within 30 mm of where it was (P2)

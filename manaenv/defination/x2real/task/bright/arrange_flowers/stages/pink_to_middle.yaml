@@ -6,27 +6,36 @@ direct_task_generator:
     termination_component:
       terms:
         success:
+          _combine: and
           terms:
           - mid:
               _func: object_position_in_zone
-              object_cfg: '@flower_2'
+              object_cfg: '@flower_pink'
               consecutive_steps: 5
               x_range: [0.0, 0.4]
               y_range: [-0.4, -0.14]
-              z_range: [-0.1404, 0.30960000000000004]
+              z_range: [-0.1404, 0.0096]
           - held:
-              _func: object_contact_destination
-              contact_sensor_cfgs: '@flower2_left_contact'
-              force_threshold: 0.05
-              consecutive_steps: 1
+              _combine: or
+              terms:
+              - flower_pink_by_left:
+                  _func: object_contact_destination
+                  contact_sensor_cfgs: '@flower_pink_left_contact'
+                  force_threshold: 0.05
+                  consecutive_steps: 1
+              - flower_pink_by_right:
+                  _func: object_contact_destination
+                  contact_sensor_cfgs: '@flower_pink_right_contact'
+                  force_threshold: 0.05
+                  consecutive_steps: 1
           - untouched:
               _func: object_no_contact_destination
               contact_sensor_cfgs:
-              - '@flower2_cloth_contact'
+              - '@flower_pink_cloth_contact'
               force_threshold: 0.05
               consecutive_steps: 5
     log_component:
       entries:
         progress:
           trigger: success
-          value: pink rose lifted above the table centre, not touching the table (M1)
+          value: flesh-pink rose lifted ~15 cm above the table centre, not touching the table (M1)

@@ -175,6 +175,11 @@ scene_orders:
 - include: x2real/scene/bright/handover_tools/vnext.yaml
 - include: x2real/scene/bright/handover_tools_basket/vnext.yaml
 - include: x2real/scene/bright/arrange_flowers/vnext.yaml
+- include: x2real/scene/bright/stack_rings_r1/vnext.yaml
+- include: x2real/scene/bright/stack_rings_r3/vnext.yaml
+- include: x2real/scene/bright/handover_tools_r1/vnext.yaml
+- include: x2real/scene/bright/arrange_flowers_r1/vnext.yaml
+- include: x2real/scene/bright/arrange_flowers_r2/vnext.yaml
 # <<< bright2026 end
 task_orders:
 - include: x2real/task/visual_reasoning/adjust_temperature/vnext_dag.yaml
@@ -235,6 +240,11 @@ task_orders:
 - include: x2real/task/bright/handover_tools/vnext_dag.yaml
 - include: x2real/task/bright/handover_tools_basket/vnext_dag.yaml
 - include: x2real/task/bright/arrange_flowers/vnext_dag.yaml
+- include: x2real/task/bright/stack_rings_r1/vnext_dag.yaml
+- include: x2real/task/bright/stack_rings_r3/vnext_dag.yaml
+- include: x2real/task/bright/handover_tools_r1/vnext_dag.yaml
+- include: x2real/task/bright/arrange_flowers_r1/vnext_dag.yaml
+- include: x2real/task/bright/arrange_flowers_r2/vnext_dag.yaml
 # <<< bright2026 end
 assembly_orders:
 - assembly_generator:
@@ -1265,6 +1275,71 @@ assembly_orders:
         - benchmark
         robot_generator_identity: EX001-6R-G
         board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_stack_rings_r1_id_env
+    scene_generator_name: bright_stack_rings_r1_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_stack_rings_r1
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_stack_rings_r3_id_env
+    scene_generator_name: bright_stack_rings_r3_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_stack_rings_r3
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_handover_tools_r1_id_env
+    scene_generator_name: bright_handover_tools_r1_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_handover_tools_r1
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_arrange_flowers_r1_id_env
+    scene_generator_name: bright_arrange_flowers_r1_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_arrange_flowers_r1
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_arrange_flowers_r2_id_env
+    scene_generator_name: bright_arrange_flowers_r2_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_arrange_flowers_r2
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
 # <<< bright2026 end
 rollout:
 - env_ref: artixon_arm6a_G_put_glasses_on_woodshelf_id_env
@@ -2020,8 +2095,8 @@ rollout:
         include: policy/x2real_ps@v1.0.0.yaml
 - env_ref: artixon_arm6a_G_bright_stack_rings_id_env
   num_episodes: 10
-  episode_length_s: 150
-  max_steps: 4500
+  episode_length_s: 260
+  max_steps: 7800
   num_parallel_envs: 1
   show_evaluation_overlay: true
   planner:
@@ -2030,8 +2105,8 @@ rollout:
         include: policy/x2real_ps@v1.0.0.yaml
 - env_ref: artixon_arm6a_G_bright_handover_tools_id_env
   num_episodes: 10
-  episode_length_s: 150
-  max_steps: 4500
+  episode_length_s: 240
+  max_steps: 7200
   num_parallel_envs: 1
   show_evaluation_overlay: true
   planner:
@@ -2040,8 +2115,8 @@ rollout:
         include: policy/x2real_ps@v1.0.0.yaml
 - env_ref: artixon_arm6a_G_bright_handover_tools_basket_id_env
   num_episodes: 10
-  episode_length_s: 150
-  max_steps: 4500
+  episode_length_s: 240
+  max_steps: 7200
   num_parallel_envs: 1
   show_evaluation_overlay: true
   planner:
@@ -2050,8 +2125,58 @@ rollout:
         include: policy/x2real_ps@v1.0.0.yaml
 - env_ref: artixon_arm6a_G_bright_arrange_flowers_id_env
   num_episodes: 10
-  episode_length_s: 150
-  max_steps: 4500
+  episode_length_s: 360
+  max_steps: 10800
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_stack_rings_r1_id_env
+  num_episodes: 10
+  episode_length_s: 100
+  max_steps: 3000
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_stack_rings_r3_id_env
+  num_episodes: 10
+  episode_length_s: 180
+  max_steps: 5400
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_handover_tools_r1_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_arrange_flowers_r1_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_arrange_flowers_r2_id_env
+  num_episodes: 10
+  episode_length_s: 180
+  max_steps: 5400
   num_parallel_envs: 1
   show_evaluation_overlay: true
   planner:

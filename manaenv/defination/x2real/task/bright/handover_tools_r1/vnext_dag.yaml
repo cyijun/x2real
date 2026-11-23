@@ -1,0 +1,83 @@
+graph_task_generator:
+  definition:
+    task_type: bright_handover_tools_r1
+    layout:
+      runtime_sample:
+        id: runtime
+        targets:
+          assets:
+          - id: tablecloth_asset
+            target:
+              type: node
+              id: tablecloth
+            selector:
+              type: uniform
+          placements:
+          - id: tablecloth
+            target:
+              type: node
+              id: tablecloth
+            sample:
+              type: inherit
+          - id: tools_layout
+            target:
+              type: group
+              id: tools_layout
+            sample:
+              type: inherit
+        global:
+          lighting:
+            dome:
+              intensity:
+                range: [600.0, 2600.0]
+              color_temperature:
+                range: [3600.0, 7500.0]
+              rotation:
+                range: [-180.0, 180.0]
+    component_sections:
+      log_component:
+        entries:
+          active_assets:
+            trigger: enter
+            func: schema_vnext_active_asset_ids_label
+            params:
+              object_names:
+              - tablecloth
+      instruction_component:
+        instructions:
+        - text: 'Hand over the hammer one at a time, in this order. For each tool: with the arm on the tools'' side
+            pick it up, lift it about 15 cm above the middle of the table and hand it over in mid-air to the other
+            arm, then the other arm puts it into the toolbox. Leave the other tools on the table.'
+          log:
+            instruction_variant: direct
+      overlay_component:
+        evaluation: true
+        entries:
+        - log_key: active_assets
+          label: Assets
+          font_size: 18
+  nodes:
+  - id: pick_hammer
+    include: x2real/task/bright/handover_tools_r1/stages/pick_hammer.yaml
+    score: 2
+  - id: hammer_to_middle
+    include: x2real/task/bright/handover_tools_r1/stages/hammer_to_middle.yaml
+    score: 2
+  - id: hammer_handover
+    include: x2real/task/bright/handover_tools_r1/stages/hammer_handover.yaml
+    score: 2
+  - id: hammer_over_box
+    include: x2real/task/bright/handover_tools_r1/stages/hammer_over_box.yaml
+    score: 2
+  - id: hammer_in_box
+    include: x2real/task/bright/handover_tools_r1/stages/hammer_in_box.yaml
+    score: 2
+  edges:
+  - src: pick_hammer
+    dst: hammer_to_middle
+  - src: hammer_to_middle
+    dst: hammer_handover
+  - src: hammer_handover
+    dst: hammer_over_box
+  - src: hammer_over_box
+    dst: hammer_in_box

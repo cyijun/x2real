@@ -3,7 +3,7 @@ definition:
   metadata:
     name: bright_fold_towel
     source: bright/fold_towel
-    semantic_goal: Fold the towel in half away from the robot, then put it into the basket
+    semantic_goal: Fold the towel in half away from the robot, then put it flat into the basket
 render_settings:
   gen_method: 0
   tags: green_booth
@@ -57,34 +57,10 @@ objects:
   - cloth_placeholder
 - id: basket
   asset:
-    type: pool
-    cache_size: 3
-    cache_slot_order: authored
-    candidates:
-    - id: green
-      assets:
-      - bright_basket_green
-    - id: blue
-      assets:
-      - bright_basket_blue
-    - id: pink_box
-      assets:
-      - bright_bin_pink
+    type: asset_id
+    id: bright_basket_green
   semantic_tags:
   - container
-- id: distractor_towel
-  asset:
-    type: pool
-    candidates:
-    - id: any
-      assets:
-      - bright_towel_blue
-      - bright_towel_pink
-      - bright_towel_yellow
-      - bright_towel_green
-      - bright_towel_purple
-  semantic_tags:
-  - distractor
 layout:
   surfaces:
     tabletop:
@@ -114,22 +90,36 @@ layout:
         yaws: [-0.15, 0.15]
     basket:
       object: basket
-      placement:
-        type: surface
-        surface: cloth
-        ranges:
-          x: [-0.16, -0.08]
-          y: [0.24, 0.32]
-        yaws: 1.5708
-    distractor_towel:
-      object: distractor_towel
-      placement:
-        type: surface
-        surface: cloth
-        ranges:
-          x: [-0.18, -0.08]
-          y: [-0.42, -0.28]
-        yaws: [-0.5, 0.5]
+  groups:
+    basket_side:
+      type: slot
+      nodes:
+      - basket
+      slots:
+        basket_L:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [-0.16, -0.08]
+            y: [0.24, 0.32]
+          yaws: [1.5608, 1.5808]
+        basket_R:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [-0.16, -0.08]
+            y: [-0.32, -0.24]
+          yaws: [1.5608, 1.5808]
+      assignments:
+        mode: explicit
+        items:
+        - id: l0
+          bindings:
+            basket: basket_L
+        - id: r0
+          bindings:
+            basket: basket_R
+      default_assignment: l0
 variants:
   materialization:
   - id: tablecloth_pick
@@ -145,27 +135,5 @@ variants:
     - id: pick_any
       candidate_refs:
       - towel.any
-      weight: 1.0
-  - id: basket_pick
-    type: asset_pool_choice
-    choices:
-    - id: pick_green
-      candidate_refs:
-      - basket.green
-      weight: 1.0
-    - id: pick_blue
-      candidate_refs:
-      - basket.blue
-      weight: 0.001
-    - id: pick_pink_box
-      candidate_refs:
-      - basket.pink_box
-      weight: 0.001
-  - id: distractor_towel_pick
-    type: asset_pool_choice
-    choices:
-    - id: pick_any
-      candidate_refs:
-      - distractor_towel.any
       weight: 1.0
   assignments: []

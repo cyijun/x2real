@@ -6,20 +6,31 @@ direct_task_generator:
     termination_component:
       terms:
         success:
+          _combine: and
           terms:
-          - grasp:
-              _func: object_contact_destination
-              contact_sensor_cfgs: '@flower1_left_contact'
-              force_threshold: 0.05
-              consecutive_steps: 3
+          - grab:
+              _combine: or
+              terms:
+              - flower_red_by_left:
+                  _func: object_contact_destination
+                  contact_sensor_cfgs: '@flower_red_left_contact'
+                  force_threshold: 0.05
+                  consecutive_steps: 3
+              - flower_red_by_right:
+                  _func: object_contact_destination
+                  contact_sensor_cfgs: '@flower_red_right_contact'
+                  force_threshold: 0.05
+                  consecutive_steps: 3
           - raised:
               _func: object_lifted
-              object_cfg: '@flower_1'
+              object_cfg: '@flower_red'
               min_lift: 0.04
               consecutive_steps: 3
-              contact_sensor: left_gripper_contact
+              contact_sensor:
+              - left_gripper_contact
+              - right_gripper_contact
     log_component:
       entries:
         progress:
           trigger: success
-          value: left hand picks the red rose by the stem from above (G1)
+          value: one hand picks the red rose by the stem from above (G1)

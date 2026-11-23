@@ -3,8 +3,8 @@ definition:
   metadata:
     name: bright_stack_rings
     source: bright/stack_rings
-    semantic_goal: Hold the round stacker base with the left hand and stack three rings large-to-small on its single
-      peg
+    semantic_goal: One hand holds the round stacker base, the other hand stacks rings large-to-small on its single
+      peg (5 rings, sides swap)
 render_settings:
   gen_method: 0
   tags: green_booth
@@ -48,33 +48,41 @@ objects:
   semantic_tags:
   - destination
   - stacker
-- id: ring_large
+- id: ring_1
   asset:
     type: asset_id
-    id: bright_ring_large
+    id: bright_ring_1
   semantic_tags:
   - pickable
   - ring_1
-- id: ring_medium
+- id: ring_2
   asset:
     type: asset_id
-    id: bright_ring_medium
+    id: bright_ring_2
   semantic_tags:
   - pickable
   - ring_2
-- id: ring_small
+- id: ring_3
   asset:
     type: asset_id
-    id: bright_ring_small
+    id: bright_ring_3
   semantic_tags:
   - pickable
   - ring_3
-- id: ring_extra
+- id: ring_4
   asset:
     type: asset_id
-    id: bright_ring_extra
+    id: bright_ring_4
   semantic_tags:
-  - distractor
+  - pickable
+  - ring_4
+- id: ring_5
+  asset:
+    type: asset_id
+    id: bright_ring_5
+  semantic_tags:
+  - pickable
+  - ring_5
 layout:
   surfaces:
     tabletop:
@@ -95,70 +103,211 @@ layout:
         yaws: 0.0
     stacker:
       object: stacker
-      placement:
-        type: surface
-        surface: cloth
-        ranges:
-          x: [-0.02, 0.04]
-          y: [-0.05, 0.03]
-    ring_large:
-      object: ring_large
-    ring_medium:
-      object: ring_medium
-    ring_small:
-      object: ring_small
-    ring_extra:
-      object: ring_extra
+    ring_1:
+      object: ring_1
+    ring_2:
+      object: ring_2
+    ring_3:
+      object: ring_3
+    ring_4:
+      object: ring_4
+    ring_5:
+      object: ring_5
   groups:
-    rings_region:
+    stack_layout:
       type: slot
       nodes:
-      - ring_large
-      - ring_medium
-      - ring_small
-      - ring_extra
+      - stacker
+      - ring_1
+      - ring_2
+      - ring_3
+      - ring_4
+      - ring_5
       slots:
-        slot_0:
+        stacker_L:
           type: surface
           surface: cloth
           ranges:
-            x: [0.13, 0.22]
-            y: [0.1, 0.16]
-          yaws: &id001 [-3.14, 3.14]
-        slot_1:
+            x: [0.0, 0.06]
+            y: [-0.1, -0.05]
+          yaws: [-3.14, 3.14]
+        p0s0_L:
           type: surface
           surface: cloth
           ranges:
-            x: [0.13, 0.22]
-            y: [0.22, 0.28]
-          yaws: *id001
-        slot_2:
+            x: [0.13, 0.17]
+            y: [0.08, 0.12]
+          yaws: [-3.14, 3.14]
+        p0s1_L:
           type: surface
           surface: cloth
           ranges:
-            x: [0.13, 0.22]
-            y: [0.34, 0.4]
-          yaws: *id001
-        slot_3:
+            x: [0.13, 0.17]
+            y: [0.2, 0.24]
+          yaws: [-3.14, 3.14]
+        p0s2_L:
           type: surface
           surface: cloth
           ranges:
-            x: [-0.18, -0.1]
-            y: [0.16, 0.3]
-          yaws: *id001
+            x: [0.13, 0.17]
+            y: [0.32, 0.36]
+          yaws: [-3.14, 3.14]
+        p0s3_L:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.0, 0.04]
+            y: [0.14, 0.18]
+          yaws: [-3.14, 3.14]
+        p0s4_L:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.0, 0.04]
+            y: [0.26, 0.3]
+          yaws: [-3.14, 3.14]
+        stacker_R:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.0, 0.06]
+            y: [0.05, 0.1]
+          yaws: [-3.14, 3.14]
+        p0s0_R:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.13, 0.17]
+            y: [-0.12, -0.08]
+          yaws: [-3.14, 3.14]
+        p0s1_R:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.13, 0.17]
+            y: [-0.24, -0.2]
+          yaws: [-3.14, 3.14]
+        p0s2_R:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.13, 0.17]
+            y: [-0.36, -0.32]
+          yaws: [-3.14, 3.14]
+        p0s3_R:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.0, 0.04]
+            y: [-0.18, -0.14]
+          yaws: [-3.14, 3.14]
+        p0s4_R:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.0, 0.04]
+            y: [-0.3, -0.26]
+          yaws: [-3.14, 3.14]
       assignments:
-        mode: permutation
-        nodes:
-        - ring_large
-        - ring_medium
-        - ring_small
-        - ring_extra
-        slots:
-        - slot_0
-        - slot_1
-        - slot_2
-        - slot_3
-      default_assignment: perm_0
+        mode: explicit
+        items:
+        - id: l0
+          bindings:
+            stacker: stacker_L
+            ring_1: p0s0_L
+            ring_2: p0s1_L
+            ring_3: p0s2_L
+            ring_4: p0s3_L
+            ring_5: p0s4_L
+        - id: l1
+          bindings:
+            stacker: stacker_L
+            ring_1: p0s0_L
+            ring_2: p0s2_L
+            ring_3: p0s3_L
+            ring_4: p0s4_L
+            ring_5: p0s1_L
+        - id: l2
+          bindings:
+            stacker: stacker_L
+            ring_1: p0s4_L
+            ring_2: p0s3_L
+            ring_3: p0s2_L
+            ring_4: p0s1_L
+            ring_5: p0s0_L
+        - id: l3
+          bindings:
+            stacker: stacker_L
+            ring_1: p0s1_L
+            ring_2: p0s0_L
+            ring_3: p0s2_L
+            ring_4: p0s3_L
+            ring_5: p0s4_L
+        - id: l4
+          bindings:
+            stacker: stacker_L
+            ring_1: p0s2_L
+            ring_2: p0s0_L
+            ring_3: p0s1_L
+            ring_4: p0s3_L
+            ring_5: p0s4_L
+        - id: l5
+          bindings:
+            stacker: stacker_L
+            ring_1: p0s2_L
+            ring_2: p0s1_L
+            ring_3: p0s3_L
+            ring_4: p0s4_L
+            ring_5: p0s0_L
+        - id: r0
+          bindings:
+            stacker: stacker_R
+            ring_1: p0s0_R
+            ring_2: p0s1_R
+            ring_3: p0s2_R
+            ring_4: p0s3_R
+            ring_5: p0s4_R
+        - id: r1
+          bindings:
+            stacker: stacker_R
+            ring_1: p0s0_R
+            ring_2: p0s2_R
+            ring_3: p0s3_R
+            ring_4: p0s4_R
+            ring_5: p0s1_R
+        - id: r2
+          bindings:
+            stacker: stacker_R
+            ring_1: p0s4_R
+            ring_2: p0s3_R
+            ring_3: p0s2_R
+            ring_4: p0s1_R
+            ring_5: p0s0_R
+        - id: r3
+          bindings:
+            stacker: stacker_R
+            ring_1: p0s1_R
+            ring_2: p0s0_R
+            ring_3: p0s2_R
+            ring_4: p0s3_R
+            ring_5: p0s4_R
+        - id: r4
+          bindings:
+            stacker: stacker_R
+            ring_1: p0s2_R
+            ring_2: p0s0_R
+            ring_3: p0s1_R
+            ring_4: p0s3_R
+            ring_5: p0s4_R
+        - id: r5
+          bindings:
+            stacker: stacker_R
+            ring_1: p0s2_R
+            ring_2: p0s1_R
+            ring_3: p0s3_R
+            ring_4: p0s4_R
+            ring_5: p0s0_R
+      default_assignment: l0
 variants:
   materialization:
   - id: tablecloth_pick

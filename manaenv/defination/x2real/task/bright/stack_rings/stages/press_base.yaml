@@ -6,12 +6,20 @@ direct_task_generator:
     termination_component:
       terms:
         success:
-          _func: object_contact_destination
-          contact_sensor_cfgs: '@base_left_contact'
-          force_threshold: 0.5
-          consecutive_steps: 10
+          _combine: or
+          terms:
+          - base_by_left:
+              _func: object_contact_destination
+              contact_sensor_cfgs: '@base_left_contact'
+              force_threshold: 0.5
+              consecutive_steps: 10
+          - base_by_right:
+              _func: object_contact_destination
+              contact_sensor_cfgs: '@base_right_contact'
+              force_threshold: 0.5
+              consecutive_steps: 10
     log_component:
       entries:
         progress:
           trigger: success
-          value: left hand holds the stacker base (C1)
+          value: one hand holds the stacker base (C1)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-"""Geometric check for the stack_rings task: left G-gripper pressing the edge of the small
-round stacker base while the right G-gripper puts a ring onto the peg from straight above.
+"""Geometric check for the stack_rings task: left G-gripper pressing the edge of the round
+stacker base (final: 8 cm, 5 rings) while the right G-gripper puts a ring onto the peg from straight above.
 
 No simulation: gripper meshes (visual, i.e. incl. finger tips) are read from the robot USD,
 fingers are rotated to the required opening, both grippers are posed with the approach axis
@@ -22,12 +22,12 @@ from scipy.spatial import cKDTree
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--asset-root", default="x2real-assets")
-ap.add_argument("--base-radius", type=float, default=0.050)
-ap.add_argument("--base-height", type=float, default=0.022)
-ap.add_argument("--peg-height", type=float, default=0.115, help="peg length above the base top")
-ap.add_argument("--ring-id", type=float, default=0.030)
-ap.add_argument("--ring-ods", type=float, nargs=3, default=[0.085, 0.070, 0.055])
-ap.add_argument("--ring-t", type=float, default=0.020)
+ap.add_argument("--base-radius", type=float, default=0.040)
+ap.add_argument("--base-height", type=float, default=0.025)
+ap.add_argument("--peg-height", type=float, default=0.100, help="peg length above the base top")
+ap.add_argument("--ring-id", type=float, default=0.023)
+ap.add_argument("--ring-ods", type=float, nargs="+", default=[0.070, 0.063, 0.056, 0.048, 0.040])
+ap.add_argument("--ring-t", type=float, default=0.017)
 ap.add_argument("--press-inset", type=float, default=0.008, help="finger pad centre inside the base rim")
 ap.add_argument("--out", default="")
 args = ap.parse_args()
@@ -131,7 +131,7 @@ for k, od in enumerate(args.ring_ods):
         tree = cKDTree(left)
         while tree.query(right + np.array([0.0, -extra, 0.0]), k=1)[0].min() < 0.003 and extra < 0.3:
             extra += 0.002
-        results.append({"ring": ["large", "medium", "small"][k], "ring_od_m": od, "right_open_deg": round(open_deg, 1),
+        results.append({"ring": f"ring_{k + 1}", "ring_od_m": od, "right_open_deg": round(open_deg, 1),
                         "right_tip_gap_m": round(wall + 0.006, 4), "release": hname, "left": lname,
                         "axis_distance_m": round(press_r + r_mid, 4),
                         "min_distance_m": round(float(d.min()), 4),

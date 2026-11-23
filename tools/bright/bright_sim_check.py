@@ -157,12 +157,12 @@ if args.mode == "layout":
         ("cup_green", "bright_cup_green", -0.12, -0.08, 0), ("cup_purple", "bright_cup_purple", 0.15, -0.05, 0),
         ("mcup", "bright_measuring_cup_blue", 0.22, -0.18, 0),
         ("stacker", "bright_stacker_round", 0.05, 0.05, 0),
-        ("ring_l", "bright_ring_large", -0.12, 0.10, 0), ("ring_m", "bright_ring_medium", -0.12, 0.20, 0),
-        ("ring_s", "bright_ring_small", -0.05, 0.25, 0),
+        ("ring_l", "bright_ring_1", -0.12, 0.10, 0), ("ring_m", "bright_ring_3", -0.12, 0.20, 0),
+        ("ring_s", "bright_ring_5", -0.05, 0.25, 0),
         ("vase", "bright_vase_white", 0.20, 0.25, 0),
         ("rose", "bright_flower_rose_red", -0.25, 0.30, 90), ("rose2", "bright_flower_rose_pink", -0.28, 0.15, 90),
         ("toolbox", "bright_toolbox", 0.25, 0.42, 90), ("hammer", "bright_hammer", -0.25, -0.15, 0),
-        ("wrench", "bright_wrench", -0.28, -0.30, 0), ("screwdriver", "bright_screwdriver", -0.28, -0.42, 0),
+        ("screw_twister", "bright_screw_twister", -0.28, -0.30, 0), ("screwdriver", "bright_screwdriver", -0.28, -0.42, 0),
         ("basket", "bright_basket_green", 0.18, -0.42, 90), ("towel", "bright_towel_blue", -0.05, -0.45, 0),
     ]
     for name, aid, dx, dy, yaw in items:
@@ -183,30 +183,31 @@ if args.mode == "layout":
 else:
     from omni.physx import get_physx_interface
 
-    # ---- scene for physics tests (dynamic) ----
+    # ---- scene for physics tests (dynamic, no robot): final props (PDF 2026-11-22) ----
     place("tablecloth", "bright_tablecloth_blue_cloud", tab(0, 0, 0.0), 0)
     z0 = 0.0015
     tests = {}
-    # stacker: base on table, rings released above the +y end peg (base along table y -> world -y)
+    # stacker (8 cm base, peg top 12.5 cm): 5 rings released level ~5 mm above the peg top, 3.6 mm xy error,
+    # largest first -- what a careful top-down placement would do
     base_pos = tab(0.05, 0.0, z0)
     place("stacker", "bright_stacker_round", base_pos, 0)
     peg_world = base_pos.copy()   # single central peg
-    ring_ids = ["bright_ring_large", "bright_ring_medium", "bright_ring_small"]
-    # rings are spawned one at a time during the run (see SPAWN): level, 6 mm above the cone tip,
-    # 3.6 mm xy error -- i.e. what a careful top-down placement would do.
-    # toolbox with hammer + wrench dropped into their slots (toolbox yaw 0: slots along x, hammer slot -y)
+    ring_ids = [f"bright_ring_{k}" for k in range(1, 6)]
+    PEG_TOP = 0.125
+    # open toolbox (yaw 0: long side along world x); tools released lying along the box, ~3 cm above the side walls
     tb_pos = tab(0.15, 0.30, z0)
     place("toolbox", "bright_toolbox", tb_pos, 0)
-    place("hammer", "bright_hammer", tb_pos + np.array([0.0, -0.05, 0.075]), 0)
-    place("wrench", "bright_wrench", tb_pos + np.array([0.0, 0.05, 0.075]), 0)
-    # vase + two roses held vertical (stem down) above the mouth
+    TOOL_DROPS = [("hammer", "bright_hammer", np.array([0.0, -0.022, 0.105])),
+                  ("screwdriver", "bright_screwdriver", np.array([0.0, 0.035, 0.105])),
+                  ("screw_twister", "bright_screw_twister", np.array([0.0, 0.0, 0.125]))]
+    # vase + five roses released stem-down above the mouth (a few mm to 1.5 cm off-centre)
     vase_pos = tab(-0.15, 0.25, z0)
     place("vase", "bright_vase_white", vase_pos, 0)
-    down = (math.cos(math.pi / 4), 0.0, -math.sin(math.pi / 4), 0.0)  # stem-first: authored +X (head) -> +Z
-    place("rose_0", "bright_flower_rose_red", vase_pos + np.array([0.008, 0.0, 0.20]), quat=down)
+    up = (math.cos(math.pi / 4), 0.0, -math.sin(math.pi / 4), 0.0)    # -90 deg about y: +X -> +Z (head up)
+    ROSE_IDS = ["purple", "blue", "yellow", "red", "pink"]
+    ROSE_OFF = [(0.006, 0.0), (-0.012, 0.008), (0.004, -0.014), (0.010, 0.012), (-0.008, -0.006)]
 
-    # beans poured: bowl on table, cup above the bowl tilted 120 deg containing beans -> use cup resting upright,
-    # beans dropped into cup first, then cup is kinematically tipped by script.
+    # beans poured: bowl on table, cup above the bowl tilted 125 deg -> cup kinematically tipped by script
     bowl_pos = tab(-0.05, -0.20, z0)
     place("bowl", "bright_bowl_blue", bowl_pos, 0)
     cup_pos = tab(-0.20, -0.35, z0)
@@ -215,18 +216,35 @@ else:
     for k in range(nb):
         a = 2 * math.pi * k / 7
         r = 0.012 if k % 2 else 0.022
-        place(f"bean_{k}", "bright_bean_red", cup_pos + np.array([r * math.cos(a), r * math.sin(a), 0.11 + 0.008 * k]),
+        place(f"bean_{k}", "bright_bean_red", cup_pos + np.array([r * math.cos(a), r * math.sin(a), 0.12 + 0.008 * k]),
               yaw_deg=37 * k)
     # basket + towel (rigid) dropped in
     bk_pos = tab(0.20, -0.30, z0)
-    place("basket", "bright_basket_blue", bk_pos, 90)
+    place("basket", "bright_basket_green", bk_pos, 90)
     place("towel", "bright_towel_pink", bk_pos + np.array([0, 0, 0.20]), 20)
 
     # step -> (name, asset, position, yaw, quat): objects added while the simulation runs
-    SPAWN = {5: ("ring_0", ring_ids[0], peg_world + np.array([0.003, -0.002, 0.0015 + 0.142]), 0.0, None),
-             120: ("ring_1", ring_ids[1], peg_world + np.array([0.003, -0.002, 0.0015 + 0.142]), 30.0, None),
-             200: ("ring_2", ring_ids[2], peg_world + np.array([0.003, -0.002, 0.0015 + 0.142]), 60.0, None),
-             150: ("rose_1", "bright_flower_rose_pink", vase_pos + np.array([-0.012, 0.006, 0.20]), 0.0, down)}
+    SPAWN = {}
+    for k, rid in enumerate(ring_ids):
+        SPAWN[5 + 110 * k] = (f"ring_{k}", rid, peg_world + np.array([0.003, -0.002, z0 + PEG_TOP + 0.005]), 30.0 * k, None)
+    for k, (t, aid, off) in enumerate(TOOL_DROPS):
+        SPAWN[8 + 130 * k] = (t, aid, tb_pos + off, 0.0, None)
+    ROSE_TILT = math.radians(20)   # 5 heads of 9 cm around the axis need ~20 deg outward lean to not overlap
+    ROSE_PATH = {}
+    for k, c in enumerate(ROSE_IDS):
+        # each rose goes in along its own axis: stem bottom 12 mm across the vase axis, head leaning 20 deg
+        # outward, 5 directions 72 deg apart; lowered kinematically along that axis and released 4 cm above the floor
+        a = 2 * math.pi * k / 5
+        d = np.array([math.cos(a), math.sin(a), 0.0])
+        u = np.array([math.sin(ROSE_TILT) * d[0], math.sin(ROSE_TILT) * d[1], math.cos(ROSE_TILT)])
+        end = vase_pos + np.array([-0.012 * d[0], -0.012 * d[1], 0.04])
+        start = end + 0.32 * u
+        ax = np.cross([1.0, 0.0, 0.0], u)
+        ang = math.acos(float(u[0]))
+        ax = ax / np.linalg.norm(ax)
+        q = (math.cos(ang / 2), *(math.sin(ang / 2) * ax))
+        ROSE_PATH[f"rose_{k}"] = (start, end)
+        SPAWN[11 + 130 * k] = (f"rose_{k}", f"bright_flower_rose_{c}", start, 0.0, q)
     stage.GetPrimAtPath(cup_path).GetAttribute("physics:kinematicEnabled").Set(True)   # scripted cup
     anns = renderer([HEAD, OVER]) if args.frames or args.video else renderer([OVER])
     warm(10)
@@ -238,20 +256,26 @@ else:
         t = phx.get_rigidbody_transformation(f"/World/props/{name}")
         return np.array(t["position"]), np.array(t["rotation"])  # rotation xyzw
 
-    frames = []
-    total = 600  # app updates (~ 5 s at 120 Hz physics if 1 step per update)
-    # make the cup kinematic later for the scripted pour
+    total = 900  # app updates (1 physics step of 1/120 s per update)
+    INSERT = {}   # rose prim path -> (spawn step, xy+z start position): scripted kinematic insertion like a gripper would
     for step in range(total):
         if step in SPAWN:
             _n, _a, _p, _y, _q = SPAWN[step]
-            place(_n, _a, _p, _y, quat=_q)
-        if step == 240:
-            # scripted pour: switch the cup to kinematic and move it above the bowl, then tilt
-            cp = stage.GetPrimAtPath(cup_path)
-            cp.GetAttribute("physics:kinematicEnabled").Set(True)
-        if 240 <= step < 480:
-            s = min(1.0, (step - 240) / 120.0)
-            tilt = 0.0 if step < 360 else min(1.0, (step - 360) / 80.0) * math.radians(125)
+            _path = place(_n, _a, _p, _y, quat=_q)
+            if _n.startswith("rose_"):
+                stage.GetPrimAtPath(_path).GetAttribute("physics:kinematicEnabled").Set(True)
+                INSERT[_path] = (step,) + ROSE_PATH[_n]
+        for _path, (s0, p0, p1) in list(INSERT.items()):
+            k = step - s0
+            if k <= 80:   # move the stem bottom along the rose axis to 4 cm above the vase floor in 80 steps (0.67 s)
+                p = p0 + (p1 - p0) * (k / 80.0)
+                UsdGeom.Xformable(stage.GetPrimAtPath(_path)).GetOrderedXformOps()[0].Set(Gf.Vec3d(*p))
+            elif k == 90:  # hold 10 steps, then let go
+                stage.GetPrimAtPath(_path).GetAttribute("physics:kinematicEnabled").Set(False)
+                del INSERT[_path]
+        if 300 <= step < 540:
+            s = min(1.0, (step - 300) / 120.0)
+            tilt = 0.0 if step < 420 else min(1.0, (step - 420) / 80.0) * math.radians(125)
             p = cup_pos * (1 - s) + (bowl_pos + np.array([0.0, 0.07, 0.16])) * s   # side offset toward +y
             xfc = UsdGeom.Xformable(stage.GetPrimAtPath(cup_path))
             ops = xfc.GetOrderedXformOps()
@@ -267,24 +291,30 @@ else:
 
     res = {}
     peg_xy = peg_world[:2]
-    for k in range(3):
+    for k in range(len(ring_ids)):
         p, q = pose(f"ring_{k}")
-        res[f"ring_{k}"] = {"pos": p.round(4).tolist(), "xy_off_from_peg": float(np.linalg.norm(p[:2] - peg_xy)),
-                            "z_above_table": float(p[2] - TABLE[2])}
-    for t in ("hammer", "wrench"):
+        x, y, z, w = q
+        res[f"ring_{k + 1}"] = {"xy_off_from_peg": round(float(np.linalg.norm(p[:2] - peg_xy)), 4),
+                                "z_above_table": round(float(p[2] - (TABLE[2] + z0)), 4),
+                                "expected_z": round(0.025 + 0.017 * k, 4),
+                                "tilt_dot_up": round(float(1 - 2 * (x * x + y * y)), 4)}
+    for t, _, _ in TOOL_DROPS:
         p, q = pose(t)
         rel = p - tb_pos
-        res[t] = {"rel_toolbox": rel.round(4).tolist()}
-    for k in range(2):
+        res[t] = {"rel_toolbox": rel.round(4).tolist(),
+                  "inside": bool(abs(rel[0]) < 0.0915 and abs(rel[1]) < 0.0555 and -0.005 < rel[2] < 0.06)}
+    for k, c in enumerate(ROSE_IDS):
         p, q = pose(f"rose_{k}")
         x, y, z, w = q
         axis_x_up = 2 * (x * z - w * y)
-        res[f"rose_{k}"] = {"rel_vase": (p - vase_pos).round(4).tolist(), "stem_axis_dot_up": float(axis_x_up)}
+        rel = p - vase_pos
+        res[f"rose_{c}"] = {"stem_bottom_rel_vase": rel.round(4).tolist(), "stem_axis_dot_up": round(float(axis_x_up), 4),
+                            "in_vase": bool(np.linalg.norm(rel[:2]) < 0.06 and rel[2] < 0.10)}
     inbowl = 0
     for k in range(nb):
         p, _ = pose(f"bean_{k}")
         d = p - bowl_pos
-        if np.linalg.norm(d[:2]) < 0.085 and -0.01 < d[2] < 0.09:
+        if np.linalg.norm(d[:2]) < 0.095 and -0.01 < d[2] < 0.10:
             inbowl += 1
     res["beans_in_bowl"] = inbowl
     res["beans_total"] = nb
@@ -294,6 +324,8 @@ else:
     res["towel_rel_basket"] = (p - bk_pos).round(4).tolist()
     p, _ = pose("stacker")
     res["stacker_moved"] = float(np.linalg.norm(p[:2] - base_pos[:2]))
+    p, _ = pose("vase")
+    res["vase_moved"] = float(np.linalg.norm(p[:2] - vase_pos[:2]))
     (OUT / "drop_results.json").write_text(json.dumps(res, indent=1))
     print("DROP_RESULTS", json.dumps(res), flush=True)
     tl.stop()

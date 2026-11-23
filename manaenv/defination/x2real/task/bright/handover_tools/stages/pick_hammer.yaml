@@ -6,20 +6,31 @@ direct_task_generator:
     termination_component:
       terms:
         success:
+          _combine: and
           terms:
-          - grasp:
-              _func: object_contact_destination
-              contact_sensor_cfgs: '@tool1_left_contact'
-              force_threshold: 0.1
-              consecutive_steps: 3
+          - grab:
+              _combine: or
+              terms:
+              - tool_hammer_by_left:
+                  _func: object_contact_destination
+                  contact_sensor_cfgs: '@tool_hammer_left_contact'
+                  force_threshold: 0.1
+                  consecutive_steps: 3
+              - tool_hammer_by_right:
+                  _func: object_contact_destination
+                  contact_sensor_cfgs: '@tool_hammer_right_contact'
+                  force_threshold: 0.1
+                  consecutive_steps: 3
           - raised:
               _func: object_lifted
-              object_cfg: '@tool_1'
+              object_cfg: '@tool_hammer'
               min_lift: 0.04
               consecutive_steps: 3
-              contact_sensor: left_gripper_contact
+              contact_sensor:
+              - left_gripper_contact
+              - right_gripper_contact
     log_component:
       entries:
         progress:
           trigger: success
-          value: left hand picks the hammer (G1)
+          value: one hand picks the hammer (G1)

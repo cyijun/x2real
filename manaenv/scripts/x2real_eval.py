@@ -88,7 +88,7 @@ _EXPECTED_BOARD_COUNTS = {
 }
 # Local extension boards (BRIGHT 2026 hackathon tasks); not part of the 73 formal cases.
 _EXTENSION_BOARD_COUNTS = {
-    "bright_arm6a_tabletop": 6,
+    "bright_arm6a_tabletop": 11,
 }
 _BOARD_ALIASES = {
     "ex001_tabletop": "artixon_arm6a_tabletop",

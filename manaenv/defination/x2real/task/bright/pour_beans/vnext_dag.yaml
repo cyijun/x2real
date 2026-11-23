@@ -6,47 +6,29 @@ graph_task_generator:
         id: runtime
         targets:
           assets:
+          - id: tablecloth_asset
+            target:
+              type: node
+              id: tablecloth
+            selector:
+              type: uniform
           - id: distractor_bowl_asset
             target:
               type: node
               id: distractor_bowl
             selector:
               type: uniform
-          - id: empty_cup_asset
-            target:
-              type: node
-              id: empty_cup
-            selector:
-              type: uniform
           placements:
-          - id: target_bowl
+          - id: tablecloth
             target:
               type: node
-              id: target_bowl
+              id: tablecloth
             sample:
               type: inherit
-          - id: bean_cup
-            target:
-              type: node
-              id: bean_cup
-            sample:
-              type: inherit
-          - id: distractor_bowl
-            target:
-              type: node
-              id: distractor_bowl
-            sample:
-              type: inherit
-          - id: empty_cup
-            target:
-              type: node
-              id: empty_cup
-            sample:
-              type: inherit
-          - id: beans_in_cup
+          - id: bowls_layout
             target:
               type: group
-              id: beans_in_cup
+              id: bowls_layout
             sample:
               type: inherit
         global:
@@ -66,13 +48,13 @@ graph_task_generator:
             func: schema_vnext_active_asset_ids_label
             params:
               object_names:
+              - tablecloth
               - distractor_bowl
-              - empty_cup
       instruction_component:
         instructions:
-        - text: Hold the light-blue bowl steady on the table with the left hand. With the right hand pick up the
-            green cup with red beans, move it above the bowl, tilt it to pour all the beans into the bowl without
-            spilling, then put the cup back where it was.
+        - text: Use the arm on the blue bowl's side to hold the blue bowl steady by its rim. With the other arm
+            pick up the green cup with red beans, move it above the blue bowl and tilt it to pour all the beans
+            into the bowl without spilling any, then put the cup back where it was.
           log:
             instruction_variant: direct
       overlay_component:

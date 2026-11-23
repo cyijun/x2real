@@ -1,9 +1,9 @@
 direct_task_generator:
   definition:
     gen_method: 0
-    episode_length_s: 150.0
+    episode_length_s: 240.0
     num_episodes: 10
-    max_steps_per_episode: 4500
+    max_steps_per_episode: 7200
   component_sections:
     termination_component:
       terms:
@@ -34,35 +34,47 @@ direct_task_generator:
         tags: bright_handover_tools_basket_scene
     sensor_component:
       sensors:
-      - tool1_left_contact:
+      - tool_hammer_left_contact:
           type: contact
-          source: '@tool_1'
+          source: '@tool_hammer'
           against: &id001
           - '{ENV_REGEX_NS}/Robot/left_arm_gripper_left_link'
           - '{ENV_REGEX_NS}/Robot/left_arm_gripper_left_tip_link'
           - '{ENV_REGEX_NS}/Robot/left_arm_gripper_right_link'
           - '{ENV_REGEX_NS}/Robot/left_arm_gripper_right_tip_link'
-      - tool1_right_contact:
+      - tool_hammer_right_contact:
           type: contact
-          source: '@tool_1'
+          source: '@tool_hammer'
           against: &id002
           - '{ENV_REGEX_NS}/Robot/right_arm_gripper_left_link'
           - '{ENV_REGEX_NS}/Robot/right_arm_gripper_left_tip_link'
           - '{ENV_REGEX_NS}/Robot/right_arm_gripper_right_link'
           - '{ENV_REGEX_NS}/Robot/right_arm_gripper_right_tip_link'
-      - tool1_cloth_contact:
+      - tool_hammer_cloth_contact:
           type: contact
-          source: '@tool_1'
+          source: '@tool_hammer'
           against: '@background_cloth'
-      - tool2_left_contact:
+      - tool_screwdriver_left_contact:
           type: contact
-          source: '@tool_2'
+          source: '@tool_screwdriver'
           against: *id001
-      - tool2_right_contact:
+      - tool_screwdriver_right_contact:
           type: contact
-          source: '@tool_2'
+          source: '@tool_screwdriver'
           against: *id002
-      - tool2_cloth_contact:
+      - tool_screwdriver_cloth_contact:
           type: contact
-          source: '@tool_2'
+          source: '@tool_screwdriver'
+          against: '@background_cloth'
+      - tool_screw_twister_left_contact:
+          type: contact
+          source: '@tool_screw_twister'
+          against: *id001
+      - tool_screw_twister_right_contact:
+          type: contact
+          source: '@tool_screw_twister'
+          against: *id002
+      - tool_screw_twister_cloth_contact:
+          type: contact
+          source: '@tool_screw_twister'
           against: '@background_cloth'

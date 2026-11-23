@@ -37,16 +37,24 @@ direct_task_generator:
       - bowl_left_contact:
           type: contact
           source: '@target_bowl'
-          against:
+          against: &id001
           - '{ENV_REGEX_NS}/Robot/left_arm_gripper_left_link'
           - '{ENV_REGEX_NS}/Robot/left_arm_gripper_left_tip_link'
           - '{ENV_REGEX_NS}/Robot/left_arm_gripper_right_link'
           - '{ENV_REGEX_NS}/Robot/left_arm_gripper_right_tip_link'
-      - cup_right_contact:
+      - bowl_right_contact:
           type: contact
-          source: '@bean_cup'
-          against:
+          source: '@target_bowl'
+          against: &id002
           - '{ENV_REGEX_NS}/Robot/right_arm_gripper_left_link'
           - '{ENV_REGEX_NS}/Robot/right_arm_gripper_left_tip_link'
           - '{ENV_REGEX_NS}/Robot/right_arm_gripper_right_link'
           - '{ENV_REGEX_NS}/Robot/right_arm_gripper_right_tip_link'
+      - cup_left_contact:
+          type: contact
+          source: '@bean_cup'
+          against: *id001
+      - cup_right_contact:
+          type: contact
+          source: '@bean_cup'
+          against: *id002

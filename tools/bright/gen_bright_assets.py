@@ -360,8 +360,9 @@ def gen_bowl(root: Path, color_name: str, color):
     path = root / "tableware" / f"{aid}.usd"
     mass = 0.13   # "摔不坏" straw-plastic bowl, 20 cm: ~130 g (light, so a pour can push it)
     st = new_stage(path, mass=mass)
-    pm = physics_material(st, static=0.25, dynamic=0.2, combine="min")   # smooth PP: slides easily -> left hand must hold it
-    R, H, rf, t, tb = 0.100, 0.088, 0.048, 0.0035, 0.005   # rim diameter 20 cm
+    pm = physics_material(st, static=0.25, dynamic=0.2, combine="min")   # smooth PP: slides easily -> one hand must hold it
+    # final (2026-11-22 PDF): wheat-straw bowl, rim diameter 20 cm, height 10 cm, light matte colour
+    R, H, rf, t, tb = 0.100, 0.0985, 0.045, 0.0035, 0.005
     zf = 0.008  # foot height
     n_band = 6
     outer = [(rf * 0.92, 0.0), (rf, 0.0), (rf, zf)]
@@ -376,8 +377,16 @@ def gen_bowl(root: Path, color_name: str, color):
     for (r, z) in reversed(outer_bands):
         inner.append((max(r - t, 0.0), min(z, H)))
     inner[-1] = (rf - t, zf + tb)
-    profile = [(0.0, 0.0)] + outer + [(R - t * 0.5, H + 0.0015)] + inner + [(0.0, zf + tb)]
-    look = omnipbr(st, "straw", color=color, texture=tex_or_none(root, STRAW), tint=color, roughness=0.75)
+    # visual only: the PDF bowl has a few shallow horizontal ribs on the lower outside
+    ribbed = []
+    for (r0, z0), (r1, z1) in zip(outer[2:], outer[3:]):
+        ribbed.append((r0, z0))
+        if z1 < 0.06:
+            for f in (0.3, 0.5, 0.7):
+                ribbed.append((r0 + (r1 - r0) * f + (0.0012 if f == 0.5 else 0.0), z0 + (z1 - z0) * f))
+    ribbed.append(outer[-1])
+    profile = [(0.0, 0.0)] + outer[:2] + ribbed + [(R - t * 0.5, H + 0.0015)] + inner + [(0.0, zf + tb)]
+    look = omnipbr(st, "straw", color=color, texture=tex_or_none(root, STRAW), tint=color, roughness=0.8)
     p = lathe(profile, segments=72, u_tiles=4.0, v_scale=12.0)
     add_mesh(st, "/World/visual/bowl", *p, mat=look)
     # collision: foot disk + revolved wall bands
@@ -389,8 +398,9 @@ def gen_bowl(root: Path, color_name: str, color):
            collision="foot cylinder + 20x6 convex wall pieces", texture=STRAW)
 
 
-def gen_cup(root: Path, color_name: str, color, *, aid=None, r_bot=0.031, r_top=0.041, H=0.096, mass=0.045,
+def gen_cup(root: Path, color_name: str, color, *, aid=None, r_bot=0.0325, r_top=0.039, H=0.105, mass=0.045,
             glass=False, texture=STRAW):
+    # final (PDF): wheat-straw cup 350 ml, mouth 7.8 cm, height 10.5 cm (bottom 6.5 cm inferred; inner volume ~352 ml)
     aid = aid or f"bright_cup_{color_name}"
     path = root / "tableware" / f"{aid}.usd"
     st = new_stage(path, mass=mass)
@@ -516,68 +526,100 @@ def gen_tray(root: Path, color_name: str, color, L=0.40, W=0.30, H=0.025, mass=0
            texture=PLASTIC)
 
 
+TOOLBOX_DECAL = "toolbox_endpanel.png"   # Codex: beech end panel with the grey gear/hammer print
+
+
 def gen_toolbox(root: Path):
-    """Kids' wooden carry toolbox: open box, tall end panels and a dowel handle; NO inner dividers."""
+    """Final (PDF 2026-11-22) kids' wooden toolbox 20.7 x 12.7 x 12.7 cm, used with the top dowel and the middle
+    four-hole boards REMOVED: an open box with two tall end panels (oblong handle slot) and lower side walls."""
     aid = "bright_toolbox"
     path = root / "tools" / f"{aid}.usd"
-    mass = 0.8
+    mass = 0.35   # pine/beech plywood toy box, inferred
     st = new_stage(path, mass=mass)
     pm = physics_material(st, static=0.7, dynamic=0.6)
-    wood = omnipbr(st, "wood", color=(0.85, 0.7, 0.5), texture=tex_or_none(root, BEECH), roughness=0.7)
-    L, W, H, t, tb = 0.28, 0.20, 0.06, 0.008, 0.008
-    endH, dowel_z, dowel_r = 0.16, 0.145, 0.009
-    boxes = [
-        ((0, 0, tb / 2), (L, W, tb)),                                  # bottom
-        ((0, W / 2 - t / 2, H / 2), (L, t, H)),                        # side +y
-        ((0, -W / 2 + t / 2, H / 2), (L, t, H)),                       # side -y
-        ((L / 2 - t / 2, 0, endH / 2), (t, W, endH)),                  # end panel +x (tall)
-        ((-L / 2 + t / 2, 0, endH / 2), (t, W, endH)),                 # end panel -x (tall)
-    ]
+    wood = omnipbr(st, "wood", color=(0.88, 0.75, 0.56), texture=tex_or_none(root, BEECH), roughness=0.7)
+    L, W, endH = 0.207, 0.127, 0.127          # from the PDF
+    H, te, ts, tb = 0.075, 0.012, 0.008, 0.008  # side-wall height and board thicknesses: inferred from the photo
+    slot_w, slot_z0, slot_z1 = 0.060, 0.090, 0.112   # oblong handle slot in each end panel (inferred)
+    boxes = [((0, 0, tb / 2), (L - 2 * te, W, tb)),                       # bottom (between the end panels)
+             ((0, W / 2 - ts / 2, H / 2), (L - 2 * te, ts, H)),           # side +y
+             ((0, -W / 2 + ts / 2, H / 2), (L - 2 * te, ts, H))]          # side -y
+    for sgn in (-1, 1):                                                   # end panels, split around the slot
+        x = sgn * (L / 2 - te / 2)
+        post_w = (W - slot_w) / 2
+        boxes += [((x, 0, slot_z0 / 2), (te, W, slot_z0)),
+                  ((x, 0, (slot_z1 + endH) / 2), (te, W, endH - slot_z1)),
+                  ((x, W / 2 - post_w / 2, (slot_z0 + slot_z1) / 2), (te, post_w, slot_z1 - slot_z0)),
+                  ((x, -W / 2 + post_w / 2, (slot_z0 + slot_z1) / 2), (te, post_w, slot_z1 - slot_z0))]
     vis = []
     for k, (c, s) in enumerate(boxes):
         vis.append(box_mesh(c, s, 1 / 0.25))
         add_convex(st, f"box_{k}", box_pts(c, s), pm)
-    # dowel handle along x across the middle of the opening
-    dow = lathe([(0, 0), (dowel_r, 0), (dowel_r, L - 2 * t), (0, L - 2 * t)], segments=20, u_tiles=1, v_scale=4)
-    dow = transform(dow, rot_y(math.pi / 2), (-(L - 2 * t) / 2, 0, dowel_z))
-    vis.append(dow)
-    add_convex(st, "dowel", box_pts((0, 0, dowel_z), (L - 2 * t, 2 * dowel_r, 2 * dowel_r)), pm)
     add_mesh(st, "/World/visual/box", *merge(*vis), mat=wood, smooth=False)
-    # decorative coloured gears on the outside of the -y side wall (visual only, like the toy)
-    for k, (x, col) in enumerate(((-0.07, (0.2, 0.6, 0.3)), (0.0, (0.95, 0.75, 0.1)), (0.07, (0.85, 0.2, 0.2)))):
-        mat = omnipbr(st, f"gear_{k}", color=col, roughness=0.5)
-        g = lathe([(0, 0), (0.022, 0), (0.022, 0.008), (0, 0.008)], 24, 1, 1,
-                  rmod=lambda th, kk: 1.0 + (0.12 if kk in (1, 2) else 0.0) * (1 if math.cos(10 * th) > 0 else -1))
-        g = transform(g, np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]]), (x, -W / 2, 0.032))
-        add_mesh(st, f"/World/visual/gear_{k}", *g, mat=mat, smooth=False)
-    inner = (round(L - 2 * t, 4), round(W - 2 * t, 4))
-    finish(st, aid, path, mass_kg=mass, friction=[0.7, 0.6], collision="6 boxes (bottom, 2 sides, 2 tall ends, dowel)",
-           texture=BEECH, inner_m=list(inner), wall_height_m=H, end_panel_height_m=endH, dowel_axis_height_m=dowel_z,
-           dowel_diameter_m=2 * dowel_r, opening_each_side_of_dowel_m=round((W - 2 * t) / 2 - dowel_r, 4),
-           note="no dividers; dimensions not measured (to be checked on the real toy)")
+    # printed grey gear / hammer graphic on the outside of both end panels (visual decal, below the slot)
+    decal_tex = tex_or_none(root, TOOLBOX_DECAL)
+    if decal_tex:
+        decal = omnipbr(st, "endpanel_print", color=(0.88, 0.75, 0.56), texture=decal_tex, roughness=0.7)
+        for sgn in (-1, 1):
+            x = sgn * (L / 2 + 0.0004)
+            ys = (W / 2, -W / 2) if sgn > 0 else (-W / 2, W / 2)
+            q = np.array([(x, ys[0], 0.0), (x, ys[1], 0.0), (x, ys[1], slot_z0), (x, ys[0], slot_z0)])
+            add_mesh(st, f"/World/visual/print_{'p' if sgn > 0 else 'm'}", q, [4], [0, 1, 2, 3],
+                     [(0, 0), (1, 0), (1, slot_z0 / endH * 1.0), (0, slot_z0 / endH * 1.0)], mat=decal, smooth=False)
+    inner = (round(L - 2 * te, 4), round(W - 2 * ts, 4))
+    finish(st, aid, path, mass_kg=mass, friction=[0.7, 0.6],
+           collision="bottom + 2 side walls + 2 end panels (4 boxes each, around the handle slot)",
+           texture=BEECH + (f" + {TOOLBOX_DECAL}" if decal_tex else ""), inner_m=list(inner), wall_height_m=H,
+           end_panel_height_m=endH, open_top=True,
+           note="PDF: 20.7x12.7x12.7 cm, top dowel + middle four-hole boards removed (fully open). Side-wall height, "
+                "board thickness and slot size inferred from the product photo")
+
+
+def _cyl_x(r0, r1, length, n=24, v_scale=5.0):
+    """Lathe a (possibly tapered) solid cylinder along +X starting at x=0."""
+    p = lathe([(0, 0), (r0, 0), (r1, length), (0, length)], n, 1, v_scale)
+    return transform(p, rot_y(math.pi / 2))
+
+
+def _sphere_pts(c, r, n=10):
+    pts = []
+    for j in range(1, n):
+        ph = math.pi * j / n
+        for k in range(n):
+            th = 2 * math.pi * k / n
+            pts.append((c[0] + r * math.sin(ph) * math.cos(th), c[1] + r * math.sin(ph) * math.sin(th),
+                        c[2] + r * math.cos(ph)))
+    return np.array(pts + [(c[0], c[1], c[2] + r), (c[0], c[1], c[2] - r)])
 
 
 def gen_hammer(root: Path):
+    """PDF: toy hammer 16.5 x 7.5 cm, grey plastic head, wooden handle. Lying flat along +X (head at +X);
+    the head is a barrel along Y.  Handle / head diameters inferred from the product photo."""
     aid = "bright_hammer"
     path = root / "tools" / f"{aid}.usd"
-    mass = 0.06
+    mass = 0.05
     st = new_stage(path, mass=mass)
     pm = physics_material(st, static=0.6, dynamic=0.5)
-    wood = omnipbr(st, "wood", color=(0.85, 0.7, 0.5), texture=tex_or_none(root, BEECH), roughness=0.7)
-    red = omnipbr(st, "red_paint", color=(0.8, 0.12, 0.1), texture=tex_or_none(root, BEECH), tint=(0.95, 0.2, 0.15),
-                  roughness=0.55)
-    hs, hl = 0.016, 0.15          # handle square section, length
-    hx, hy, hz = 0.026, 0.07, 0.026  # head
-    total = hl + hx
+    wood = omnipbr(st, "wood", color=(0.88, 0.72, 0.52), texture=tex_or_none(root, BEECH), roughness=0.6)
+    grey = omnipbr(st, "grey_plastic", color=(0.42, 0.44, 0.47), roughness=0.4)
+    total, head_len, rh = 0.165, 0.075, 0.016        # along X, head length along Y, head radius
+    r_handle0, r_handle1 = 0.0115, 0.0095             # handle tapers toward the head
     x0 = -total / 2
-    handle_c = (x0 + hl / 2, 0, hz / 2)
-    head_c = (x0 + hl + hx / 2, 0, hz / 2)
-    add_mesh(st, "/World/visual/handle", *box_mesh(handle_c, (hl, hs, hs), 1 / 0.2), mat=wood, smooth=False)
-    add_mesh(st, "/World/visual/head", *box_mesh(head_c, (hx, hy, hz), 1 / 0.2), mat=red, smooth=False)
-    add_convex(st, "handle", box_pts(handle_c, (hl, hs, hs)), pm)
-    add_convex(st, "head", box_pts(head_c, (hx, hy, hz)), pm)
-    finish(st, aid, path, mass_kg=mass, friction=[0.6, 0.5], collision="2 boxes", texture=BEECH,
-           note="handle 16x16 mm square section; red-painted head")
+    zc = rh                                           # handle/head axis height when lying
+    hl = total - rh                                   # handle runs into the head centre
+    handle = transform(_cyl_x(r_handle0, r_handle1, hl, 24), None, (x0, 0, zc))
+    add_mesh(st, "/World/visual/handle", *handle, mat=wood)
+    xh = x0 + total - rh
+    prof = [(0, -head_len / 2), (rh * 0.8, -head_len / 2), (rh, -head_len / 2 + 0.004), (rh, head_len / 2 - 0.012),
+            (rh * 0.85, head_len / 2 - 0.004), (rh * 0.75, head_len / 2), (0, head_len / 2)]
+    head = lathe(prof, 32, 1, 5)
+    head = transform(head, np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]]), (xh, 0, zc))   # lathe axis Z -> Y
+    add_mesh(st, "/World/visual/head", *head, mat=grey)
+    add_convex(st, "handle", cyl_pts(r_handle0, 0, r_handle1, hl, n=12) @ rot_y(math.pi / 2).T + np.array([x0, 0, zc]), pm)
+    hp = cyl_pts(rh, -head_len / 2, rh, head_len / 2, n=16) @ np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]]).T
+    add_convex(st, "head", hp + np.array([xh, 0, zc]), pm)
+    finish(st, aid, path, mass_kg=mass, friction=[0.6, 0.5], collision="handle + head convex cylinders",
+           texture=BEECH, note="PDF 16.5x7.5 cm, grey plastic head, wooden handle; diameters inferred")
 
 
 def gen_wrench(root: Path):
@@ -605,27 +647,84 @@ def gen_wrench(root: Path):
 
 
 def gen_screwdriver(root: Path):
+    """PDF: flat-blade toy screwdriver 15 x 1.5 cm, red/orange painted wooden handle, wooden shaft.
+    Lying along +X, blade tip at +X; handle/shaft split inferred from the photo."""
     aid = "bright_screwdriver"
     path = root / "tools" / f"{aid}.usd"
-    mass = 0.035
+    mass = 0.025
     st = new_stage(path, mass=mass)
     pm = physics_material(st, static=0.6, dynamic=0.5)
-    yellow = omnipbr(st, "handle", color=(0.95, 0.75, 0.1), texture=tex_or_none(root, BEECH), tint=(1.0, 0.8, 0.2),
-                     roughness=0.55)
-    wood = omnipbr(st, "wood", color=(0.85, 0.7, 0.5), texture=tex_or_none(root, BEECH), roughness=0.7)
-    # along +x, lying: axis at z = r_handle
-    rh, lh, rs, ls = 0.014, 0.08, 0.005, 0.085
-    handle = lathe([(0, 0), (rh * 0.8, 0), (rh, 0.01), (rh, lh - 0.01), (rh * 0.8, lh), (0, lh)], 24, 1, 5)
-    shaft = lathe([(0, 0), (rs, 0), (rs, ls - 0.012), (0.0015, ls), (0, ls)], 16, 1, 5)
+    red = omnipbr(st, "red_paint", color=(0.93, 0.30, 0.12), roughness=0.35)
+    wood = omnipbr(st, "wood", color=(0.88, 0.72, 0.52), texture=tex_or_none(root, BEECH), roughness=0.6)
+    rh, lh, rs, ls = 0.0075, 0.075, 0.004, 0.075          # 15 cm total, 1.5 cm handle diameter
     x0 = -(lh + ls) / 2
-    add_mesh(st, "/World/visual/handle", *transform(handle, rot_y(math.pi / 2), (x0, 0, rh)), mat=yellow)
+    handle = lathe([(0, 0), (rh * 0.6, 0), (rh * 0.92, 0.004), (rh, 0.012), (rh, lh), (0, lh)], 24, 1, 5)
+    add_mesh(st, "/World/visual/handle", *transform(handle, rot_y(math.pi / 2), (x0, 0, rh)), mat=red)
+    shaft = lathe([(0, 0), (rs, 0), (rs, ls - 0.014), (0, ls - 0.014)], 16, 1, 5)
     add_mesh(st, "/World/visual/shaft", *transform(shaft, rot_y(math.pi / 2), (x0 + lh, 0, rh)), mat=wood)
-    hp = cyl_pts(rh, 0, rh, lh, n=12) @ rot_y(math.pi / 2).T + np.array([x0, 0, rh])
-    sp = cyl_pts(rs, 0, 0.0015, ls, n=8) @ rot_y(math.pi / 2).T + np.array([x0 + lh, 0, rh])
-    add_convex(st, "handle", hp, pm)
-    add_convex(st, "shaft", sp, pm)
-    finish(st, aid, path, mass_kg=mass, friction=[0.6, 0.5], collision="2 convex cylinders", texture=BEECH,
-           note="distractor tool")
+    # flat blade: wedge from the round shaft to a 1.5 mm edge (blade plane = XY, i.e. lying flat)
+    xb = x0 + lh + ls - 0.014
+    blade = np.array([(xb, -rs, rh - rs * 0.8), (xb, rs, rh - rs * 0.8), (xb, rs, rh + rs * 0.8), (xb, -rs, rh + rs * 0.8),
+                      (xb + 0.014, -rs * 1.1, rh - 0.0008), (xb + 0.014, rs * 1.1, rh - 0.0008),
+                      (xb + 0.014, rs * 1.1, rh + 0.0008), (xb + 0.014, -rs * 1.1, rh + 0.0008)])
+    faces = [[0, 1, 2, 3], [4, 7, 6, 5], [0, 4, 5, 1], [1, 5, 6, 2], [2, 6, 7, 3], [3, 7, 4, 0]]
+    add_mesh(st, "/World/visual/blade", blade, [4] * 6, sum(faces, []), [(0, 0)] * 8, mat=wood, smooth=False)
+    add_convex(st, "handle", cyl_pts(rh, 0, rh, lh, n=12) @ rot_y(math.pi / 2).T + np.array([x0, 0, rh]), pm)
+    add_convex(st, "shaft", cyl_pts(rs, 0, rs, ls - 0.014, n=8) @ rot_y(math.pi / 2).T + np.array([x0 + lh, 0, rh]), pm)
+    add_convex(st, "blade", blade, pm)
+    finish(st, aid, path, mass_kg=mass, friction=[0.6, 0.5], collision="handle + shaft cylinders + blade wedge",
+           texture=BEECH, note="PDF 15x1.5 cm; red/orange painted handle, wooden shaft and flat blade")
+
+
+def gen_screw_twister(root: Path):
+    """PDF '螺丝拧' 9.5 x 8.5 cm: red painted wooden hub coaxial with a grey threaded rod, and a wooden cross dowel
+    through the hub carrying two red balls (T handle).  Lying with the rod along +X and the cross dowel along Y.
+    Part sizes inferred from the product photo (page-5 / lu_1813)."""
+    aid = "bright_screw_twister"
+    path = root / "tools" / f"{aid}.usd"
+    mass = 0.04
+    st = new_stage(path, mass=mass)
+    pm = physics_material(st, static=0.6, dynamic=0.5)
+    red = omnipbr(st, "red_paint", color=(0.85, 0.07, 0.08), roughness=0.3)
+    grey = omnipbr(st, "grey_thread", color=(0.62, 0.62, 0.60), roughness=0.55)
+    wood = omnipbr(st, "wood", color=(0.88, 0.72, 0.52), texture=tex_or_none(root, BEECH), roughness=0.6)
+    r_hub, l_hub = 0.015, 0.030          # hub cylinder (coaxial with the rod)
+    r_rod, l_rod, pitch = 0.0065, 0.065, 0.006
+    r_dowel, r_ball, span = 0.0045, 0.011, 0.085
+    total = l_hub + l_rod                # 9.5 cm along X
+    x0 = -total / 2
+    zc = r_hub                           # axis height when lying on the hub
+    hub = lathe([(0, 0), (r_hub - 0.002, 0), (r_hub, 0.002), (r_hub, l_hub - 0.002), (r_hub - 0.002, l_hub), (0, l_hub)],
+                32, 1, 5)
+    add_mesh(st, "/World/visual/hub", *transform(hub, rot_y(math.pi / 2), (x0, 0, zc)), mat=red)
+    # threaded rod: helical ridge via a radius modulation that depends on (angle, axial position)
+    nz = 90
+    zs = [l_rod * k / nz for k in range(nz + 1)]
+    prof = [(0.0, 0.0)] + [(r_rod, z) for z in zs] + [(0.0, l_rod)]
+
+    def rmod(th, k):
+        if k == 0 or k == len(prof) - 1:
+            return 1.0
+        z = prof[k][1]
+        return 1.0 + 0.16 * math.cos(th - 2 * math.pi * z / pitch)
+    rod = lathe(prof, 24, 1, 5, rmod=rmod)
+    add_mesh(st, "/World/visual/rod", *transform(rod, rot_y(math.pi / 2), (x0 + l_hub, 0, zc)), mat=grey)
+    # cross dowel along Y through the hub centre + two red balls at the ends
+    half = span / 2 - r_ball
+    dow = lathe([(0, -half), (r_dowel, -half), (r_dowel, half), (0, half)], 16, 1, 5)
+    dow = transform(dow, np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]]), (x0 + l_hub / 2, 0, zc))
+    add_mesh(st, "/World/visual/dowel", *dow, mat=wood)
+    for sgn in (-1, 1):
+        c = (x0 + l_hub / 2, sgn * half, zc)
+        ball = lathe([(r_ball * math.sin(a), -r_ball * math.cos(a)) for a in np.linspace(0, math.pi, 13)], 24, 1, 5)
+        add_mesh(st, f"/World/visual/ball_{'p' if sgn > 0 else 'm'}", *transform(ball, None, c), mat=red)
+        add_convex(st, f"ball_{'p' if sgn > 0 else 'm'}", _sphere_pts(c, r_ball), pm)
+    add_convex(st, "hub", cyl_pts(r_hub, 0, r_hub, l_hub, n=16) @ rot_y(math.pi / 2).T + np.array([x0, 0, zc]), pm)
+    add_convex(st, "rod", cyl_pts(r_rod * 1.1, 0, r_rod * 1.1, l_rod, n=12) @ rot_y(math.pi / 2).T
+               + np.array([x0 + l_hub, 0, zc]), pm)
+    add_convex(st, "dowel", box_pts((x0 + l_hub / 2, 0, zc), (2 * r_dowel, 2 * half, 2 * r_dowel)), pm)
+    finish(st, aid, path, mass_kg=mass, friction=[0.6, 0.5], collision="hub + rod cylinders, dowel box, 2 ball hulls",
+           texture=BEECH, note="PDF 9.5x8.5 cm; red painted hub/balls, grey threaded rod; part sizes inferred")
 
 
 def gen_saw(root: Path):
@@ -716,9 +815,14 @@ def gen_lily(root: Path):
            texture=YARN, note="distractor; authored along +X with the arch toward +Y")
 
 
-# Montessori ring stacker (what was bought: round base, ONE peg, beech + sapele, unpainted, no guide cap).
-# Dimensions are inferred from typical Montessori stackers and must be measured on arrival (ASSETS.md).
-STACK = {"base_r": 0.050, "base_h": 0.022, "peg_r": 0.011, "peg_h": 0.115, "ring_id": 0.030, "ring_t": 0.020}
+# Montessori ring stacker, final (PDF 2026-11-22): round base diameter 8 cm, whole set 12.5 cm high, 5 rings,
+# beech + sapele, unpainted, two tones.  Everything except the base diameter and the total height is INFERRED from
+# the product photo (gu_1804_ring.jpg, silhouette widths relative to the 8 cm base): base 2.5 cm high, 5 rings
+# 1.7 cm thick (OD 7.0/6.3/5.6/4.8/4.0 cm), peg 1.5 cm diameter reaching 10 cm above the base (round top =
+# the knob), ring hole 2.3 cm (4 mm radial clearance -- 3 mm jammed in the previous physics test).
+# 2.5 + 5 x 1.7 + 1.5 (knob above the top ring) = 12.5 cm.
+STACK = {"base_r": 0.040, "base_h": 0.025, "peg_r": 0.0075, "peg_h": 0.100, "ring_id": 0.023, "ring_t": 0.017}
+RING_ODS = [0.070, 0.063, 0.056, 0.048, 0.040]    # ring 1 (largest, bottom) .. ring 5 (smallest, top)
 
 
 def gen_stacker(root: Path):
@@ -727,11 +831,12 @@ def gen_stacker(root: Path):
     # --- main prop: round base + single peg with a plain rounded (domed) top
     aid = "bright_stacker_round"
     path = root / "stacker" / f"{aid}.usd"
-    mass = 0.22
+    mass = 0.10   # solid beech disc 8 x 2.5 cm + peg (~700 kg/m^3)
     st = new_stage(path, mass=mass)
     pm = physics_material(st, static=0.7, dynamic=0.6)
     wood = omnipbr(st, "wood", color=(0.85, 0.7, 0.5), texture=tex_or_none(root, BEECH), roughness=0.65)
-    base = lathe([(0, 0), (Rb - 0.002, 0), (Rb, 0.002), (Rb, Hb - 0.004), (Rb - 0.004, Hb), (0, Hb)], 64, 2, 6)
+    base = lathe([(0, 0), (Rb - 0.004, 0), (Rb - 0.0012, 0.0012), (Rb, 0.004), (Rb, Hb - 0.004), (Rb - 0.0012, Hb - 0.0012),
+                  (Rb - 0.004, Hb), (0, Hb)], 64, 2, 6)
     dome = [(pr * math.cos(a), Hb + ph - pr + pr * math.sin(a)) for a in np.linspace(0, math.pi / 2, 7)]
     peg = lathe([(0, Hb), (pr, Hb)] + dome, 32, 1, 6)
     add_mesh(st, "/World/visual/base", *merge(base, peg), mat=wood)
@@ -745,7 +850,7 @@ def gen_stacker(root: Path):
     add_convex(st, "dome", domep, pm)
     finish(st, aid, path, mass_kg=mass, friction=[0.7, 0.6], collision="base disk + peg cylinder + dome",
            texture=BEECH, base_diameter_m=2 * Rb, base_height_m=Hb, peg_diameter_m=2 * pr, peg_height_above_base_m=ph,
-           note="single peg, rounded top, no guide cap; all dimensions inferred -> measure on arrival")
+           note="PDF: base diameter 8 cm, set height 12.5 cm; base height / peg size inferred from the photo")
     # --- legacy long three-peg base (five_tasks draft); not used by any scene any more, kept for reference
     aid = "bright_stacker_base"
     path = root / "stacker" / f"{aid}.usd"
@@ -783,70 +888,89 @@ def gen_ring(root: Path, size_name: str, r_out: float, texture: str, color):
 
 
 def gen_vase(root: Path, color_name: str, color):
-    """'阳春款' unglazed (bisque) ceramic vase: mouth 11.5 cm, widest 13 cm, height 19.5 cm."""
+    """Final (PDF): unglazed (bisque) ceramic vase, white matte, mouth 11.5 cm, height 19.5 cm.  Silhouette taken
+    from the PDF product picture (8 px/cm): foot ~9 cm, fluted belly ~13.6 cm at 6 cm, neck ~7.5 cm at 14 cm, flared
+    wavy lip 11.5 cm.  Everything but mouth and height is inferred from that picture."""
     aid = f"bright_vase_{color_name}"
     path = root / "flowers" / f"{aid}.usd"
-    mass = 1.0
+    mass = 0.7
     st = new_stage(path, mass=mass)
     pm = physics_material(st, static=0.7, dynamic=0.6)
     look = omnipbr(st, "bisque", color=color, roughness=0.9)
-    t, tb, H = 0.006, 0.015, 0.195
-    outer_b = [(0.052, 0.0), (0.062, 0.045), (0.065, 0.090), (0.062, 0.140), (0.0575, 0.180), (0.0575, H)]
+    t, tb, H = 0.005, 0.015, 0.195
+    outer_b = [(0.045, 0.0), (0.046, 0.012), (0.060, 0.035), (0.068, 0.060), (0.064, 0.088), (0.052, 0.110),
+               (0.0405, 0.128), (0.0375, 0.140), (0.043, 0.158), (0.052, 0.176), (0.0575, H)]
     inner_b = [(r - t, max(z, tb)) for r, z in outer_b]
+    n_out = len(outer_b)
     profile = [(0, 0)] + outer_b + [(0.0575 - t / 2, H + 0.002)] + list(reversed(inner_b)) + [(0, tb)]
-    add_mesh(st, "/World/visual/vase", *lathe(profile, 72, 1, 1), mat=look)
-    add_convex(st, "bottom", cyl_pts(0.052, 0.0, 0.052 + 0.010 * tb / 0.045, tb, n=24), pm)
-    shell_collision(st, pm, outer_b, inner_b, segments=20)
+
+    def rmod(th, k):   # vertical flutes on the outside of belly/neck, wavy lip (8 scallops)
+        if 2 <= k <= n_out - 1:
+            return 1.0 + 0.018 * math.cos(16 * th)
+        if n_out <= k <= n_out + 2:
+            return 1.0 + 0.035 * math.cos(8 * th)
+        return 1.0
+    add_mesh(st, "/World/visual/vase", *lathe(profile, 96, 1, 1, rmod=rmod), mat=look)
+    add_convex(st, "bottom", cyl_pts(0.045, 0.0, 0.0465, tb, n=24), pm)
+    shell_collision(st, pm, outer_b[1:], inner_b[1:], segments=20)
     finish(st, aid, path, mass_kg=mass, friction=[0.7, 0.6], color=color,
-           collision="bottom + 20x5 convex wall pieces", mouth_outer_diameter_m=0.115,
-           mouth_inner_diameter_m=round(2 * (0.0575 - t), 4), max_diameter_m=0.13, height_m=H)
+           collision=f"bottom + 20x{n_out - 2} convex wall pieces", mouth_outer_diameter_m=0.115,
+           mouth_inner_diameter_m=round(2 * (0.0575 - t), 4), neck_inner_diameter_m=round(2 * (0.0375 - t), 4),
+           max_diameter_m=0.136, height_m=H)
 
 
-def gen_flower(root: Path, color_name: str, head_color, stem_len=0.20):
+def gen_flower(root: Path, color_name: str, head_color, stem_len=0.25, head_d=0.09):
+    """Final (PDF): crochet rose, head diameter 8-10 cm (9 cm used), overall ~30 cm.  Single rigid body,
+    authored lying along +X; origin = stem bottom end on the stem axis."""
     aid = f"bright_flower_rose_{color_name}"
     path = root / "flowers" / f"{aid}.usd"
     mass = 0.03
     st = new_stage(path, mass=mass)
     pm = physics_material(st, static=0.8, dynamic=0.7)
     yarn_h = omnipbr(st, "yarn_head", color=head_color, texture=tex_or_none(root, YARN), tint=head_color, roughness=0.9)
-    green = (0.25, 0.55, 0.2)
+    green = (0.36, 0.58, 0.22)
     yarn_s = omnipbr(st, "yarn_stem", color=green, texture=tex_or_none(root, YARN), tint=green, roughness=0.9)
     rs = 0.0035
-    # Authored lying along +X; origin = stem bottom end on the axis.
     stem = lathe([(0, 0), (rs, 0), (rs, stem_len), (0, stem_len)], 12, 1, 40)
     stem = transform(stem, rot_y(math.pi / 2))
     add_mesh(st, "/World/visual/stem", *stem, mat=yarn_s)
-    # Rose head: lobed bulb (5 petals), height 5 cm, max diameter 5.6 cm
-    hr, hh = 0.028, 0.05
-    prof = [(0.004, 0.0), (0.012, 0.006), (0.022, 0.016), (hr, 0.03), (hr * 0.95, 0.042), (0.02, 0.05), (0.008, 0.046),
-            (0.0, 0.04)]
-    head = lathe(prof, 60, 8, 40, rmod=lambda th, k: 1.0 + (0.08 if k >= 2 else 0.0) * math.cos(5 * th))
-    head = transform(head, rot_y(math.pi / 2), (stem_len - 0.004, 0, 0))
-    add_mesh(st, "/World/visual/head", *head, mat=yarn_h)
-    # sepal leaves: two flat ellipses on the stem
-    for k, (x, ang) in enumerate(((0.12, 0.6), (0.08, -0.7))):
+    # rose head: an outer cup of 5 lobed petals + two inner rolled layers, axis along +X
+    hr, hh = head_d / 2, 0.055
+    x_head = stem_len - 0.004
+    prof = [(0.005, 0.0), (0.016, 0.006), (0.030, 0.016), (hr, 0.032), (hr * 0.97, 0.042), (hr * 0.85, 0.048),
+            (0.030, 0.050), (0.0, 0.046)]
+    head = lathe(prof, 72, 8, 40, rmod=lambda th, k: 1.0 + (0.07 if k >= 2 else 0.0) * math.cos(5 * th))
+    add_mesh(st, "/World/visual/head", *transform(head, rot_y(math.pi / 2), (x_head, 0, 0)), mat=yarn_h)
+    for j, (r, z0, z1, lobes, a0) in enumerate(((0.030, 0.030, 0.055, 4, 0.4), (0.017, 0.040, 0.058, 3, 1.3))):
+        inner = lathe([(r * 0.6, z0), (r, z0 + 0.4 * (z1 - z0)), (r * 0.9, z1), (r * 0.4, z1 - 0.002), (0.0, z1 - 0.004)],
+                      48, 4, 40, angle0=a0, rmod=lambda th, k, L=lobes: 1.0 + 0.12 * math.cos(L * th))
+        add_mesh(st, f"/World/visual/petals_{j}", *transform(inner, rot_y(math.pi / 2), (x_head, 0, 0)), mat=yarn_h)
+    # green sepals under the head + two leaves on the stem
+    # (base x, direction angle in the XY plane measured from +X, length, half width); sepals point back down the stem
+    for k, (x, ang, ln, wd) in enumerate(((x_head + 0.002, math.pi - 0.7, 0.022, 0.007),
+                                          (x_head + 0.002, math.pi + 0.7, 0.022, 0.007),
+                                          (0.16, 0.6, 0.040, 0.010), (0.11, -0.7, 0.040, 0.010))):
         pts, uv = [], []
         n = 12
+        ca, sa = math.cos(ang), math.sin(ang)
         for s in range(n):
             th = 2 * math.pi * s / n
-            u, v = 0.022 * (1 + math.cos(th)), 0.008 * math.sin(th)   # leaf base sits on the stem
-            ca, sa = math.cos(ang), math.sin(ang)
+            u, v = ln * (1 - math.cos(th)) / 2, wd * math.sin(th)
             pts.append((x + u * ca - v * sa, u * sa + v * ca, 0.0))
             uv.append((math.cos(th), math.sin(th)))
-        pts = np.array(pts)
-        add_mesh(st, f"/World/visual/leaf_{k}", pts, [n], list(range(n)), uv, mat=yarn_s, smooth=False)
-    # collision: stem prism + convex head hull
+        add_mesh(st, f"/World/visual/leaf_{k}", np.array(pts), [n], list(range(n)), uv, mat=yarn_s, smooth=False)
     sp = cyl_pts(rs, 0, rs, stem_len, n=8) @ rot_y(math.pi / 2).T
     add_convex(st, "stem", sp, pm)
     hp = []
     for (r, z) in prof:
-        for s in range(12):
-            th = 2 * math.pi * s / 12
-            hp.append((stem_len - 0.004 + z, r * 1.05 * math.cos(th), r * 1.05 * math.sin(th)))
+        for s in range(16):
+            th = 2 * math.pi * s / 16
+            hp.append((x_head + z, r * 1.04 * math.cos(th), r * 1.04 * math.sin(th)))
     add_convex(st, "head", hp, pm)
     finish(st, aid, path, mass_kg=mass, friction=[0.8, 0.7], color=head_color,
            collision="8-gon stem prism + convex hull head", texture=YARN, stem_length_m=stem_len,
-           stem_diameter_m=2 * rs, head_diameter_m=2 * hr, authored_axis="+X (stem base at origin, head at +X)")
+           stem_diameter_m=2 * rs, head_diameter_m=2 * hr, overall_length_m=round(x_head + 0.05, 3),
+           authored_axis="+X (stem base at origin, head at +X)")
 
 
 def gen_tablecloth(root: Path, name: str, texture: str, tile_m: float, color=(1, 1, 1), size=(0.68, 1.10)):
@@ -924,11 +1048,12 @@ def main():
     (root / TEX_DIR_NAME).mkdir(parents=True, exist_ok=True)
     make_procedural_textures(root / TEX_DIR_NAME)
     # drop USDs of props that were removed from the plan (stale files would stay registered)
-    for stale in ("flowers/bright_vase_celadon.usd",):
+    for stale in ("flowers/bright_vase_celadon.usd", "stacker/bright_ring_large.usd", "stacker/bright_ring_medium.usd",
+                  "stacker/bright_ring_small.usd", "stacker/bright_ring_extra.usd"):   # 3+1 rings -> 5 rings (final)
         (root / stale).unlink(missing_ok=True)
 
     bowls = {"blue": (0.66, 0.78, 0.88), "pink": (0.94, 0.77, 0.77), "beige": (0.91, 0.86, 0.76),
-             "mint": (0.72, 0.87, 0.78)}
+             "mint": (0.72, 0.87, 0.78), "green": (0.64, 0.80, 0.70)}   # final pair: blue + green
     for n, c in bowls.items():
         gen_bowl(root, n, c)
     cups = {"green": (0.73, 0.83, 0.62), "blue": (0.63, 0.75, 0.89), "purple": (0.76, 0.71, 0.89),
@@ -947,20 +1072,22 @@ def main():
     gen_hammer(root)
     gen_wrench(root)
     gen_screwdriver(root)
+    gen_screw_twister(root)
     gen_saw(root)
     gen_gear(root)
     gen_stacker(root)
     sap, bee = (0.45, 0.25, 0.18), (0.85, 0.7, 0.5)
-    gen_ring(root, "large", 0.0425, SAPELE, sap)       # OD 8.5 cm
-    gen_ring(root, "medium", 0.035, BEECH, bee)        # OD 7.0 cm
-    gen_ring(root, "small", 0.0275, SAPELE, sap)       # OD 5.5 cm
-    gen_ring(root, "extra", 0.03125, BEECH, bee)       # OD 6.25 cm: look-alike distractor from the same set
+    for k, od in enumerate(RING_ODS, start=1):        # 1 = largest (bottom); dark/light alternate as in the photo
+        gen_ring(root, str(k), od / 2, SAPELE if k % 2 else BEECH, sap if k % 2 else bee)
     gen_vase(root, "white", (0.90, 0.88, 0.84))        # bisque off-white
-    gen_flower(root, "red", (0.85, 0.12, 0.15))
-    gen_flower(root, "pink", (0.96, 0.6, 0.72))
-    gen_flower(root, "purple", (0.55, 0.4, 0.8))
-    gen_flower(root, "orange", (0.98, 0.55, 0.15))
-    gen_lily(root)
+    # the 5 final crochet roses (PDF order: deep purple, light blue, yellow, red, flesh pink)
+    gen_flower(root, "purple", (0.33, 0.08, 0.42))
+    gen_flower(root, "blue", (0.62, 0.76, 0.93))
+    gen_flower(root, "yellow", (0.98, 0.88, 0.55))
+    gen_flower(root, "red", (0.80, 0.05, 0.09))
+    gen_flower(root, "pink", (0.98, 0.76, 0.70))
+    gen_flower(root, "orange", (0.98, 0.55, 0.15))     # legacy, not used by any scene
+    gen_lily(root)                                      # legacy, not used by any scene
     gen_tablecloth(root, "gray_grid", "tablecloth_gray_grid.png", 0.48)
     gen_tablecloth(root, "forest_deer", "tablecloth_forest_deer.png", 0.50)
     gen_tablecloth(root, "blue_cloud", "tablecloth_blue_cloud.png", 0.40)

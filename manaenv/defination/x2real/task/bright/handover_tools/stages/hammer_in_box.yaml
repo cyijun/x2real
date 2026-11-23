@@ -6,21 +6,23 @@ direct_task_generator:
     termination_component:
       terms:
         success:
+          _combine: and
           terms:
           - inside:
               _func: object_position_in_zone
-              object_cfg: '@tool_1'
+              object_cfg: '@tool_hammer'
               consecutive_steps: 10
               reference_cfg: '@toolbox'
               velocity_threshold: 0.05
               in_reference_frame: true
-              x_range: [-0.13, 0.13]
-              y_range: [-0.09, 0.09]
-              z_range: [-0.005, 0.1]
+              x_range: [-0.085, 0.085]
+              y_range: [-0.05, 0.05]
+              z_range: [-0.005, 0.06]
           - free:
               _func: object_no_contact_destination
               contact_sensor_cfgs:
-              - '@tool1_right_contact'
+              - '@tool_hammer_left_contact'
+              - '@tool_hammer_right_contact'
               force_threshold: 0.05
               consecutive_steps: 10
     log_component:

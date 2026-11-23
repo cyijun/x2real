@@ -19,22 +19,10 @@ graph_task_generator:
               id: tablecloth
             sample:
               type: inherit
-          - id: box
-            target:
-              type: node
-              id: box
-            sample:
-              type: inherit
-          - id: gear
-            target:
-              type: node
-              id: gear
-            sample:
-              type: inherit
-          - id: tools_region
+          - id: tools_layout
             target:
               type: group
-              id: tools_region
+              id: tools_layout
             sample:
               type: inherit
         global:
@@ -57,8 +45,10 @@ graph_task_generator:
               - tablecloth
       instruction_component:
         instructions:
-        - text: With the left hand pick up the hammer, lift it above the middle of the table and hand it to the
-            right hand in mid-air, then put it into the green basket; then do the same with the wrench.
+        - text: 'Hand over the hammer, flat-head screwdriver and red T-handle screw one at a time, in this order.
+            For each tool: with the arm on the tools'' side pick it up, lift it about 15 cm above the middle of
+            the table and hand it over in mid-air to the other arm, then the other arm puts it into the green basket.
+            Leave the other tools on the table.'
           log:
             instruction_variant: direct
       overlay_component:
@@ -83,20 +73,35 @@ graph_task_generator:
   - id: hammer_in_box
     include: x2real/task/bright/handover_tools_basket/stages/hammer_in_box.yaml
     score: 2
-  - id: pick_wrench
-    include: x2real/task/bright/handover_tools_basket/stages/pick_wrench.yaml
+  - id: pick_screwdriver
+    include: x2real/task/bright/handover_tools_basket/stages/pick_screwdriver.yaml
     score: 2
-  - id: wrench_to_middle
-    include: x2real/task/bright/handover_tools_basket/stages/wrench_to_middle.yaml
+  - id: screwdriver_to_middle
+    include: x2real/task/bright/handover_tools_basket/stages/screwdriver_to_middle.yaml
     score: 2
-  - id: wrench_handover
-    include: x2real/task/bright/handover_tools_basket/stages/wrench_handover.yaml
+  - id: screwdriver_handover
+    include: x2real/task/bright/handover_tools_basket/stages/screwdriver_handover.yaml
     score: 2
-  - id: wrench_over_box
-    include: x2real/task/bright/handover_tools_basket/stages/wrench_over_box.yaml
+  - id: screwdriver_over_box
+    include: x2real/task/bright/handover_tools_basket/stages/screwdriver_over_box.yaml
     score: 2
-  - id: wrench_in_box
-    include: x2real/task/bright/handover_tools_basket/stages/wrench_in_box.yaml
+  - id: screwdriver_in_box
+    include: x2real/task/bright/handover_tools_basket/stages/screwdriver_in_box.yaml
+    score: 2
+  - id: pick_screw_twister
+    include: x2real/task/bright/handover_tools_basket/stages/pick_screw_twister.yaml
+    score: 2
+  - id: screw_twister_to_middle
+    include: x2real/task/bright/handover_tools_basket/stages/screw_twister_to_middle.yaml
+    score: 2
+  - id: screw_twister_handover
+    include: x2real/task/bright/handover_tools_basket/stages/screw_twister_handover.yaml
+    score: 2
+  - id: screw_twister_over_box
+    include: x2real/task/bright/handover_tools_basket/stages/screw_twister_over_box.yaml
+    score: 2
+  - id: screw_twister_in_box
+    include: x2real/task/bright/handover_tools_basket/stages/screw_twister_in_box.yaml
     score: 2
   edges:
   - src: pick_hammer
@@ -108,12 +113,22 @@ graph_task_generator:
   - src: hammer_over_box
     dst: hammer_in_box
   - src: hammer_in_box
-    dst: pick_wrench
-  - src: pick_wrench
-    dst: wrench_to_middle
-  - src: wrench_to_middle
-    dst: wrench_handover
-  - src: wrench_handover
-    dst: wrench_over_box
-  - src: wrench_over_box
-    dst: wrench_in_box
+    dst: pick_screwdriver
+  - src: pick_screwdriver
+    dst: screwdriver_to_middle
+  - src: screwdriver_to_middle
+    dst: screwdriver_handover
+  - src: screwdriver_handover
+    dst: screwdriver_over_box
+  - src: screwdriver_over_box
+    dst: screwdriver_in_box
+  - src: screwdriver_in_box
+    dst: pick_screw_twister
+  - src: pick_screw_twister
+    dst: screw_twister_to_middle
+  - src: screw_twister_to_middle
+    dst: screw_twister_handover
+  - src: screw_twister_handover
+    dst: screw_twister_over_box
+  - src: screw_twister_over_box
+    dst: screw_twister_in_box

@@ -19,23 +19,6 @@ graph_task_generator:
             selector:
               type: uniform
               distinct_id: towel_color
-          - id: basket_asset
-            target:
-              type: node
-              id: basket
-            selector:
-              type: weighted
-              weights:
-                green: 1.0
-                blue: 0.5
-                pink_box: 0.0
-          - id: distractor_towel_asset
-            target:
-              type: node
-              id: distractor_towel
-            selector:
-              type: uniform
-              distinct_id: towel_color
           placements:
           - id: tablecloth
             target:
@@ -49,16 +32,10 @@ graph_task_generator:
               id: towel
             sample:
               type: inherit
-          - id: basket
+          - id: basket_side
             target:
-              type: node
-              id: basket
-            sample:
-              type: inherit
-          - id: distractor_towel
-            target:
-              type: node
-              id: distractor_towel
+              type: group
+              id: basket_side
             sample:
               type: inherit
         global:
@@ -80,12 +57,12 @@ graph_task_generator:
               object_names:
               - tablecloth
               - towel
-              - basket
-              - distractor_towel
       instruction_component:
         instructions:
-        - text: Grasp the two near corners of the towel with both hands, fold it once away from you, put it down,
-            then pick the folded towel up and drop it into the basket.
+        - text: Grasp the two near corners of the towel with both hands and fold it once away from you, put it down
+            and let go. Then with one hand grasp the middle of the folded edge, lift the folded towel, move it right
+            above the basket, lower it close to the basket bottom and release it so it lies flat and folded in the
+            basket.
           log:
             instruction_variant: direct
       overlay_component:
@@ -107,6 +84,9 @@ graph_task_generator:
   - id: pick_folded
     include: x2real/task/bright/fold_towel/stages/pick_folded.yaml
     score: 2
+  - id: over_basket
+    include: x2real/task/bright/fold_towel/stages/over_basket.yaml
+    score: 2
   - id: into_basket
     include: x2real/task/bright/fold_towel/stages/into_basket.yaml
     score: 2
@@ -118,4 +98,6 @@ graph_task_generator:
   - src: release
     dst: pick_folded
   - src: pick_folded
+    dst: over_basket
+  - src: over_basket
     dst: into_basket
