@@ -429,21 +429,38 @@ def task_fold_towel(task="fold_towel"):
         sensors = {}
         def cloth_term(name, **params):
             return all_of(shape={"_func": "manaenv.terms.cloth_terms." + name, "cloth": "towel_cloth", **params})
+        # final demo (2026-11-22 submission): M3 -> D3 -> P2 -> G1 -> M1 -> P2, tolerances from its step table
         stages = {
-            "grasp_corners": (cloth_term("cloth_corners_held"), "Both near corners pinched and raised"),
-            "fold_lift": (cloth_term("cloth_corners_held", min_lift=0.06, far_max_lift=0.04),
-                          "Near edge raised with far edge on the table"),
-            "release": (cloth_term("cloth_folded_in_half"), "Released half fold settled on table"),
-            "pick_folded": (cloth_term("cloth_lifted_off_table"), "Towel lifted again"),
-            "into_basket": (cloth_term("cloth_in_container", container_cfg="@container", xy_inset=0.008),
-                            "Towel released and settled in basket"),
+            "align_corners": (cloth_term("cloth_corners_reached", max_dist=0.05),
+                              "Both grippers at the near corners (M3, <= 50 mm)"),
+            "fold": (cloth_term("cloth_fold_carried", align_tol=0.03),
+                     "Corners pinched and folded onto the far edge (D3, <= 30 mm)"),
+            "release": (cloth_term("cloth_folded_in_half", corner_xy_tol=0.03, short_range=[0.12, 0.18],
+                                   long_range=[0.27, 0.33]),
+                        "Released, half fold flat without a second fold (P2)"),
+            "pick_crease": (cloth_term("cloth_lifted_off_table", crease_grasp_tol=0.03),
+                            "Folded towel picked at the middle of the fold line (G1, <= 30 mm)"),
+            "over_basket": (cloth_term("cloth_over_container", container_cfg="@container"),
+                            "Towel held above the basket, projection inside the mouth (M1)"),
+            "place_folded": (cloth_term("cloth_placed_folded", container_cfg="@container"),
+                             "Released <= 30 mm above the basket floor, still folded and flat (P2)"),
         }
-    dag = dag_doc(task, "Grasp the two near corners of the towel with both hands, fold it once away from you, put it "
-                        "down, then pick the folded towel up and drop it into the basket.",
+    instruction = ("Grasp the two near corners of the towel with both hands, fold it once away from you, put it "
+                   "down, then pick the folded towel up and drop it into the basket.")
+    if deformable:
+        instruction = ("Grasp the two near corners of the towel with both hands and fold it once away from you, put "
+                       "it down, then pick it up at the middle of the folded edge, move it above the basket and lower "
+                       "it to the basket floor before letting go, keeping it folded and flat.")
+    dag = dag_doc(task, instruction,
                   [{"id": s} for s in stages],
                   runtime_assets=(["tablecloth", "basket", "distractor_towel"] if deformable else
                                   ["tablecloth", "towel", "basket", "distractor_towel"]),
                   runtime_nodes=["tablecloth", "towel", "basket", "distractor_towel"])
+    if deformable:
+        # final demo prop: one light-green 35 x 25.5 cm basket (colour variants off for the cloth board)
+        for target in dag["graph_task_generator"]["definition"]["layout"]["runtime_sample"]["targets"]["assets"]:
+            if target["id"] == "basket_asset":
+                target["selector"] = {"type": "weighted", "weights": {"green": 1.0, "blue": 0.0, "pink_box": 0.0}}
     write_task(task, sensors, stages, dag, scene, dropped="@pickable")
 
 

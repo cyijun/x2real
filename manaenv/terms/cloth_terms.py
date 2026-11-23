@@ -220,6 +220,7 @@ def cloth_lifted_off_table(
     min_fraction: float = 0.9,
     max_hold_dist: float = 0.05,
     max_reach: float = 0.5,
+    crease_grasp_tol: float | None = None,
     consecutive_steps: int = 5,
     robot: str = "robot",
 ) -> torch.Tensor:
@@ -238,7 +239,19 @@ def cloth_lifted_off_table(
     held = dist.min(dim=-1).values.min(dim=-1).values < max_hold_dist
     reach = dist.min(dim=1).values.max(dim=-1).values
     ok = (frac >= min_fraction) & finite & held & (reach < max_reach)
-    _trace(env, cloth, "lifted", frac=frac, held=held, reach=reach, ok=ok)
+    extra = {}
+    if crease_grasp_tol is not None:
+        crease = cloth_state(env, cloth).get("crease")
+        if crease is None:
+            ok = torch.zeros_like(ok)
+        else:
+            mid = torch.gather(safe, 1, crease[:, :1, None].expand(-1, -1, 3))  # (E,1,3)
+            d_mid = torch.linalg.norm(_pinch_points_env(env, robot) - mid, dim=-1).min(dim=1).values
+            ok &= d_mid < crease_grasp_tol
+            extra["crease_mid_dist"] = d_mid
+            extra["crease_mid"] = mid[:, 0]
+            extra["pinch"] = _pinch_points_env(env, robot)
+    _trace(env, cloth, "lifted", frac=frac, held=held, reach=reach, ok=ok, **extra)
     return _apply_consecutive_filter(
         env, ok, int(consecutive_steps), f"_mana_cloth_lifted_{cloth}_{min_height}"
     )
@@ -291,8 +304,167 @@ def cloth_in_container(
 
 
 __all__ = [
+    "cloth_corners_reached",
+    "cloth_fold_carried",
+    "cloth_over_container",
+    "cloth_placed_folded",
     "cloth_corners_held",
     "cloth_folded_in_half",
     "cloth_lifted_off_table",
     "cloth_in_container",
 ]
+
+
+# ---------------------------------------------------------------------------
+# Stage criteria of the final BRIGHT fold-towel demo (6 steps, 2026-11-22 submission):
+# M3 align -> D3 fold -> P2 release -> G1 pick fold-line middle -> M1 over basket -> P2 place flat
+# ---------------------------------------------------------------------------
+
+
+def cloth_corners_reached(
+    env: Any,
+    *,
+    cloth: str,
+    max_dist: float = 0.05,
+    consecutive_steps: int = 3,
+    robot: str = "robot",
+) -> torch.Tensor:
+    """[M3 align] Each arm's fingertip midpoint is within ``max_dist`` of its near corner
+    (near-left <-> left arm, near-right <-> right arm)."""
+    cloth = _resolve_name(cloth)
+    pts = cloth_points_env(env, cloth)
+    corners = _corners(env, cloth, pts)
+    if corners is None:
+        return torch.zeros(env.num_envs, dtype=torch.bool, device=env.device)
+    d = torch.linalg.norm(corners[:, :2, :] - _pinch_points_env(env, robot), dim=-1)
+    ok = (d < max_dist).all(dim=1)
+    _trace(env, cloth, "reached", dist=d, ok=ok)
+    return _apply_consecutive_filter(env, ok, int(consecutive_steps), f"_mana_cloth_reached_{cloth}_{max_dist}")
+
+
+def cloth_fold_carried(
+    env: Any,
+    *,
+    cloth: str,
+    table_z: float | None = None,
+    max_hold_dist: float = 0.045,
+    align_tol: float = 0.03,
+    far_max_lift: float = 0.04,
+    consecutive_steps: int = 5,
+    robot: str = "robot",
+) -> torch.Tensor:
+    """[D3 fold] Both near corners are still pinched and have been carried over their far corners:
+    near/far corner xy offset <= ``align_tol`` on both sides, far corners still on the table."""
+    cloth = _resolve_name(cloth)
+    pts = cloth_points_env(env, cloth)
+    corners = _corners(env, cloth, pts)
+    if corners is None:
+        return torch.zeros(env.num_envs, dtype=torch.bool, device=env.device)
+    held = torch.linalg.norm(corners[:, :2, :] - _pinch_points_env(env, robot), dim=-1)
+    align = torch.linalg.norm(corners[:, :2, :2] - corners[:, 2:, :2], dim=-1)
+    far_lift = corners[:, 2:, 2] - _support_z(env, cloth, table_z)[:, None]
+    ok = (held < max_hold_dist).all(dim=1) & (align < align_tol).all(dim=1) & (far_lift < far_max_lift).all(dim=1)
+    _trace(env, cloth, "fold_carried", held=held, align=align, far_lift=far_lift, ok=ok)
+    return _apply_consecutive_filter(env, ok, int(consecutive_steps), f"_mana_cloth_carried_{cloth}_{align_tol}")
+
+
+def _container_box(env: Any, container: str, env_id: int):
+    bbox = _reference_bbox_env(env, container, env_id)
+    if bbox is None:
+        return None
+    return bbox[0], bbox[1]
+
+
+def cloth_over_container(
+    env: Any,
+    *,
+    cloth: str,
+    container_cfg: Any,
+    min_fraction: float = 0.98,
+    max_hold_dist: float = 0.05,
+    consecutive_steps: int = 5,
+    robot: str = "robot",
+) -> torch.Tensor:
+    """[M1 move] The towel is held and its xy projection lies inside the container mouth
+    (live bounding box; ``min_fraction`` of the vertices)."""
+    cloth = _resolve_name(cloth)
+    container = _resolve_name(container_cfg)
+    pts = cloth_points_env(env, cloth)
+    finite = torch.isfinite(pts).all(dim=-1).all(dim=-1)
+    safe = torch.nan_to_num(pts, nan=1e3, posinf=1e3, neginf=-1e3)
+    held = torch.cdist(_pinch_points_env(env, robot), safe).min(dim=-1).values.min(dim=-1).values < max_hold_dist
+    frac = torch.zeros(env.num_envs, device=env.device)
+    for env_id in range(env.num_envs):
+        box = _container_box(env, container, env_id)
+        if box is None:
+            continue
+        bmin, bmax = box
+        p = safe[env_id]
+        inside = (p[:, 0] > bmin[0]) & (p[:, 0] < bmax[0]) & (p[:, 1] > bmin[1]) & (p[:, 1] < bmax[1])
+        frac[env_id] = inside.float().mean()
+    ok = finite & held & (frac >= min_fraction)
+    _trace(env, cloth, "over_container", frac=frac, held=held, ok=ok)
+    return _apply_consecutive_filter(env, ok, int(consecutive_steps), f"_mana_cloth_over_{cloth}_{container}")
+
+
+def cloth_placed_folded(
+    env: Any,
+    *,
+    cloth: str,
+    container_cfg: Any,
+    min_fraction: float = 0.95,
+    release_max_height: float = 0.03,
+    pair_tol: float = 0.05,
+    min_length: float = 0.25,
+    max_stack_height: float = 0.05,
+    z_margin: float = 0.03,
+    release_clearance: float = 0.03,
+    max_speed: float = 0.1,
+    consecutive_steps: int = 10,
+    robot: str = "robot",
+) -> torch.Tensor:
+    """[P2 place] Released near the container floor and lying there still folded.
+
+    * at the last gripper release the lowest towel vertex was <= ``release_max_height`` above the
+      container bottom (live bounding-box min z);
+    * ``min_fraction`` of the vertices are inside the container box (z up to ``z_margin`` above the rim);
+    * still a half fold: each near corner within ``pair_tol`` (3D) of its far corner, the fold line and
+      the open edge each spread to >= ``min_length`` (not bunched), whole towel <= ``max_stack_height``
+      above the container bottom (lying flat);
+    * settled (max vertex speed < ``max_speed``) and no fingertip within ``release_clearance``.
+    """
+    cloth = _resolve_name(cloth)
+    container = _resolve_name(container_cfg)
+    st = cloth_state(env, cloth)
+    pts = cloth_points_env(env, cloth)
+    corners = _corners(env, cloth, pts)
+    crease = st.get("crease")
+    if corners is None or crease is None:
+        return torch.zeros(env.num_envs, dtype=torch.bool, device=env.device)
+    ok = torch.zeros(env.num_envs, dtype=torch.bool, device=env.device)
+    vals = {k: torch.full((env.num_envs,), float("nan"), device=env.device)
+            for k in ("frac", "release_h", "pair", "crease_len", "open_len", "stack_h")}
+    for e in range(env.num_envs):
+        box = _container_box(env, container, e)
+        rel = st.get("last_release", {}).get(e)
+        if box is None or rel is None:
+            continue
+        bmin, bmax = box
+        p = pts[e]
+        inside = ((p[:, 0] > bmin[0]) & (p[:, 0] < bmax[0]) & (p[:, 1] > bmin[1]) & (p[:, 1] < bmax[1])
+                  & (p[:, 2] > bmin[2] - 0.01) & (p[:, 2] < bmax[2] + z_margin))
+        c = corners[e]
+        ends = p[crease[e, 1:]]
+        vals["frac"][e] = inside.float().mean()
+        vals["release_h"][e] = rel["zmin"] - float(bmin[2])
+        vals["pair"][e] = torch.maximum(torch.linalg.norm(c[0] - c[2]), torch.linalg.norm(c[1] - c[3]))
+        vals["crease_len"][e] = torch.linalg.norm(ends[0] - ends[1])
+        vals["open_len"][e] = torch.linalg.norm(c[2] - c[3])
+        vals["stack_h"][e] = p[:, 2].max() - bmin[2]
+    speed = torch.linalg.norm(cloth_velocities(env, cloth), dim=-1).max(dim=1).values
+    clearance = _min_dist_to_cloth(_pinch_points_env(env, robot), pts).min(dim=1).values
+    ok = ((vals["frac"] >= min_fraction) & (vals["release_h"] <= release_max_height) & (vals["pair"] <= pair_tol)
+          & (vals["crease_len"] >= min_length) & (vals["open_len"] >= min_length)
+          & (vals["stack_h"] <= max_stack_height) & (speed < max_speed) & (clearance > release_clearance))
+    _trace(env, cloth, "placed", speed=speed, clearance=clearance, ok=ok, **vals)
+    return _apply_consecutive_filter(env, ok, int(consecutive_steps), f"_mana_cloth_placed_{cloth}_{container}")

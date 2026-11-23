@@ -37,7 +37,10 @@ ap.add_argument("--regrasp-layers", default="both", choices=["both", "top"])
 ap.add_argument("--patch-r", type=float, default=0.019)
 ap.add_argument("--lift-h", type=float, default=0.25)
 ap.add_argument("--lift-s", type=float, default=2.5, help="regrasp lift duration [s]")
-ap.add_argument("--regrasp-at", default="edge", choices=["edge", "center", "corners2"],
+ap.add_argument("--regrasp-path", default="",
+                help="'dx,dy,dz,T;...' smoothed waypoints (offsets from the grasp point, segment durations); "
+                     "replaces the default lift/carry, then hold 1 s and release")
+ap.add_argument("--regrasp-at", default="edge", choices=["edge", "center", "corners2", "crease"],
                 help="edge: middle of the shared edge; center: towel centre; corners2: two patches at the ends of the shared edge")
 ap.add_argument("--regrasp-usd", action="append", default=[],
                 help="USD attribute override applied to the towel prims right before the regrasp, attr=json")
@@ -224,6 +227,9 @@ if args.regrasp:
         targets = [(p[n - 1] + p[n * n - 1]) / 2 + torch.tensor([-0.02, 0.0, 0.0], device=p.device)]
     elif args.regrasp_at == "center":
         targets = [p.mean(0)]
+    elif args.regrasp_at == "crease":
+        mid = (n // 2) * n + n // 2            # rest-grid centre = middle of the fold line
+        targets = [p[mid] + torch.tensor([0.01, 0.0, 0.0], device=p.device)]
     else:
         inward = torch.nn.functional.normalize(p[n * n - 1] - p[n - 1], dim=0) * 0.03
         targets = [p[n - 1] + inward + torch.tensor([-0.02, 0.0, 0.0], device=p.device),
@@ -256,7 +262,20 @@ if args.regrasp:
             sim.step(render=False); cloth.update(dt)
     T_lift, T_carry, T_hold, T_rel = args.lift_s, 2.5, 1.0, 2.0
 
+    wps = [(0.0, 0.0, 0.0, 0.0)]
+    if args.regrasp_path:
+        for seg in args.regrasp_path.split(";"):
+            wps.append(tuple(float(v) for v in seg.split(",")))
+        T_lift = sum(w[3] for w in wps)
+        T_carry = 0.0
+
     def roff(tt):
+        if args.regrasp_path:
+            for a, b in zip(wps[:-1], wps[1:]):
+                if tt < b[3] or b is wps[-1]:
+                    u = smooth(tt / b[3]) if b[3] > 0 else 1.0
+                    return torch.tensor([a[i] + (b[i] - a[i]) * u for i in range(3)], device=p.device)
+                tt -= b[3]
         if tt < T_lift:
             return torch.tensor([0.0, 0.0, args.lift_h * smooth(tt / T_lift)], device=p.device)
         tt -= T_lift
@@ -281,7 +300,17 @@ if args.regrasp:
             vv = torch.linalg.norm(as_torch(cloth.data.nodal_vel_w)[0], dim=-1)
             regrasp_log.append({"t": round(tt, 3), "zmin": float(pp[:, 2].min()), "zmax": float(pp[:, 2].max()),
                                 "speed_max": float(vv.max()), "speed_p95": float(torch.quantile(vv, 0.95))})
-    print("REGRASP patch", len(patch), json.dumps(regrasp_log[-1]), flush=True)
+    pp = as_torch(cloth.data.nodal_pos_w)[0]
+    mid = (n // 2) * n + n // 2
+    c = {kk: pp[i] for kk, i in corners.items()}
+    ce = [(n // 2) * n, (n // 2) * n + n - 1]   # hmm: placeholder, replaced below
+    ce = [n // 2, (n - 1) * n + n // 2]          # crease ends (I = n//2, J = 0 / n-1)
+    place = {"pair_l": float(torch.linalg.norm(c["nl"] - c["fl"])), "pair_r": float(torch.linalg.norm(c["nr"] - c["fr"])),
+             "crease_len": float(torch.linalg.norm(pp[ce[0]] - pp[ce[1]])),
+             "open_len": float(torch.linalg.norm(c["fl"] - c["fr"])),
+             "height": float(pp[:, 2].max()), "speed_max": float(torch.linalg.norm(as_torch(cloth.data.nodal_vel_w)[0], dim=-1).max())}
+    regrasp_log.append({"t": -1, "zmin": 0, "zmax": 0, "speed_max": 0, "speed_p95": 0, "place": place})
+    print("REGRASP patch", len(patch), json.dumps(regrasp_log[-2]), "PLACE", json.dumps(place), flush=True)
 wall = time.time() - wall0
 final = log[-1]
 res = {"profile": prof, "args": vars(args), "steps": steps, "wall_s": round(wall, 2),

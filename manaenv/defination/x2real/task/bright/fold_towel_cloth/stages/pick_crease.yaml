@@ -1,19 +1,18 @@
 include: x2real/task/bright/fold_towel_cloth/stages/_stage_base.yaml
 direct_task_generator:
   definition:
-    task_type: bright_fold_towel_cloth_fold_lift
+    task_type: bright_fold_towel_cloth_pick_crease
   component_sections:
     termination_component:
       terms:
         success:
           terms:
           - shape:
-              _func: manaenv.terms.cloth_terms.cloth_corners_held
+              _func: manaenv.terms.cloth_terms.cloth_lifted_off_table
               cloth: towel_cloth
-              min_lift: 0.06
-              far_max_lift: 0.04
+              crease_grasp_tol: 0.03
     log_component:
       entries:
         progress:
           trigger: success
-          value: Near edge raised with far edge on the table
+          value: Folded towel picked at the middle of the fold line (G1, <= 30 mm)

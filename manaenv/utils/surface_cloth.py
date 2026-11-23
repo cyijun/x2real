@@ -79,8 +79,8 @@ PROFILES: dict[str, dict[str, Any]] = {
         # PhysX surface-deformable self-collision diverges (NaN within ~1 s) when a pinch that holds
         # *both layers* of the folded towel lifts it (standalone probe: cloth_physx_fold_probe.py
         # --regrasp, 11 of 13 configurations).  With this set, a capture whose patch spans vertices far
-        # apart in the rest mesh (= several layers) switches the towel's self-collision off until the
-        # next reset.  The first fold (single-layer corner pinches) keeps self-collision on.
+        # apart in the rest mesh, or made while the towel covers < 75 % of its rest footprint (folded:
+        # the pinch holds several layers), switches the towel's self-collision off until the next reset.  The first fold (single-layer corner pinches) keeps self-collision on.
         "multilayer_grasp_disables_self_collision": True,
         # towel colours bought for the event (tint of the bordered microfiber texture)
         "tints": {
@@ -397,6 +397,19 @@ def reset_surface_cloth_to_proxy(
         st["corners"][env_id] = grid_corners[row, torch.cat((near, far))]
         direction = cp[far, :2].mean(0) - cp[near, :2].mean(0)
         st["fold_dir"][env_id] = torch.nn.functional.normalize(direction, dim=0)
+        # rest-mesh landmarks of the half fold: the fold line runs through the towel centre,
+        # perpendicular to near->far; its middle is the rest centre vertex.
+        lc = local[row]
+        cr = st["corners"][env_id]
+        a = torch.nn.functional.normalize(lc[cr[2:], :2].mean(0) - lc[cr[:2], :2].mean(0), dim=0)
+        b = torch.stack((-a[1], a[0]))
+        along, across = lc[:, :2] @ a, lc[:, :2] @ b
+        st.setdefault("crease", torch.zeros((env.num_envs, 3), dtype=torch.long, device=device))
+        st["crease"][env_id, 0] = torch.argmin(torch.linalg.vector_norm(lc[:, :2], dim=-1))
+        st["crease"][env_id, 1] = torch.argmax(across - 10.0 * along.abs())
+        st["crease"][env_id, 2] = torch.argmin(across + 10.0 * along.abs())
+        st.setdefault("rest_footprint", {})[env_id] = footprint_cells(pos[row])
+        st.setdefault("last_release", {}).pop(env_id, None)
         from manaenv.terms.cloth_terms import _trace
 
         _trace(
@@ -433,6 +446,15 @@ def _rigid_object_poses(env: Any, env_id: int) -> dict[str, list[float]]:
         out["_error"] = [0.0]
         manaprint(f"WARNING: surface cloth reset trace: {exc!r}")
     return out
+
+
+FOOTPRINT_CELL = 0.02
+
+
+def footprint_cells(points: torch.Tensor) -> int:
+    """Number of 2 cm xy cells touched by the cloth vertices (~ its projected area, rotation-robust)."""
+    cells = torch.floor(points[:, :2] / FOOTPRINT_CELL).to(torch.long)
+    return int(torch.unique(cells, dim=0).shape[0])
 
 
 def describe_profile(profile_name: str) -> str:
@@ -546,6 +568,7 @@ def update_point_grasp(env, env_ids, cloth_name: str) -> None:
 GRASP_OPEN_RAD = 0.50     # gripper joint above this -> released / armed
 GRASP_CLOSE_RAD = 0.30    # armed gripper closing below this -> capture
 GRASP_RADIUS = 0.03       # the nearest cloth vertex must be this close to the fingertip midpoint [m]
+FOLDED_FOOTPRINT_RATIO = 0.75  # a capture on a cloth covering < 75 % of its rest area pinches several layers
 GRASP_PATCH_RADIUS = 0.019  # captured patch: every vertex within this distance of that nearest vertex
 # (~3x3 vertices of the 1.25 cm grid, ~2.5 cm like a jaw pad; with a folded towel both layers).
 # Driving a single vertex is not an option: the probe blows up (NaN) when only one vertex is held.
@@ -639,7 +662,10 @@ def _substep_point_grasp(env: Any, cloth_name: str, prof: Mapping[str, Any]) -> 
             mid = tips_p[e, links].mean(0)
             if opening > GRASP_OPEN_RAD:
                 if g.get("vertices") is not None:
-                    rec = {"env": e, "arm": arm, "event": "release"}
+                    zmin = float(as_torch(cloth.data.nodal_pos_w)[e, :, 2].min() - env.scene.env_origins[e, 2])
+                    step = int(as_torch(env.episode_length_buf)[e].item()) if hasattr(env, "episode_length_buf") else -1
+                    st.setdefault("last_release", {})[e] = {"step": step, "arm": arm, "zmin": zmin}
+                    rec = {"env": e, "arm": arm, "event": "release", "zmin": round(zmin, 4)}
                     st.setdefault("grasp_log", []).append(rec)
                     _grasp_trace(env, cloth_name, rec)
                 g.clear()
@@ -665,8 +691,11 @@ def _substep_point_grasp(env: Any, cloth_name: str, prof: Mapping[str, Any]) -> 
                     rest = st["local"][e, verts, :2]
                     spread = float(torch.cdist(rest, rest).max())
                     rec["rest_spread_m"] = round(spread, 4)
+                    rest_fp = st.get("rest_footprint", {}).get(e)
+                    fp_ratio = footprint_cells(pos[e]) / rest_fp if rest_fp else 1.0
+                    rec["footprint_ratio"] = round(fp_ratio, 3)
                     if (
-                        spread > 2.0 * GRASP_PATCH_RADIUS + 0.01
+                        (spread > 2.0 * GRASP_PATCH_RADIUS + 0.01 or fp_ratio < FOLDED_FOOTPRINT_RATIO)
                         and prof.get("multilayer_grasp_disables_self_collision")
                         and st.get("self_collision", {}).get(e, True)
                     ):

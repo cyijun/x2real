@@ -1,0 +1,18 @@
+include: x2real/task/bright/fold_towel_cloth/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_fold_towel_cloth_align_corners
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          terms:
+          - shape:
+              _func: manaenv.terms.cloth_terms.cloth_corners_reached
+              cloth: towel_cloth
+              max_dist: 0.05
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: Both grippers at the near corners (M3, <= 50 mm)

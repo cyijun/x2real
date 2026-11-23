@@ -20,7 +20,7 @@ graph_task_generator:
               type: weighted
               weights:
                 green: 1.0
-                blue: 0.5
+                blue: 0.0
                 pink_box: 0.0
           - id: distractor_towel_asset
             target:
@@ -76,8 +76,9 @@ graph_task_generator:
               - distractor_towel
       instruction_component:
         instructions:
-        - text: Grasp the two near corners of the towel with both hands, fold it once away from you, put it down,
-            then pick the folded towel up and drop it into the basket.
+        - text: Grasp the two near corners of the towel with both hands and fold it once away from you, put it down,
+            then pick it up at the middle of the folded edge, move it above the basket and lower it to the basket
+            floor before letting go, keeping it folded and flat.
           log:
             instruction_variant: direct
       overlay_component:
@@ -87,27 +88,32 @@ graph_task_generator:
           label: Assets
           font_size: 18
   nodes:
-  - id: grasp_corners
-    include: x2real/task/bright/fold_towel_cloth/stages/grasp_corners.yaml
+  - id: align_corners
+    include: x2real/task/bright/fold_towel_cloth/stages/align_corners.yaml
     score: 2
-  - id: fold_lift
-    include: x2real/task/bright/fold_towel_cloth/stages/fold_lift.yaml
+  - id: fold
+    include: x2real/task/bright/fold_towel_cloth/stages/fold.yaml
     score: 2
   - id: release
     include: x2real/task/bright/fold_towel_cloth/stages/release.yaml
     score: 2
-  - id: pick_folded
-    include: x2real/task/bright/fold_towel_cloth/stages/pick_folded.yaml
+  - id: pick_crease
+    include: x2real/task/bright/fold_towel_cloth/stages/pick_crease.yaml
     score: 2
-  - id: into_basket
-    include: x2real/task/bright/fold_towel_cloth/stages/into_basket.yaml
+  - id: over_basket
+    include: x2real/task/bright/fold_towel_cloth/stages/over_basket.yaml
+    score: 2
+  - id: place_folded
+    include: x2real/task/bright/fold_towel_cloth/stages/place_folded.yaml
     score: 2
   edges:
-  - src: grasp_corners
-    dst: fold_lift
-  - src: fold_lift
+  - src: align_corners
+    dst: fold
+  - src: fold
     dst: release
   - src: release
-    dst: pick_folded
-  - src: pick_folded
-    dst: into_basket
+    dst: pick_crease
+  - src: pick_crease
+    dst: over_basket
+  - src: over_basket
+    dst: place_folded

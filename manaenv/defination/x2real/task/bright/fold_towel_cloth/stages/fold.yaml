@@ -1,17 +1,18 @@
 include: x2real/task/bright/fold_towel_cloth/stages/_stage_base.yaml
 direct_task_generator:
   definition:
-    task_type: bright_fold_towel_cloth_pick_folded
+    task_type: bright_fold_towel_cloth_fold
   component_sections:
     termination_component:
       terms:
         success:
           terms:
           - shape:
-              _func: manaenv.terms.cloth_terms.cloth_lifted_off_table
+              _func: manaenv.terms.cloth_terms.cloth_fold_carried
               cloth: towel_cloth
+              align_tol: 0.03
     log_component:
       entries:
         progress:
           trigger: success
-          value: Towel lifted again
+          value: Corners pinched and folded onto the far edge (D3, <= 30 mm)
