@@ -93,6 +93,8 @@ _EXTENSION_BOARD_COUNTS = {
 }
 # Extension boards whose scenes need GPU PhysX (surface-deformable cloth): synchronous GPU runtime.
 _GPU_PHYSX_BOARDS = {"bright_arm6a_cloth": "runtime/solver/physx_gpu_sync.yaml"}
+# ... and their physics rate (surface-deformable cloth needs 240 Hz to settle).
+_BOARD_TIMESTEP = {"bright_arm6a_cloth": "runtime/timestep/cloth_240hz.yaml"}
 _BOARD_ALIASES = {
     "ex001_tabletop": "artixon_arm6a_tabletop",
     "ex001_challenge": "artixon_arm6a_challenge",
@@ -584,6 +586,12 @@ def build_run_suite_document(
             raise ValueError(f"{board.board_id} requires pipeline.pipeline_runtime")
         runtime["include"] = _GPU_PHYSX_BOARDS[board.board_id]
         runtime["kit_render_mode"] = "sync"
+    if board.board_id in _BOARD_TIMESTEP:
+        scene_factory = document.get("scene_factory")
+        scene_runtime = scene_factory.get("scene_runtime") if isinstance(scene_factory, dict) else None
+        if not isinstance(scene_runtime, dict):
+            raise ValueError(f"{board.board_id} requires scene_factory.scene_runtime")
+        scene_runtime["include"] = _BOARD_TIMESTEP[board.board_id]
     cases_by_env = {case.env: case for case in cases}
     assembly_orders = [
         order

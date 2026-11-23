@@ -52,7 +52,7 @@ PROFILES: dict[str, dict[str, Any]] = {
         "material": {
             "static_friction": 1.0,
             "dynamic_friction": 1.0,
-            "youngs_modulus": 5.0e4,
+            "youngs_modulus": 2.0e4,  # stable + settles at 240 Hz (probe sweep); 5e4 jitters, 5e3 tangles
             "poissons_ratio": 0.3,
             "surface_thickness": 0.005,
             "surface_stretch_stiffness": 1.0,
@@ -71,6 +71,11 @@ PROFILES: dict[str, dict[str, Any]] = {
         "contact_offset": 0.006,
         "lift_z": 0.004,  # cloth mid-plane above the proxy root (proxy origin = towel bottom)
         "gripper_friction": 3.0,
+        # gripper/cloth coupling: "point_substep" (fingertip point attachment, every physics sub-step;
+        # default), "point" (same, once per control step, legacy), "friction" (contact only).
+        # Override with MANA_CLOTH_GRASP.
+        "grasp": "point_substep",
+        "grasp_write": "state",
         # towel colours bought for the event (tint of the bordered microfiber texture)
         "tints": {
             "blue": (0.2, 0.45, 0.9),
@@ -129,8 +134,11 @@ def find_cloth_proxies(scene: Any) -> list[tuple[str, str]]:
 
 
 def _spawn_with_collision_offsets(
-    original_func, rest_offset: float, contact_offset: float
+    original_func, rest_offset: float, contact_offset: float, filter_links: list[str] | None = None
 ):
+    """Wrap the cloth spawn: set sim-mesh collision offsets and (optionally) filter collisions
+    between the cloth and the given robot links (``{env}/Robot/<link>``)."""
+
     def _spawn(prim_path, cfg, *args, **kwargs):
         prim = original_func(prim_path, cfg, *args, **kwargs)
         import isaaclab.sim as sim_utils
@@ -147,6 +155,13 @@ def _spawn_with_collision_offsets(
             api = PhysxSchema.PhysxCollisionAPI.Apply(sim_mesh)
             api.CreateRestOffsetAttr().Set(float(rest_offset))
             api.CreateContactOffsetAttr().Set(float(contact_offset))
+            if filter_links:
+                from pxr import Sdf, UsdPhysics
+
+                env_root = path.rsplit("/", 1)[0]
+                targets = [Sdf.Path(f"{env_root}/Robot/{link}") for link in filter_links]
+                for target_prim in (stage.GetPrimAtPath(path), sim_mesh):
+                    UsdPhysics.FilteredPairsAPI.Apply(target_prim).CreateFilteredPairsRel().SetTargets(targets)
         return prim
 
     return _spawn
@@ -185,8 +200,13 @@ def attach_surface_cloths(
             ),
             physics_material=PhysxSurfaceDeformableBodyMaterialCfg(**prof["material"]),
         )
+        # With the point grasp the captured vertices follow the fingertips kinematically; if the jaws
+        # also collide with the cloth, PhysX pushes those vertices out of the finger shapes while the
+        # grasp writes them back every sub-step, which blows the cloth up (measured vertex speeds of
+        # 15-50 m/s).  So in that mode the jaw links do not collide with the cloth (the palm/arm do).
+        filter_links = list(GRIPPER_FINGER_BODIES) if _grasp_mode(prof).startswith("point") else None
         spawn.func = _spawn_with_collision_offsets(
-            spawn.func, prof["rest_offset"], prof["contact_offset"]
+            spawn.func, prof["rest_offset"], prof["contact_offset"], filter_links
         )
         # Spawn pose only matters until the first reset event re-lays the cloth on the proxy.
         cfg = DeformableObjectCfg(
@@ -209,7 +229,7 @@ def attach_surface_cloths(
                     },
                 ),
             )
-            if os.environ.get("MANA_CLOTH_GRASP", "friction") == "point":
+            if _grasp_mode(prof) == "point":
                 setattr(
                     events,
                     f"{cloth_name}_point_grasp",
@@ -325,10 +345,13 @@ def reset_surface_cloth_to_proxy(
         st["corners"] = torch.zeros((env.num_envs, 4), dtype=torch.long, device=device)
         st["fold_dir"] = torch.zeros((env.num_envs, 2), device=device)
         st["tint"] = ["blue"] * env.num_envs
+    if "support_z" not in st:
+        st["support_z"] = torch.zeros(env.num_envs, device=device)
     if "point_grips" not in st:
         st["point_grips"] = [[{}, {}] for _ in range(env.num_envs)]
     for e in env_ids.tolist():
         st["point_grips"][e] = [{}, {}]
+    install_substep_point_grasp(env, cloth_name, profile_name)
     local = st["local"][env_ids]
     ppos = as_torch(proxy.data.root_pos_w)[env_ids].to(device)
     pquat = as_torch(proxy.data.root_quat_w)[env_ids].to(device)
@@ -344,6 +367,8 @@ def reset_surface_cloth_to_proxy(
     )
     pos = pos + ppos[:, None, :]
     pos[..., 2] += float(prof["lift_z"])
+    # support height (env frame) for the stage criteria: the proxy root sits on the tablecloth top
+    st["support_z"][env_ids] = ppos[:, 2] - env.scene.env_origins[env_ids, 2]
     state = torch.zeros((len(env_ids), num_v, 6), dtype=torch.float32, device=device)
     state[..., :3] = pos
     cloth.write_nodal_state_to_sim_index(state, env_ids=env_ids)
@@ -482,3 +507,127 @@ def update_point_grasp(env, env_ids, cloth_name: str) -> None:
             cloth.write_nodal_state_to_sim_index(
                 state, env_ids=torch.tensor([e], device=env.device)
             )
+
+
+# ---------------------------------------------------------------------------
+# Point-grasp approximation, applied before *every physics sub-step*
+# ---------------------------------------------------------------------------
+#
+# The interval-event version above runs once per control step (4 physics sub-steps at 120 Hz):
+# the pinched vertices fall freely for 3 sub-steps and are then snapped back, which pumps energy
+# into the cloth (measured vertex speeds of 1-3 m/s that never settle).  This version wraps the
+# cloth's ``write_data_to_sim`` (called by ``ManagerBasedEnv.step`` right before each
+# ``sim.step`` in synchronous mode) and drives the captured vertices with the measured fingertip
+# pose and velocity on every sub-step.
+
+GRASP_OPEN_RAD = 0.50     # gripper joint above this -> released / armed
+GRASP_CLOSE_RAD = 0.30    # armed gripper closing below this -> capture
+GRASP_RADIUS = 0.03       # the nearest cloth vertex must be this close to the fingertip midpoint [m]
+GRASP_PATCH_RADIUS = 0.019  # captured patch: every vertex within this distance of that nearest vertex
+# (~3x3 vertices of the 1.25 cm grid, ~2.5 cm like a jaw pad; with a folded towel both layers).
+# Driving a single vertex is not an option: the probe blows up (NaN) when only one vertex is held.
+
+
+def _grasp_mode(prof: Mapping[str, Any]) -> str:
+    return os.environ.get("MANA_CLOTH_GRASP", str(prof.get("grasp", "point")))
+
+
+def install_substep_point_grasp(env: Any, cloth_name: str, profile_name: str) -> bool:
+    """Wrap ``env.scene[cloth_name].write_data_to_sim`` with the per-sub-step point grasp (idempotent)."""
+    prof = PROFILES[profile_name]
+    if _grasp_mode(prof) != "point_substep":
+        return False
+    cloth = env.scene[cloth_name]
+    if getattr(cloth, "_mana_point_grasp_installed", False):
+        return True
+    original = cloth.write_data_to_sim
+
+    def _write_data_to_sim():
+        original()
+        try:
+            _substep_point_grasp(env, cloth_name, prof)
+        except Exception as exc:  # noqa: BLE001 - never kill the physics loop
+            manaprint(f"WARNING: surface cloth point grasp failed: {exc!r}")
+
+    cloth.write_data_to_sim = _write_data_to_sim
+    cloth._mana_point_grasp_installed = True
+    manaprint(f"INFO: surface cloth {cloth_name!r}: per-sub-step point grasp installed")
+    return True
+
+
+def _grasp_trace(env: Any, cloth_name: str, rec: dict) -> None:
+    path = os.environ.get("MANA_CLOTH_TRACE")
+    if not path:
+        return
+    import json
+
+    step = int(as_torch(env.episode_length_buf)[0].item()) if hasattr(env, "episode_length_buf") else -1
+    with open(path, "a") as fh:
+        fh.write(json.dumps({"tag": "grasp", "cloth": cloth_name, "step": step, **rec}) + "\n")
+    manaprint(f"INFO: surface cloth grasp {rec}")
+
+
+def _substep_point_grasp(env: Any, cloth_name: str, prof: Mapping[str, Any]) -> None:
+    from manaenv.terms.cloth_terms import _TIP_BODIES
+
+    st = cloth_state(env, cloth_name)
+    grips = st.get("point_grips")
+    if grips is None:
+        return
+    robot = env.scene["robot"]
+    if "grip_links" not in st:
+        st["grip_links"] = [list(robot.find_bodies(list(n), preserve_order=True)[0]) for n in _TIP_BODIES.values()]
+        st["grip_joints"] = list(robot.find_joints(["left_arm_gripper", "right_arm_gripper"], preserve_order=True)[0])
+    cloth = env.scene[cloth_name]
+    tips_p = as_torch(robot.data.body_pos_w)
+    tips_v = as_torch(robot.data.body_lin_vel_w)
+    openings = as_torch(robot.data.joint_pos)[:, st["grip_joints"]]
+    pos = vel = None
+    write_vel = str(prof.get("grasp_write", "state")) == "state"
+    for e in range(env.num_envs):
+        updates = []
+        for arm in range(2):
+            g = grips[e][arm]
+            opening = float(openings[e, arm])
+            links = st["grip_links"][arm]
+            mid = tips_p[e, links].mean(0)
+            if opening > GRASP_OPEN_RAD:
+                if g.get("vertices") is not None:
+                    rec = {"env": e, "arm": arm, "event": "release"}
+                    st.setdefault("grasp_log", []).append(rec)
+                    _grasp_trace(env, cloth_name, rec)
+                g.clear()
+                g["armed"] = True
+                continue
+            if g.get("armed") and opening < GRASP_CLOSE_RAD:
+                g["armed"] = False
+                if pos is None:
+                    pos = as_torch(cloth.data.nodal_pos_w).clone()
+                    vel = as_torch(cloth.data.nodal_vel_w).clone()
+                dist_all = torch.linalg.vector_norm(pos[e] - mid, dim=-1)
+                nearest = int(torch.argmin(dist_all))
+                d0 = float(dist_all[nearest])
+                verts = pos.new_zeros(0, dtype=torch.long)
+                if d0 < GRASP_RADIUS:
+                    verts = torch.nonzero(
+                        torch.linalg.vector_norm(pos[e] - pos[e, nearest], dim=-1) < GRASP_PATCH_RADIUS
+                    ).flatten()
+                    g["vertices"] = verts
+                    g["offset"] = (pos[e, verts] - mid).clone()
+                rec = {"env": e, "arm": arm, "event": "close", "captured": int(len(verts)), "nearest_m": round(d0, 4)}
+                st.setdefault("grasp_log", []).append(rec)
+                _grasp_trace(env, cloth_name, rec)
+            if g.get("vertices") is not None:
+                updates.append((g["vertices"], mid + g["offset"], tips_v[e, links].mean(0)))
+        if updates:
+            if pos is None:
+                pos = as_torch(cloth.data.nodal_pos_w).clone()
+                vel = as_torch(cloth.data.nodal_vel_w).clone()
+            for verts, target, v in updates:
+                pos[e, verts] = target
+                vel[e, verts] = v
+            ids = torch.tensor([e], device=env.device)
+            if write_vel:
+                cloth.write_nodal_state_to_sim_index(torch.cat([pos[e:e + 1], vel[e:e + 1]], dim=-1), env_ids=ids)
+            else:
+                cloth.write_nodal_pos_to_sim_index(pos[e:e + 1], env_ids=ids)

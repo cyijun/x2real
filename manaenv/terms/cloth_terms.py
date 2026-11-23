@@ -82,11 +82,23 @@ def _min_dist_to_cloth(pinch: torch.Tensor, pts: torch.Tensor) -> torch.Tensor:
     return torch.cdist(pinch, pts).min(dim=-1).values
 
 
+def _support_z(env: Any, cloth: str, table_z: float | None) -> torch.Tensor:
+    """Height (env frame) of the surface the towel was laid on at reset, ``(E,)``.
+
+    The reset event records the layout proxy's root z (= top of the tablecloth overlay, ~2 cm above
+    the bare table).  ``table_z`` is only a fallback for states recorded before that existed.
+    """
+    sz = cloth_state(env, cloth).get("support_z")
+    if sz is not None:
+        return sz
+    return torch.full((env.num_envs,), float(table_z if table_z is not None else 0.0), device=env.device)
+
+
 def cloth_corners_held(
     env: Any,
     *,
     cloth: str,
-    table_z: float,
+    table_z: float | None = None,
     max_dist: float = 0.045,
     min_lift: float = 0.015,
     far_max_lift: float | None = None,
@@ -107,7 +119,7 @@ def cloth_corners_held(
         return torch.zeros(env.num_envs, dtype=torch.bool, device=env.device)
     pinch = _pinch_points_env(env, robot)
     d = torch.linalg.norm(corners[:, :2, :] - pinch, dim=-1)  # (E,2)
-    lift = corners[:, :, 2] - float(table_z)
+    lift = corners[:, :, 2] - _support_z(env, cloth, table_z)[:, None]
     # The support overlay sits above the nominal table. A stationary corner
     # should not count as lifted merely because of that fixed offset.
     relative_lift = lift[:, :2] - lift[:, 2:]
@@ -134,7 +146,7 @@ def cloth_folded_in_half(
     env: Any,
     *,
     cloth: str,
-    table_z: float,
+    table_z: float | None = None,
     corner_xy_tol: float = 0.05,
     short_range: tuple[float, float] = (0.10, 0.20),
     long_range: tuple[float, float] = (0.25, 0.34),
@@ -166,7 +178,8 @@ def cloth_folded_in_half(
     b = (xy * normal[:, None, :]).sum(-1)
     ext_a = a.max(dim=1).values - a.min(dim=1).values
     ext_b = b.max(dim=1).values - b.min(dim=1).values
-    height = pts[..., 2].max(dim=1).values - float(table_z)
+    support = _support_z(env, cloth, table_z)
+    height = pts[..., 2].max(dim=1).values - support
     speed = torch.linalg.norm(cloth_velocities(env, cloth), dim=-1).max(dim=1).values
     clearance = _min_dist_to_cloth(_pinch_points_env(env, robot), pts).min(dim=1).values
     ok = (
@@ -177,7 +190,7 @@ def cloth_folded_in_half(
         & (ext_b >= long_range[0])
         & (ext_b <= long_range[1])
         & (height < max_height)
-        & (pts[..., 2].min(dim=1).values >= table_z - 0.015)
+        & (pts[..., 2].min(dim=1).values >= support - 0.015)
         & (speed < max_speed)
         & (clearance > release_clearance)
     )
@@ -202,7 +215,7 @@ def cloth_lifted_off_table(
     env: Any,
     *,
     cloth: str,
-    table_z: float,
+    table_z: float | None = None,
     min_height: float = 0.02,
     min_fraction: float = 0.9,
     consecutive_steps: int = 5,
@@ -210,7 +223,7 @@ def cloth_lifted_off_table(
     """[SKILL pick cloth] At least ``min_fraction`` of the cloth vertices are ``min_height`` above the table."""
     cloth = _resolve_name(cloth)
     pts = cloth_points_env(env, cloth)
-    frac = (pts[..., 2] > float(table_z) + min_height).float().mean(dim=1)
+    frac = (pts[..., 2] > _support_z(env, cloth, table_z)[:, None] + min_height).float().mean(dim=1)
     ok = frac >= min_fraction
     _trace(env, cloth, "lifted", frac=frac, ok=ok)
     return _apply_consecutive_filter(

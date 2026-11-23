@@ -1,0 +1,5 @@
+# 240 Hz physics, 30 Hz control/render (decimation 8). PhysX surface-deformable cloth is only
+# stable at this rate: at 120 Hz the towel never settles after a fold (see CLOTH_SIM_RESEARCH.md).
+sim_fps: 240
+render_decremental: 8
+simulation_decimation: 8

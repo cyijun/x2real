@@ -10,7 +10,6 @@ direct_task_generator:
           - shape:
               _func: manaenv.terms.cloth_terms.cloth_folded_in_half
               cloth: towel_cloth
-              table_z: -0.2404
     log_component:
       entries:
         progress:

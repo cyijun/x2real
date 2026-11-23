@@ -430,11 +430,11 @@ def task_fold_towel(task="fold_towel"):
         def cloth_term(name, **params):
             return all_of(shape={"_func": "manaenv.terms.cloth_terms." + name, "cloth": "towel_cloth", **params})
         stages = {
-            "grasp_corners": (cloth_term("cloth_corners_held", table_z=TABLE_Z), "Both near corners pinched and raised"),
-            "fold_lift": (cloth_term("cloth_corners_held", table_z=TABLE_Z, min_lift=0.06, far_max_lift=0.04),
+            "grasp_corners": (cloth_term("cloth_corners_held"), "Both near corners pinched and raised"),
+            "fold_lift": (cloth_term("cloth_corners_held", min_lift=0.06, far_max_lift=0.04),
                           "Near edge raised with far edge on the table"),
-            "release": (cloth_term("cloth_folded_in_half", table_z=TABLE_Z), "Released half fold settled on table"),
-            "pick_folded": (cloth_term("cloth_lifted_off_table", table_z=TABLE_Z), "Towel lifted again"),
+            "release": (cloth_term("cloth_folded_in_half"), "Released half fold settled on table"),
+            "pick_folded": (cloth_term("cloth_lifted_off_table"), "Towel lifted again"),
             "into_basket": (cloth_term("cloth_in_container", container_cfg="@container", xy_inset=0.008),
                             "Towel released and settled in basket"),
         }

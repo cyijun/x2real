@@ -10,7 +10,6 @@ direct_task_generator:
           - shape:
               _func: manaenv.terms.cloth_terms.cloth_corners_held
               cloth: towel_cloth
-              table_z: -0.2404
               min_lift: 0.06
               far_max_lift: 0.04
     log_component:
