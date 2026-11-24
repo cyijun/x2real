@@ -781,6 +781,13 @@ TIMEOUTS.update({
 })
 
 
+# Generalization cases (6 rule cases x A/B tiers per task) and training-distribution envs:
+# tools/bright/gen_bright_cases.py, registered on the same board (see sim-assets/GENERALIZATION.md).
+import sys as _sys  # noqa: E402
+import gen_bright_cases as _cases  # noqa: E402
+
+_cases.extend(_sys.modules[__name__])
+
 def env_name(task):
     return f"artixon_arm6a_G_bright_{task}_id_env"
 

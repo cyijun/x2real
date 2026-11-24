@@ -1,0 +1,182 @@
+graph_task_generator:
+  definition:
+    task_type: bright_stack_rings_disturb_b
+    layout:
+      runtime_sample:
+        id: runtime
+        targets:
+          assets:
+          - id: tablecloth_asset
+            target:
+              type: node
+              id: tablecloth
+            selector:
+              type: uniform
+          placements:
+          - id: tablecloth
+            target:
+              type: node
+              id: tablecloth
+            sample:
+              type: inherit
+          - id: stack_layout
+            target:
+              type: group
+              id: stack_layout
+            sample:
+              type: inherit
+        global:
+          lighting:
+            dome:
+              intensity:
+                range: [600.0, 2600.0]
+              color_temperature:
+                range: [3600.0, 7500.0]
+              rotation:
+                range: [-180.0, 180.0]
+    component_sections:
+      log_component:
+        entries:
+          active_assets:
+            trigger: enter
+            func: schema_vnext_active_asset_ids_label
+            params:
+              object_names:
+              - tablecloth
+      instruction_component:
+        instructions:
+        - text: Hold the base of the ring stacker steady with the arm on its side. With the other arm put all five
+            rings onto the peg one at a time, from the largest to the smallest.
+          log:
+            instruction_variant: direct
+      overlay_component:
+        evaluation: true
+        entries:
+        - log_key: active_assets
+          label: Assets
+          font_size: 18
+      event_component:
+        terms:
+          bright_disturb:
+            _func: manaenv.terms.bright_events.bright_displace
+            mode: interval
+            interval_range_s: [0.1, 0.1]
+            is_global_time: false
+            asset_cfg: ring_1
+            key: disturb
+            dxy: [0.0, 0.0]
+            dyaw: 0.0
+            away_from_center: false
+            to: home
+            stage: ring1_on_peg
+            delay_s: 1.0
+  nodes:
+  - id: press_base
+    include: x2real/task/bright/stack_rings_disturb_b/stages/press_base.yaml
+    score: 2
+  - id: pick_ring1
+    include: x2real/task/bright/stack_rings_disturb_b/stages/pick_ring1.yaml
+    score: 2
+  - id: ring1_above_peg
+    include: x2real/task/bright/stack_rings_disturb_b/stages/ring1_above_peg.yaml
+    score: 2
+  - id: ring1_aligned
+    include: x2real/task/bright/stack_rings_disturb_b/stages/ring1_aligned.yaml
+    score: 2
+  - id: ring1_on_peg
+    include: x2real/task/bright/stack_rings_disturb_b/stages/ring1_on_peg.yaml
+    score: 2
+  - id: pick_ring2
+    include: x2real/task/bright/stack_rings_disturb_b/stages/pick_ring2.yaml
+    score: 2
+  - id: ring2_above_peg
+    include: x2real/task/bright/stack_rings_disturb_b/stages/ring2_above_peg.yaml
+    score: 2
+  - id: ring2_aligned
+    include: x2real/task/bright/stack_rings_disturb_b/stages/ring2_aligned.yaml
+    score: 2
+  - id: ring2_on_peg
+    include: x2real/task/bright/stack_rings_disturb_b/stages/ring2_on_peg.yaml
+    score: 2
+  - id: pick_ring3
+    include: x2real/task/bright/stack_rings_disturb_b/stages/pick_ring3.yaml
+    score: 2
+  - id: ring3_above_peg
+    include: x2real/task/bright/stack_rings_disturb_b/stages/ring3_above_peg.yaml
+    score: 2
+  - id: ring3_aligned
+    include: x2real/task/bright/stack_rings_disturb_b/stages/ring3_aligned.yaml
+    score: 2
+  - id: ring3_on_peg
+    include: x2real/task/bright/stack_rings_disturb_b/stages/ring3_on_peg.yaml
+    score: 2
+  - id: pick_ring4
+    include: x2real/task/bright/stack_rings_disturb_b/stages/pick_ring4.yaml
+    score: 2
+  - id: ring4_above_peg
+    include: x2real/task/bright/stack_rings_disturb_b/stages/ring4_above_peg.yaml
+    score: 2
+  - id: ring4_aligned
+    include: x2real/task/bright/stack_rings_disturb_b/stages/ring4_aligned.yaml
+    score: 2
+  - id: ring4_on_peg
+    include: x2real/task/bright/stack_rings_disturb_b/stages/ring4_on_peg.yaml
+    score: 2
+  - id: pick_ring5
+    include: x2real/task/bright/stack_rings_disturb_b/stages/pick_ring5.yaml
+    score: 2
+  - id: ring5_above_peg
+    include: x2real/task/bright/stack_rings_disturb_b/stages/ring5_above_peg.yaml
+    score: 2
+  - id: ring5_aligned
+    include: x2real/task/bright/stack_rings_disturb_b/stages/ring5_aligned.yaml
+    score: 2
+  - id: ring5_on_peg
+    include: x2real/task/bright/stack_rings_disturb_b/stages/ring5_on_peg.yaml
+    score: 2
+  - id: all_rings_on_peg
+    include: x2real/task/bright/stack_rings_disturb_b/stages/all_rings_on_peg.yaml
+    score: 2
+  edges:
+  - src: press_base
+    dst: pick_ring1
+  - src: pick_ring1
+    dst: ring1_above_peg
+  - src: ring1_above_peg
+    dst: ring1_aligned
+  - src: ring1_aligned
+    dst: ring1_on_peg
+  - src: ring1_on_peg
+    dst: pick_ring2
+  - src: pick_ring2
+    dst: ring2_above_peg
+  - src: ring2_above_peg
+    dst: ring2_aligned
+  - src: ring2_aligned
+    dst: ring2_on_peg
+  - src: ring2_on_peg
+    dst: pick_ring3
+  - src: pick_ring3
+    dst: ring3_above_peg
+  - src: ring3_above_peg
+    dst: ring3_aligned
+  - src: ring3_aligned
+    dst: ring3_on_peg
+  - src: ring3_on_peg
+    dst: pick_ring4
+  - src: pick_ring4
+    dst: ring4_above_peg
+  - src: ring4_above_peg
+    dst: ring4_aligned
+  - src: ring4_aligned
+    dst: ring4_on_peg
+  - src: ring4_on_peg
+    dst: pick_ring5
+  - src: pick_ring5
+    dst: ring5_above_peg
+  - src: ring5_above_peg
+    dst: ring5_aligned
+  - src: ring5_aligned
+    dst: ring5_on_peg
+  - src: ring5_on_peg
+    dst: all_rings_on_peg

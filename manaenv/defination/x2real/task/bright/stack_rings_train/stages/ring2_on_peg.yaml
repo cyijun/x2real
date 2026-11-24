@@ -1,0 +1,45 @@
+include: x2real/task/bright/stack_rings_train/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_stack_rings_train_ring2_on_peg
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          _combine: and
+          terms:
+          - on_peg:
+              _func: object_position_in_zone
+              object_cfg: '@ring_2'
+              consecutive_steps: 10
+              reference_cfg: '@destination'
+              velocity_threshold: 0.05
+              in_reference_frame: true
+              x_range: [-0.004, 0.004]
+              y_range: [-0.004, 0.004]
+              z_range: [0.028999999999999998, 0.045]
+          - released:
+              _func: object_no_contact_destination
+              contact_sensor_cfgs:
+              - '@ring2_left_contact'
+              - '@ring2_right_contact'
+              force_threshold: 0.05
+              consecutive_steps: 10
+          - base_held:
+              _combine: or
+              terms:
+              - base_by_left:
+                  _func: object_contact_destination
+                  contact_sensor_cfgs: '@base_left_contact'
+                  force_threshold: 0.1
+                  consecutive_steps: 1
+              - base_by_right:
+                  _func: object_contact_destination
+                  contact_sensor_cfgs: '@base_right_contact'
+                  force_threshold: 0.1
+                  consecutive_steps: 1
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: ring 2 put onto the peg and released (P3)

@@ -1,0 +1,52 @@
+include: x2real/task/bright/stack_rings_pos1_b/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_stack_rings_pos1_b_pick_ring1
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          _combine: and
+          terms:
+          - hands:
+              _combine: or
+              terms:
+              - base_left__ring1_right:
+                  _combine: and
+                  terms:
+                  - base_left:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@base_left_contact'
+                      force_threshold: 0.1
+                      consecutive_steps: 1
+                  - ring1_right:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@ring1_right_contact'
+                      force_threshold: 0.1
+                      consecutive_steps: 3
+              - base_right__ring1_left:
+                  _combine: and
+                  terms:
+                  - base_right:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@base_right_contact'
+                      force_threshold: 0.1
+                      consecutive_steps: 1
+                  - ring1_left:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@ring1_left_contact'
+                      force_threshold: 0.1
+                      consecutive_steps: 3
+          - raised:
+              _func: object_lifted
+              object_cfg: '@ring_1'
+              min_lift: 0.03
+              consecutive_steps: 3
+              contact_sensor:
+              - left_gripper_contact
+              - right_gripper_contact
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: the other hand picks ring 1 from above (G1)

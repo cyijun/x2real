@@ -1,0 +1,63 @@
+include: x2real/task/bright/pour_beans_distractor_b/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_pour_beans_distractor_b_return_cup
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          _combine: and
+          terms:
+          - upright:
+              _func: object_tilt_in_range
+              object_cfg: '@bean_cup'
+              axis: z
+              velocity_threshold: 0.5
+              consecutive_steps: 10
+              min_dot: 0.9
+              max_dot: 1.0
+          - on_table:
+              _func: object_position_in_zone
+              object_cfg: '@bean_cup'
+              consecutive_steps: 10
+              velocity_threshold: 0.05
+              z_range: [-0.2604, -0.2104]
+          - home:
+              _combine: not
+              terms:
+              - moved:
+                  _func: any_object_displaced_from_anchor
+                  object_cfgs: '@bean_cup'
+                  xy_only: true
+                  min_displacement: 0.03
+          - released:
+              _func: object_no_contact_destination
+              contact_sensor_cfgs:
+              - '@cup_left_contact'
+              - '@cup_right_contact'
+              force_threshold: 0.05
+              consecutive_steps: 10
+          - beans_kept:
+              _func: objects_count_in_relative_zone
+              object_names:
+              - bean_1
+              - bean_2
+              - bean_3
+              - bean_4
+              - bean_5
+              - bean_6
+              - bean_7
+              - bean_8
+              - bean_9
+              reference_cfg: '@target_bowl'
+              min_count: 9
+              xy_distance_threshold: 0.09
+              z_min_offset: -0.01
+              z_max_offset: 0.1
+              velocity_threshold: 0.3
+              consecutive_steps: 1
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: cup put back upright within 30 mm of where it was (P2)

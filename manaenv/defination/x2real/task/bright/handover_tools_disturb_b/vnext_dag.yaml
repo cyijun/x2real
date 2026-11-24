@@ -1,0 +1,149 @@
+graph_task_generator:
+  definition:
+    task_type: bright_handover_tools_disturb_b
+    layout:
+      runtime_sample:
+        id: runtime
+        targets:
+          assets:
+          - id: tablecloth_asset
+            target:
+              type: node
+              id: tablecloth
+            selector:
+              type: uniform
+          placements:
+          - id: tablecloth
+            target:
+              type: node
+              id: tablecloth
+            sample:
+              type: inherit
+          - id: tools_layout
+            target:
+              type: group
+              id: tools_layout
+            sample:
+              type: inherit
+        global:
+          lighting:
+            dome:
+              intensity:
+                range: [600.0, 2600.0]
+              color_temperature:
+                range: [3600.0, 7500.0]
+              rotation:
+                range: [-180.0, 180.0]
+    component_sections:
+      log_component:
+        entries:
+          active_assets:
+            trigger: enter
+            func: schema_vnext_active_asset_ids_label
+            params:
+              object_names:
+              - tablecloth
+      instruction_component:
+        instructions:
+        - text: 'Hand over the hammer, flat-head screwdriver and red T-handle screw one at a time, in this order.
+            For each tool: with the arm on the tools'' side pick it up, lift it about 15 cm above the middle of
+            the table and hand it over in mid-air to the other arm, then the other arm puts it into the toolbox.
+            Leave the other tools on the table.'
+          log:
+            instruction_variant: direct
+      overlay_component:
+        evaluation: true
+        entries:
+        - log_key: active_assets
+          label: Assets
+          font_size: 18
+      event_component:
+        terms:
+          bright_disturb:
+            _func: manaenv.terms.bright_events.bright_displace
+            mode: interval
+            interval_range_s: [0.1, 0.1]
+            is_global_time: false
+            asset_cfg: box
+            key: disturb
+            dxy: [-0.08, 0.0]
+            dyaw: 0.35
+            away_from_center: false
+            to: relative
+            stage: hammer_handover
+            delay_s: 0.3
+  nodes:
+  - id: pick_hammer
+    include: x2real/task/bright/handover_tools_disturb_b/stages/pick_hammer.yaml
+    score: 2
+  - id: hammer_to_middle
+    include: x2real/task/bright/handover_tools_disturb_b/stages/hammer_to_middle.yaml
+    score: 2
+  - id: hammer_handover
+    include: x2real/task/bright/handover_tools_disturb_b/stages/hammer_handover.yaml
+    score: 2
+  - id: hammer_over_box
+    include: x2real/task/bright/handover_tools_disturb_b/stages/hammer_over_box.yaml
+    score: 2
+  - id: hammer_in_box
+    include: x2real/task/bright/handover_tools_disturb_b/stages/hammer_in_box.yaml
+    score: 2
+  - id: pick_screwdriver
+    include: x2real/task/bright/handover_tools_disturb_b/stages/pick_screwdriver.yaml
+    score: 2
+  - id: screwdriver_to_middle
+    include: x2real/task/bright/handover_tools_disturb_b/stages/screwdriver_to_middle.yaml
+    score: 2
+  - id: screwdriver_handover
+    include: x2real/task/bright/handover_tools_disturb_b/stages/screwdriver_handover.yaml
+    score: 2
+  - id: screwdriver_over_box
+    include: x2real/task/bright/handover_tools_disturb_b/stages/screwdriver_over_box.yaml
+    score: 2
+  - id: screwdriver_in_box
+    include: x2real/task/bright/handover_tools_disturb_b/stages/screwdriver_in_box.yaml
+    score: 2
+  - id: pick_screw_twister
+    include: x2real/task/bright/handover_tools_disturb_b/stages/pick_screw_twister.yaml
+    score: 2
+  - id: screw_twister_to_middle
+    include: x2real/task/bright/handover_tools_disturb_b/stages/screw_twister_to_middle.yaml
+    score: 2
+  - id: screw_twister_handover
+    include: x2real/task/bright/handover_tools_disturb_b/stages/screw_twister_handover.yaml
+    score: 2
+  - id: screw_twister_over_box
+    include: x2real/task/bright/handover_tools_disturb_b/stages/screw_twister_over_box.yaml
+    score: 2
+  - id: screw_twister_in_box
+    include: x2real/task/bright/handover_tools_disturb_b/stages/screw_twister_in_box.yaml
+    score: 2
+  edges:
+  - src: pick_hammer
+    dst: hammer_to_middle
+  - src: hammer_to_middle
+    dst: hammer_handover
+  - src: hammer_handover
+    dst: hammer_over_box
+  - src: hammer_over_box
+    dst: hammer_in_box
+  - src: hammer_in_box
+    dst: pick_screwdriver
+  - src: pick_screwdriver
+    dst: screwdriver_to_middle
+  - src: screwdriver_to_middle
+    dst: screwdriver_handover
+  - src: screwdriver_handover
+    dst: screwdriver_over_box
+  - src: screwdriver_over_box
+    dst: screwdriver_in_box
+  - src: screwdriver_in_box
+    dst: pick_screw_twister
+  - src: pick_screw_twister
+    dst: screw_twister_to_middle
+  - src: screw_twister_to_middle
+    dst: screw_twister_handover
+  - src: screw_twister_handover
+    dst: screw_twister_over_box
+  - src: screw_twister_over_box
+    dst: screw_twister_in_box

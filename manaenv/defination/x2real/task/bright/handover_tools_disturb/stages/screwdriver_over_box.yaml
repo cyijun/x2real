@@ -1,0 +1,37 @@
+include: x2real/task/bright/handover_tools_disturb/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_handover_tools_disturb_screwdriver_over_box
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          _combine: and
+          terms:
+          - above:
+              _func: object_position_in_zone
+              object_cfg: '@tool_screwdriver'
+              consecutive_steps: 3
+              reference_cfg: '@toolbox'
+              in_reference_frame: true
+              x_range: [-0.085, 0.085]
+              y_range: [-0.05, 0.05]
+              z_range: [0.04, 0.35]
+          - held:
+              _combine: or
+              terms:
+              - tool_screwdriver_by_left:
+                  _func: object_contact_destination
+                  contact_sensor_cfgs: '@tool_screwdriver_left_contact'
+                  force_threshold: 0.05
+                  consecutive_steps: 1
+              - tool_screwdriver_by_right:
+                  _func: object_contact_destination
+                  contact_sensor_cfgs: '@tool_screwdriver_right_contact'
+                  force_threshold: 0.05
+                  consecutive_steps: 1
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: flat-head screwdriver aligned above the toolbox opening (M3)

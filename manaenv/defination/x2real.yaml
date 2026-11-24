@@ -180,6 +180,73 @@ scene_orders:
 - include: x2real/scene/bright/handover_tools_r1/vnext.yaml
 - include: x2real/scene/bright/arrange_flowers_r1/vnext.yaml
 - include: x2real/scene/bright/arrange_flowers_r2/vnext.yaml
+- include: x2real/scene/bright/pour_beans_pos1/vnext.yaml
+- include: x2real/scene/bright/pour_beans_pos1_b/vnext.yaml
+- include: x2real/scene/bright/pour_beans_pos2/vnext.yaml
+- include: x2real/scene/bright/pour_beans_pos2_b/vnext.yaml
+- include: x2real/scene/bright/pour_beans_occlude/vnext.yaml
+- include: x2real/scene/bright/pour_beans_occlude_b/vnext.yaml
+- include: x2real/scene/bright/pour_beans_disturb/vnext.yaml
+- include: x2real/scene/bright/pour_beans_disturb_b/vnext.yaml
+- include: x2real/scene/bright/pour_beans_distractor/vnext.yaml
+- include: x2real/scene/bright/pour_beans_distractor_b/vnext.yaml
+- include: x2real/scene/bright/pour_beans_visual/vnext.yaml
+- include: x2real/scene/bright/pour_beans_visual_b/vnext.yaml
+- include: x2real/scene/bright/pour_beans_train/vnext.yaml
+- include: x2real/scene/bright/fold_towel_pos1/vnext.yaml
+- include: x2real/scene/bright/fold_towel_pos1_b/vnext.yaml
+- include: x2real/scene/bright/fold_towel_pos2/vnext.yaml
+- include: x2real/scene/bright/fold_towel_pos2_b/vnext.yaml
+- include: x2real/scene/bright/fold_towel_occlude/vnext.yaml
+- include: x2real/scene/bright/fold_towel_occlude_b/vnext.yaml
+- include: x2real/scene/bright/fold_towel_disturb/vnext.yaml
+- include: x2real/scene/bright/fold_towel_disturb_b/vnext.yaml
+- include: x2real/scene/bright/fold_towel_distractor/vnext.yaml
+- include: x2real/scene/bright/fold_towel_distractor_b/vnext.yaml
+- include: x2real/scene/bright/fold_towel_visual/vnext.yaml
+- include: x2real/scene/bright/fold_towel_visual_b/vnext.yaml
+- include: x2real/scene/bright/fold_towel_train/vnext.yaml
+- include: x2real/scene/bright/stack_rings_pos1/vnext.yaml
+- include: x2real/scene/bright/stack_rings_pos1_b/vnext.yaml
+- include: x2real/scene/bright/stack_rings_pos2/vnext.yaml
+- include: x2real/scene/bright/stack_rings_pos2_b/vnext.yaml
+- include: x2real/scene/bright/stack_rings_occlude/vnext.yaml
+- include: x2real/scene/bright/stack_rings_occlude_b/vnext.yaml
+- include: x2real/scene/bright/stack_rings_disturb/vnext.yaml
+- include: x2real/scene/bright/stack_rings_disturb_b/vnext.yaml
+- include: x2real/scene/bright/stack_rings_distractor/vnext.yaml
+- include: x2real/scene/bright/stack_rings_distractor_b/vnext.yaml
+- include: x2real/scene/bright/stack_rings_visual/vnext.yaml
+- include: x2real/scene/bright/stack_rings_visual_b/vnext.yaml
+- include: x2real/scene/bright/stack_rings_train/vnext.yaml
+- include: x2real/scene/bright/handover_tools_pos1/vnext.yaml
+- include: x2real/scene/bright/handover_tools_pos1_b/vnext.yaml
+- include: x2real/scene/bright/handover_tools_pos2/vnext.yaml
+- include: x2real/scene/bright/handover_tools_pos2_b/vnext.yaml
+- include: x2real/scene/bright/handover_tools_occlude/vnext.yaml
+- include: x2real/scene/bright/handover_tools_occlude_b/vnext.yaml
+- include: x2real/scene/bright/handover_tools_disturb/vnext.yaml
+- include: x2real/scene/bright/handover_tools_disturb_b/vnext.yaml
+- include: x2real/scene/bright/handover_tools_distractor/vnext.yaml
+- include: x2real/scene/bright/handover_tools_distractor_b/vnext.yaml
+- include: x2real/scene/bright/handover_tools_visual/vnext.yaml
+- include: x2real/scene/bright/handover_tools_visual_b/vnext.yaml
+- include: x2real/scene/bright/handover_tools_train/vnext.yaml
+- include: x2real/scene/bright/arrange_flowers_pos1/vnext.yaml
+- include: x2real/scene/bright/arrange_flowers_pos1_b/vnext.yaml
+- include: x2real/scene/bright/arrange_flowers_pos2/vnext.yaml
+- include: x2real/scene/bright/arrange_flowers_pos2_b/vnext.yaml
+- include: x2real/scene/bright/arrange_flowers_occlude/vnext.yaml
+- include: x2real/scene/bright/arrange_flowers_occlude_b/vnext.yaml
+- include: x2real/scene/bright/arrange_flowers_disturb/vnext.yaml
+- include: x2real/scene/bright/arrange_flowers_disturb_b/vnext.yaml
+- include: x2real/scene/bright/arrange_flowers_distractor/vnext.yaml
+- include: x2real/scene/bright/arrange_flowers_distractor_b/vnext.yaml
+- include: x2real/scene/bright/arrange_flowers_visual/vnext.yaml
+- include: x2real/scene/bright/arrange_flowers_visual_b/vnext.yaml
+- include: x2real/scene/bright/arrange_flowers_train/vnext.yaml
+- include: x2real/scene/bright/stack_rings_reorder/vnext.yaml
+- include: x2real/scene/bright/stack_rings_reorder_b/vnext.yaml
 # <<< bright2026 end
 task_orders:
 - include: x2real/task/visual_reasoning/adjust_temperature/vnext_dag.yaml
@@ -245,6 +312,73 @@ task_orders:
 - include: x2real/task/bright/handover_tools_r1/vnext_dag.yaml
 - include: x2real/task/bright/arrange_flowers_r1/vnext_dag.yaml
 - include: x2real/task/bright/arrange_flowers_r2/vnext_dag.yaml
+- include: x2real/task/bright/pour_beans_pos1/vnext_dag.yaml
+- include: x2real/task/bright/pour_beans_pos1_b/vnext_dag.yaml
+- include: x2real/task/bright/pour_beans_pos2/vnext_dag.yaml
+- include: x2real/task/bright/pour_beans_pos2_b/vnext_dag.yaml
+- include: x2real/task/bright/pour_beans_occlude/vnext_dag.yaml
+- include: x2real/task/bright/pour_beans_occlude_b/vnext_dag.yaml
+- include: x2real/task/bright/pour_beans_disturb/vnext_dag.yaml
+- include: x2real/task/bright/pour_beans_disturb_b/vnext_dag.yaml
+- include: x2real/task/bright/pour_beans_distractor/vnext_dag.yaml
+- include: x2real/task/bright/pour_beans_distractor_b/vnext_dag.yaml
+- include: x2real/task/bright/pour_beans_visual/vnext_dag.yaml
+- include: x2real/task/bright/pour_beans_visual_b/vnext_dag.yaml
+- include: x2real/task/bright/pour_beans_train/vnext_dag.yaml
+- include: x2real/task/bright/fold_towel_pos1/vnext_dag.yaml
+- include: x2real/task/bright/fold_towel_pos1_b/vnext_dag.yaml
+- include: x2real/task/bright/fold_towel_pos2/vnext_dag.yaml
+- include: x2real/task/bright/fold_towel_pos2_b/vnext_dag.yaml
+- include: x2real/task/bright/fold_towel_occlude/vnext_dag.yaml
+- include: x2real/task/bright/fold_towel_occlude_b/vnext_dag.yaml
+- include: x2real/task/bright/fold_towel_disturb/vnext_dag.yaml
+- include: x2real/task/bright/fold_towel_disturb_b/vnext_dag.yaml
+- include: x2real/task/bright/fold_towel_distractor/vnext_dag.yaml
+- include: x2real/task/bright/fold_towel_distractor_b/vnext_dag.yaml
+- include: x2real/task/bright/fold_towel_visual/vnext_dag.yaml
+- include: x2real/task/bright/fold_towel_visual_b/vnext_dag.yaml
+- include: x2real/task/bright/fold_towel_train/vnext_dag.yaml
+- include: x2real/task/bright/stack_rings_pos1/vnext_dag.yaml
+- include: x2real/task/bright/stack_rings_pos1_b/vnext_dag.yaml
+- include: x2real/task/bright/stack_rings_pos2/vnext_dag.yaml
+- include: x2real/task/bright/stack_rings_pos2_b/vnext_dag.yaml
+- include: x2real/task/bright/stack_rings_occlude/vnext_dag.yaml
+- include: x2real/task/bright/stack_rings_occlude_b/vnext_dag.yaml
+- include: x2real/task/bright/stack_rings_disturb/vnext_dag.yaml
+- include: x2real/task/bright/stack_rings_disturb_b/vnext_dag.yaml
+- include: x2real/task/bright/stack_rings_distractor/vnext_dag.yaml
+- include: x2real/task/bright/stack_rings_distractor_b/vnext_dag.yaml
+- include: x2real/task/bright/stack_rings_visual/vnext_dag.yaml
+- include: x2real/task/bright/stack_rings_visual_b/vnext_dag.yaml
+- include: x2real/task/bright/stack_rings_train/vnext_dag.yaml
+- include: x2real/task/bright/handover_tools_pos1/vnext_dag.yaml
+- include: x2real/task/bright/handover_tools_pos1_b/vnext_dag.yaml
+- include: x2real/task/bright/handover_tools_pos2/vnext_dag.yaml
+- include: x2real/task/bright/handover_tools_pos2_b/vnext_dag.yaml
+- include: x2real/task/bright/handover_tools_occlude/vnext_dag.yaml
+- include: x2real/task/bright/handover_tools_occlude_b/vnext_dag.yaml
+- include: x2real/task/bright/handover_tools_disturb/vnext_dag.yaml
+- include: x2real/task/bright/handover_tools_disturb_b/vnext_dag.yaml
+- include: x2real/task/bright/handover_tools_distractor/vnext_dag.yaml
+- include: x2real/task/bright/handover_tools_distractor_b/vnext_dag.yaml
+- include: x2real/task/bright/handover_tools_visual/vnext_dag.yaml
+- include: x2real/task/bright/handover_tools_visual_b/vnext_dag.yaml
+- include: x2real/task/bright/handover_tools_train/vnext_dag.yaml
+- include: x2real/task/bright/arrange_flowers_pos1/vnext_dag.yaml
+- include: x2real/task/bright/arrange_flowers_pos1_b/vnext_dag.yaml
+- include: x2real/task/bright/arrange_flowers_pos2/vnext_dag.yaml
+- include: x2real/task/bright/arrange_flowers_pos2_b/vnext_dag.yaml
+- include: x2real/task/bright/arrange_flowers_occlude/vnext_dag.yaml
+- include: x2real/task/bright/arrange_flowers_occlude_b/vnext_dag.yaml
+- include: x2real/task/bright/arrange_flowers_disturb/vnext_dag.yaml
+- include: x2real/task/bright/arrange_flowers_disturb_b/vnext_dag.yaml
+- include: x2real/task/bright/arrange_flowers_distractor/vnext_dag.yaml
+- include: x2real/task/bright/arrange_flowers_distractor_b/vnext_dag.yaml
+- include: x2real/task/bright/arrange_flowers_visual/vnext_dag.yaml
+- include: x2real/task/bright/arrange_flowers_visual_b/vnext_dag.yaml
+- include: x2real/task/bright/arrange_flowers_train/vnext_dag.yaml
+- include: x2real/task/bright/stack_rings_reorder/vnext_dag.yaml
+- include: x2real/task/bright/stack_rings_reorder_b/vnext_dag.yaml
 # <<< bright2026 end
 assembly_orders:
 - assembly_generator:
@@ -1340,6 +1474,877 @@ assembly_orders:
         - benchmark
         robot_generator_identity: EX001-6R-G
         board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_pour_beans_pos1_id_env
+    scene_generator_name: bright_pour_beans_pos1_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_pour_beans_pos1
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_pour_beans_pos1_b_id_env
+    scene_generator_name: bright_pour_beans_pos1_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_pour_beans_pos1_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_pour_beans_pos2_id_env
+    scene_generator_name: bright_pour_beans_pos2_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_pour_beans_pos2
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_pour_beans_pos2_b_id_env
+    scene_generator_name: bright_pour_beans_pos2_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_pour_beans_pos2_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_pour_beans_occlude_id_env
+    scene_generator_name: bright_pour_beans_occlude_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_pour_beans_occlude
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_pour_beans_occlude_b_id_env
+    scene_generator_name: bright_pour_beans_occlude_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_pour_beans_occlude_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_pour_beans_disturb_id_env
+    scene_generator_name: bright_pour_beans_disturb_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_pour_beans_disturb
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_pour_beans_disturb_b_id_env
+    scene_generator_name: bright_pour_beans_disturb_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_pour_beans_disturb_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_pour_beans_distractor_id_env
+    scene_generator_name: bright_pour_beans_distractor_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_pour_beans_distractor
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_pour_beans_distractor_b_id_env
+    scene_generator_name: bright_pour_beans_distractor_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_pour_beans_distractor_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_pour_beans_visual_id_env
+    scene_generator_name: bright_pour_beans_visual_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_pour_beans_visual
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_pour_beans_visual_b_id_env
+    scene_generator_name: bright_pour_beans_visual_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_pour_beans_visual_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_pour_beans_train_id_env
+    scene_generator_name: bright_pour_beans_train_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_pour_beans_train
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_fold_towel_pos1_id_env
+    scene_generator_name: bright_fold_towel_pos1_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_fold_towel_pos1
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_fold_towel_pos1_b_id_env
+    scene_generator_name: bright_fold_towel_pos1_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_fold_towel_pos1_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_fold_towel_pos2_id_env
+    scene_generator_name: bright_fold_towel_pos2_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_fold_towel_pos2
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_fold_towel_pos2_b_id_env
+    scene_generator_name: bright_fold_towel_pos2_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_fold_towel_pos2_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_fold_towel_occlude_id_env
+    scene_generator_name: bright_fold_towel_occlude_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_fold_towel_occlude
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_fold_towel_occlude_b_id_env
+    scene_generator_name: bright_fold_towel_occlude_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_fold_towel_occlude_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_fold_towel_disturb_id_env
+    scene_generator_name: bright_fold_towel_disturb_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_fold_towel_disturb
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_fold_towel_disturb_b_id_env
+    scene_generator_name: bright_fold_towel_disturb_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_fold_towel_disturb_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_fold_towel_distractor_id_env
+    scene_generator_name: bright_fold_towel_distractor_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_fold_towel_distractor
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_fold_towel_distractor_b_id_env
+    scene_generator_name: bright_fold_towel_distractor_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_fold_towel_distractor_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_fold_towel_visual_id_env
+    scene_generator_name: bright_fold_towel_visual_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_fold_towel_visual
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_fold_towel_visual_b_id_env
+    scene_generator_name: bright_fold_towel_visual_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_fold_towel_visual_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_fold_towel_train_id_env
+    scene_generator_name: bright_fold_towel_train_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_fold_towel_train
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_stack_rings_pos1_id_env
+    scene_generator_name: bright_stack_rings_pos1_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_stack_rings_pos1
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_stack_rings_pos1_b_id_env
+    scene_generator_name: bright_stack_rings_pos1_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_stack_rings_pos1_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_stack_rings_pos2_id_env
+    scene_generator_name: bright_stack_rings_pos2_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_stack_rings_pos2
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_stack_rings_pos2_b_id_env
+    scene_generator_name: bright_stack_rings_pos2_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_stack_rings_pos2_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_stack_rings_occlude_id_env
+    scene_generator_name: bright_stack_rings_occlude_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_stack_rings_occlude
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_stack_rings_occlude_b_id_env
+    scene_generator_name: bright_stack_rings_occlude_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_stack_rings_occlude_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_stack_rings_disturb_id_env
+    scene_generator_name: bright_stack_rings_disturb_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_stack_rings_disturb
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_stack_rings_disturb_b_id_env
+    scene_generator_name: bright_stack_rings_disturb_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_stack_rings_disturb_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_stack_rings_distractor_id_env
+    scene_generator_name: bright_stack_rings_distractor_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_stack_rings_distractor
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_stack_rings_distractor_b_id_env
+    scene_generator_name: bright_stack_rings_distractor_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_stack_rings_distractor_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_stack_rings_visual_id_env
+    scene_generator_name: bright_stack_rings_visual_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_stack_rings_visual
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_stack_rings_visual_b_id_env
+    scene_generator_name: bright_stack_rings_visual_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_stack_rings_visual_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_stack_rings_train_id_env
+    scene_generator_name: bright_stack_rings_train_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_stack_rings_train
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_handover_tools_pos1_id_env
+    scene_generator_name: bright_handover_tools_pos1_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_handover_tools_pos1
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_handover_tools_pos1_b_id_env
+    scene_generator_name: bright_handover_tools_pos1_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_handover_tools_pos1_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_handover_tools_pos2_id_env
+    scene_generator_name: bright_handover_tools_pos2_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_handover_tools_pos2
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_handover_tools_pos2_b_id_env
+    scene_generator_name: bright_handover_tools_pos2_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_handover_tools_pos2_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_handover_tools_occlude_id_env
+    scene_generator_name: bright_handover_tools_occlude_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_handover_tools_occlude
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_handover_tools_occlude_b_id_env
+    scene_generator_name: bright_handover_tools_occlude_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_handover_tools_occlude_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_handover_tools_disturb_id_env
+    scene_generator_name: bright_handover_tools_disturb_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_handover_tools_disturb
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_handover_tools_disturb_b_id_env
+    scene_generator_name: bright_handover_tools_disturb_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_handover_tools_disturb_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_handover_tools_distractor_id_env
+    scene_generator_name: bright_handover_tools_distractor_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_handover_tools_distractor
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_handover_tools_distractor_b_id_env
+    scene_generator_name: bright_handover_tools_distractor_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_handover_tools_distractor_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_handover_tools_visual_id_env
+    scene_generator_name: bright_handover_tools_visual_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_handover_tools_visual
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_handover_tools_visual_b_id_env
+    scene_generator_name: bright_handover_tools_visual_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_handover_tools_visual_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_handover_tools_train_id_env
+    scene_generator_name: bright_handover_tools_train_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_handover_tools_train
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_arrange_flowers_pos1_id_env
+    scene_generator_name: bright_arrange_flowers_pos1_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_arrange_flowers_pos1
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_arrange_flowers_pos1_b_id_env
+    scene_generator_name: bright_arrange_flowers_pos1_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_arrange_flowers_pos1_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_arrange_flowers_pos2_id_env
+    scene_generator_name: bright_arrange_flowers_pos2_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_arrange_flowers_pos2
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_arrange_flowers_pos2_b_id_env
+    scene_generator_name: bright_arrange_flowers_pos2_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_arrange_flowers_pos2_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_arrange_flowers_occlude_id_env
+    scene_generator_name: bright_arrange_flowers_occlude_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_arrange_flowers_occlude
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_arrange_flowers_occlude_b_id_env
+    scene_generator_name: bright_arrange_flowers_occlude_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_arrange_flowers_occlude_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_arrange_flowers_disturb_id_env
+    scene_generator_name: bright_arrange_flowers_disturb_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_arrange_flowers_disturb
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_arrange_flowers_disturb_b_id_env
+    scene_generator_name: bright_arrange_flowers_disturb_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_arrange_flowers_disturb_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_arrange_flowers_distractor_id_env
+    scene_generator_name: bright_arrange_flowers_distractor_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_arrange_flowers_distractor
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_arrange_flowers_distractor_b_id_env
+    scene_generator_name: bright_arrange_flowers_distractor_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_arrange_flowers_distractor_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_arrange_flowers_visual_id_env
+    scene_generator_name: bright_arrange_flowers_visual_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_arrange_flowers_visual
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_arrange_flowers_visual_b_id_env
+    scene_generator_name: bright_arrange_flowers_visual_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_arrange_flowers_visual_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_arrange_flowers_train_id_env
+    scene_generator_name: bright_arrange_flowers_train_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_arrange_flowers_train
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_stack_rings_reorder_id_env
+    scene_generator_name: bright_stack_rings_reorder_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_stack_rings_reorder
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
+- assembly_generator:
+    name: artixon_arm6a_G_bright_stack_rings_reorder_b_id_env
+    scene_generator_name: bright_stack_rings_reorder_b_scene
+    robot_generator_name: EX001-6R-G
+    task_generator_name: bright_stack_rings_reorder_b
+    num_envs: 1
+    metadata:
+      x2real:
+        embodiment: artixon_arm6a
+        capabilities:
+        - benchmark
+        robot_generator_identity: EX001-6R-G
+        board: bright_arm6a_tabletop
 # <<< bright2026 end
 rollout:
 - env_ref: artixon_arm6a_G_put_glasses_on_woodshelf_id_env
@@ -2177,6 +3182,676 @@ rollout:
   num_episodes: 10
   episode_length_s: 180
   max_steps: 5400
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_pour_beans_pos1_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_pour_beans_pos1_b_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_pour_beans_pos2_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_pour_beans_pos2_b_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_pour_beans_occlude_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_pour_beans_occlude_b_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_pour_beans_disturb_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_pour_beans_disturb_b_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_pour_beans_distractor_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_pour_beans_distractor_b_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_pour_beans_visual_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_pour_beans_visual_b_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_pour_beans_train_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_fold_towel_pos1_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_fold_towel_pos1_b_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_fold_towel_pos2_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_fold_towel_pos2_b_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_fold_towel_occlude_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_fold_towel_occlude_b_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_fold_towel_disturb_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_fold_towel_disturb_b_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_fold_towel_distractor_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_fold_towel_distractor_b_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_fold_towel_visual_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_fold_towel_visual_b_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_fold_towel_train_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_stack_rings_pos1_id_env
+  num_episodes: 10
+  episode_length_s: 100
+  max_steps: 3000
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_stack_rings_pos1_b_id_env
+  num_episodes: 10
+  episode_length_s: 100
+  max_steps: 3000
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_stack_rings_pos2_id_env
+  num_episodes: 10
+  episode_length_s: 180
+  max_steps: 5400
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_stack_rings_pos2_b_id_env
+  num_episodes: 10
+  episode_length_s: 180
+  max_steps: 5400
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_stack_rings_occlude_id_env
+  num_episodes: 10
+  episode_length_s: 260
+  max_steps: 7800
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_stack_rings_occlude_b_id_env
+  num_episodes: 10
+  episode_length_s: 260
+  max_steps: 7800
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_stack_rings_disturb_id_env
+  num_episodes: 10
+  episode_length_s: 260
+  max_steps: 7800
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_stack_rings_disturb_b_id_env
+  num_episodes: 10
+  episode_length_s: 260
+  max_steps: 7800
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_stack_rings_distractor_id_env
+  num_episodes: 10
+  episode_length_s: 260
+  max_steps: 7800
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_stack_rings_distractor_b_id_env
+  num_episodes: 10
+  episode_length_s: 260
+  max_steps: 7800
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_stack_rings_visual_id_env
+  num_episodes: 10
+  episode_length_s: 260
+  max_steps: 7800
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_stack_rings_visual_b_id_env
+  num_episodes: 10
+  episode_length_s: 260
+  max_steps: 7800
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_stack_rings_train_id_env
+  num_episodes: 10
+  episode_length_s: 260
+  max_steps: 7800
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_handover_tools_pos1_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_handover_tools_pos1_b_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_handover_tools_pos2_id_env
+  num_episodes: 10
+  episode_length_s: 240
+  max_steps: 7200
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_handover_tools_pos2_b_id_env
+  num_episodes: 10
+  episode_length_s: 240
+  max_steps: 7200
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_handover_tools_occlude_id_env
+  num_episodes: 10
+  episode_length_s: 240
+  max_steps: 7200
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_handover_tools_occlude_b_id_env
+  num_episodes: 10
+  episode_length_s: 240
+  max_steps: 7200
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_handover_tools_disturb_id_env
+  num_episodes: 10
+  episode_length_s: 240
+  max_steps: 7200
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_handover_tools_disturb_b_id_env
+  num_episodes: 10
+  episode_length_s: 240
+  max_steps: 7200
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_handover_tools_distractor_id_env
+  num_episodes: 10
+  episode_length_s: 240
+  max_steps: 7200
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_handover_tools_distractor_b_id_env
+  num_episodes: 10
+  episode_length_s: 240
+  max_steps: 7200
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_handover_tools_visual_id_env
+  num_episodes: 10
+  episode_length_s: 240
+  max_steps: 7200
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_handover_tools_visual_b_id_env
+  num_episodes: 10
+  episode_length_s: 240
+  max_steps: 7200
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_handover_tools_train_id_env
+  num_episodes: 10
+  episode_length_s: 240
+  max_steps: 7200
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_arrange_flowers_pos1_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_arrange_flowers_pos1_b_id_env
+  num_episodes: 10
+  episode_length_s: 120
+  max_steps: 3600
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_arrange_flowers_pos2_id_env
+  num_episodes: 10
+  episode_length_s: 180
+  max_steps: 5400
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_arrange_flowers_pos2_b_id_env
+  num_episodes: 10
+  episode_length_s: 180
+  max_steps: 5400
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_arrange_flowers_occlude_id_env
+  num_episodes: 10
+  episode_length_s: 360
+  max_steps: 10800
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_arrange_flowers_occlude_b_id_env
+  num_episodes: 10
+  episode_length_s: 360
+  max_steps: 10800
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_arrange_flowers_disturb_id_env
+  num_episodes: 10
+  episode_length_s: 360
+  max_steps: 10800
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_arrange_flowers_disturb_b_id_env
+  num_episodes: 10
+  episode_length_s: 360
+  max_steps: 10800
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_arrange_flowers_distractor_id_env
+  num_episodes: 10
+  episode_length_s: 360
+  max_steps: 10800
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_arrange_flowers_distractor_b_id_env
+  num_episodes: 10
+  episode_length_s: 360
+  max_steps: 10800
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_arrange_flowers_visual_id_env
+  num_episodes: 10
+  episode_length_s: 360
+  max_steps: 10800
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_arrange_flowers_visual_b_id_env
+  num_episodes: 10
+  episode_length_s: 360
+  max_steps: 10800
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_arrange_flowers_train_id_env
+  num_episodes: 10
+  episode_length_s: 360
+  max_steps: 10800
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_stack_rings_reorder_id_env
+  num_episodes: 10
+  episode_length_s: 260
+  max_steps: 7800
+  num_parallel_envs: 1
+  show_evaluation_overlay: true
+  planner:
+    PolicyPlanner:
+      policy_cfg:
+        include: policy/x2real_ps@v1.0.0.yaml
+- env_ref: artixon_arm6a_G_bright_stack_rings_reorder_b_id_env
+  num_episodes: 10
+  episode_length_s: 260
+  max_steps: 7800
   num_parallel_envs: 1
   show_evaluation_overlay: true
   planner:

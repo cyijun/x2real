@@ -1,0 +1,52 @@
+include: x2real/task/bright/pour_beans_occlude/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_pour_beans_occlude_cup_over_bowl
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          _combine: and
+          terms:
+          - over:
+              _func: object_position_in_zone
+              object_cfg: '@bean_cup'
+              consecutive_steps: 5
+              reference_cfg: '@target_bowl'
+              xy_distance_threshold: 0.09
+              z_min_offset: 0.06
+              z_max_offset: 0.3
+          - hands:
+              _combine: or
+              terms:
+              - bowl_left__cup_right:
+                  _combine: and
+                  terms:
+                  - bowl_left:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@bowl_left_contact'
+                      force_threshold: 0.1
+                      consecutive_steps: 1
+                  - cup_right:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@cup_right_contact'
+                      force_threshold: 0.1
+                      consecutive_steps: 1
+              - bowl_right__cup_left:
+                  _combine: and
+                  terms:
+                  - bowl_right:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@bowl_right_contact'
+                      force_threshold: 0.1
+                      consecutive_steps: 1
+                  - cup_left:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@cup_left_contact'
+                      force_threshold: 0.1
+                      consecutive_steps: 1
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: cup moved above the bowl, bowl still held by the other hand (M1)

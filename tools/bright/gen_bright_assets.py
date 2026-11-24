@@ -1120,6 +1120,242 @@ def gen_bean(root: Path):
            note="1.5x scaled adzuki bean for solver stability")
 
 
+# ----------------------------------------------------------------------------
+# Generalization-case props (2026-11-24, see sim-assets/GENERALIZATION.md).  Kept apart from the competition
+# props above; ids are grouped into a TRAIN pool and an EVAL pool (GEN_POOLS) that must never overlap.
+# ----------------------------------------------------------------------------
+GEN_POOLS = {
+    # visual
+    "train_tablecloths": ["bright_tablecloth_blue_cloud", "bright_tablecloth_red_check", "bright_tablecloth_forest_deer",
+                          "bright_tablecloth_gray_grid", "bright_tablecloth_solid_beige", "bright_tablecloth_solid_olive",
+                          "bright_tablecloth_solid_lightgray", "bright_tablecloth_solid_navy"],
+    "eval_tablecloths": ["bright_tablecloth_solid_terracotta", "bright_tablecloth_metal_steel"],
+    "eval_backdrops": ["bright_backdrop_warm", "bright_backdrop_cool"],
+    "eval_lights": ["bright_desk_lamp_spot"],
+    # distractors (similar, unrelated objects)
+    "train_distractors": ["bright_cup_purple", "bright_cup_pink", "bright_cup_beige", "bright_bowl_pink",
+                          "bright_bowl_beige", "bright_measuring_cup_blue", "bright_block_cube_beech",
+                          "bright_block_cyl_sapele", "bright_saw", "bright_gear", "bright_flower_lily_white"],
+    "eval_distractors": ["bright_cup_blue", "bright_square_ring_sapele", "bright_wrench", "bright_flower_rose_orange",
+                         "bright_towel_small_gray"]
+                        + [f"bright_odd_{m}_{s}" for m in ("straw_green", "sapele", "redpaint", "yarn_red", "towel_blue")
+                           for s in ("tri", "star", "ell")],
+    # helpers that only exist in eval cases
+    "eval_fixtures": ["bright_slope_tray", "bright_slope_tray_small", "bright_occluder_hand", "bright_occluder_board"],
+}
+
+
+def _check_gen_pools():
+    train = set(GEN_POOLS["train_tablecloths"]) | set(GEN_POOLS["train_distractors"])
+    evals = set().union(*(set(v) for k, v in GEN_POOLS.items() if k.startswith("eval_")))
+    overlap = train & evals
+    assert not overlap, f"train/eval asset pools overlap: {sorted(overlap)}"
+
+
+def _extrude(poly, h, z0=0.0):
+    """Prism from a 2D polygon (counter-clockwise): returns mesh part + convex-hull points."""
+    n = len(poly)
+    pts = [(x, y, z0) for x, y in poly] + [(x, y, z0 + h) for x, y in poly]
+    counts, idx = [n, n], list(reversed(range(n))) + [n + k for k in range(n)]
+    for k in range(n):
+        a, b = k, (k + 1) % n
+        counts.append(4)
+        idx += [a, b, n + b, n + a]
+    uvs = [(x * 10, y * 10) for x, y, _ in pts]
+    return (np.array(pts), counts, idx, uvs), np.array(pts)
+
+
+def gen_slope_tray(root: Path, aid="bright_slope_tray", L=0.38, W=0.32):
+    """Kinematic wooden wedge tray, top inclined 5 deg (rising toward local +x); 38 x 32 cm or 24 x 24 cm."""
+    path = root / "fixtures" / f"{aid}.usd"
+    st = new_stage(path, mass=1.0, kinematic=True)
+    pm = physics_material(st, static=0.7, dynamic=0.6)
+    wood = omnipbr(st, "wood", color=(0.80, 0.64, 0.45), texture=tex_or_none(root, BEECH), roughness=0.6)
+    h0 = 0.012
+    h1 = h0 + L * math.tan(math.radians(5.0))
+    pts = np.array([(-L / 2, -W / 2, 0), (L / 2, -W / 2, 0), (L / 2, W / 2, 0), (-L / 2, W / 2, 0),
+                    (-L / 2, -W / 2, h0), (L / 2, -W / 2, h1), (L / 2, W / 2, h1), (-L / 2, W / 2, h0)])
+    faces = [[0, 3, 2, 1], [4, 5, 6, 7], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7]]
+    add_mesh(st, "/World/visual/tray", pts, [4] * 6, sum(faces, []), [(p[0] * 4, p[1] * 4) for p in pts], mat=wood,
+             smooth=False)
+    add_convex(st, "tray", pts, pm)
+    finish(st, aid, path, mass_kg=1.0, kinematic=True, friction=[0.7, 0.6], collision="convex wedge",
+           top_height_low_m=h0, top_height_high_m=round(h1, 4), slope_deg=5.0,
+           note="eval-only fixture: B-tier position case 2 (5 deg slope tray)")
+
+
+def gen_occluder(root: Path, kind: str):
+    """Kinematic, collision-free occluder put in front of the head camera by bright_events.bright_occluder.
+    Authored in the local YZ plane (normal = local +x = camera optical axis)."""
+    aid = f"bright_occluder_{kind}"
+    path = root / "fixtures" / f"{aid}.usd"
+    st = new_stage(path, mass=0.1, kinematic=True)
+    if kind == "hand":     # a flat stylised hand, ~19 x 10 cm (partial occlusion, A tier)
+        skin = omnipbr(st, "skin", color=(0.86, 0.66, 0.53), roughness=0.7)
+        parts = [box_mesh((0, 0, 0), (0.012, 0.09, 0.10))]
+        for k, (y, ln) in enumerate(((-0.033, 0.07), (-0.011, 0.085), (0.011, 0.08), (0.033, 0.065))):
+            parts.append(box_mesh((0, y, 0.05 + ln / 2), (0.011, 0.019, ln)))
+        parts.append(box_mesh((0, -0.058, 0.005), (0.011, 0.045, 0.02)))
+        add_mesh(st, "/World/visual/hand", *merge(*parts), mat=skin, smooth=False)
+    else:                  # a dark cardboard sheet 40 x 30 cm (full occlusion, B tier)
+        board = omnipbr(st, "board", color=(0.18, 0.17, 0.16), roughness=0.9)
+        add_mesh(st, "/World/visual/board", *box_mesh((0, 0, 0), (0.005, 0.40, 0.30)), mat=board, smooth=False)
+    finish(st, aid, path, mass_kg=0.1, kinematic=True, collision="none (visual only)",
+           note="eval-only fixture: occluder for the camera-occlusion cases")
+
+
+def gen_backdrop(root: Path, name: str, color):
+    """Kinematic colour panel standing on the far edge of the table (cold / warm background board)."""
+    aid = f"bright_backdrop_{name}"
+    path = root / "fixtures" / f"{aid}.usd"
+    st = new_stage(path, mass=2.0, kinematic=True)
+    pm = physics_material(st, static=0.6, dynamic=0.5)
+    look = omnipbr(st, "panel", color=color, roughness=0.85)
+    add_mesh(st, "/World/visual/panel", *box_mesh((0, 0, 0.225), (0.02, 1.00, 0.45)), mat=look, smooth=False)
+    add_convex(st, "panel", box_pts((0, 0, 0.225), (0.02, 1.00, 0.45)), pm)
+    finish(st, aid, path, mass_kg=2.0, kinematic=True, color=color, collision="box",
+           note="eval-only fixture: warm / cool background board for the visual cases")
+
+
+def gen_desk_lamp(root: Path):
+    """Kinematic desk lamp (base + 50 cm pole) with a shaped sphere light aimed 45 deg down along local +x:
+    a strong local spot with hard shadows for the B-tier visual case."""
+    from pxr import UsdLux
+    aid = "bright_desk_lamp_spot"
+    path = root / "fixtures" / f"{aid}.usd"
+    st = new_stage(path, mass=1.5, kinematic=True)
+    pm = physics_material(st, static=0.6, dynamic=0.5)
+    metal = omnipbr(st, "metal", color=(0.15, 0.15, 0.16), roughness=0.35, metallic=1.0)
+    base = lathe([(0, 0), (0.06, 0), (0.06, 0.02), (0, 0.02)], 32, 1, 1)
+    pole = lathe([(0, 0.02), (0.0075, 0.02), (0.0075, 0.52), (0, 0.52)], 16, 1, 1)
+    head = lathe([(0, 0), (0.03, 0), (0.045, 0.06), (0, 0.06)], 24, 1, 1)
+    head = transform(head, rot_y(math.radians(-135)), (0.02, 0, 0.53))
+    add_mesh(st, "/World/visual/lamp", *merge(base, pole, head), mat=metal)
+    add_convex(st, "base", cyl_pts(0.06, 0, 0.06, 0.02, n=16), pm)
+    add_convex(st, "pole", cyl_pts(0.0075, 0.02, 0.0075, 0.52, n=8), pm)
+    light = UsdLux.SphereLight.Define(st, "/World/visual/spot")
+    light.CreateRadiusAttr(0.02)
+    light.CreateIntensityAttr(1.5e6)
+    light.CreateColorAttr(Gf.Vec3f(1.0, 0.95, 0.85))
+    UsdLux.ShapingAPI.Apply(light.GetPrim())
+    shaping = UsdLux.ShapingAPI(light.GetPrim())
+    shaping.CreateShapingConeAngleAttr(28.0)
+    shaping.CreateShapingConeSoftnessAttr(0.15)
+    UsdLux.ShadowAPI.Apply(light.GetPrim()).CreateShadowEnableAttr(True)
+    xf = UsdGeom.Xformable(light.GetPrim())
+    xf.AddTranslateOp().Set(Gf.Vec3d(0.05, 0.0, 0.52))
+    xf.AddRotateYOp().Set(-45.0)        # emission axis (-z) -> 45 deg down toward local +x
+    finish(st, aid, path, mass_kg=1.5, kinematic=True, collision="base + pole",
+           note="eval-only fixture: local strong light + shadows (B-tier visual case); light aimed along local +x")
+
+
+def gen_solid_tablecloth(root: Path, name: str, color, *, metallic=0.0, roughness=0.95):
+    aid = f"bright_tablecloth_{name}"
+    path = root / "tablecloths" / f"{aid}.usd"
+    st = new_stage(path, mass=1.0, kinematic=True)
+    pm = physics_material(st, static=0.6, dynamic=0.5)
+    look = omnipbr(st, "cloth", color=color, roughness=roughness, metallic=metallic)
+    T, size = 0.0015, (0.68, 1.10)
+    add_mesh(st, "/World/visual/cloth", *box_mesh((0, 0, T / 2), (size[0], size[1], T)), mat=look, smooth=False)
+    add_convex(st, "cloth", box_pts((0, 0, T / 2), (size[0], size[1], T)), pm)
+    finish(st, aid, path, mass_kg=1.0, kinematic=True, friction=[0.6, 0.5], collision="thin box", color=color,
+           metallic=metallic, roughness=roughness, note="solid / metal table surface (generalization pools)")
+
+
+def gen_block(root: Path, aid: str, shape: str, texture: str, color):
+    """Train-only wooden distractor blocks (cube 4 cm / cylinder 4.5 x 4 cm)."""
+    path = root / "distractors" / f"{aid}.usd"
+    st = new_stage(path, mass=0.04)
+    pm = physics_material(st, static=0.5, dynamic=0.4)
+    look = omnipbr(st, "wood", color=color, texture=tex_or_none(root, texture), roughness=0.6)
+    if shape == "cube":
+        add_mesh(st, "/World/visual/block", *box_mesh((0, 0, 0.02), (0.04, 0.04, 0.04), 1 / 0.1), mat=look, smooth=False)
+        add_convex(st, "block", box_pts((0, 0, 0.02), (0.04, 0.04, 0.04)), pm)
+    else:
+        add_mesh(st, "/World/visual/block", *lathe([(0, 0), (0.0225, 0), (0.0225, 0.04), (0, 0.04)], 32, 2, 8), mat=look)
+        add_convex(st, "block", cyl_pts(0.0225, 0, 0.0225, 0.04, n=16), pm)
+    finish(st, aid, path, mass_kg=0.04, friction=[0.5, 0.4], collision="convex", texture=texture,
+           note="train-only distractor")
+
+
+def gen_square_ring(root: Path):
+    """Eval-only similar distractor for stack_rings: the square ring of the sister 'shape stacker' (7.5 cm set)."""
+    aid = "bright_square_ring_sapele"
+    path = root / "distractors" / f"{aid}.usd"
+    st = new_stage(path, mass=0.05)
+    pm = physics_material(st, static=0.45, dynamic=0.35)
+    look = omnipbr(st, "wood", color=(0.45, 0.25, 0.18), texture=tex_or_none(root, SAPELE), roughness=0.55)
+    a, h, T = 0.030, 0.009, 0.019          # outer half side 3.0 cm, square hole half side 0.9 cm
+    parts = [box_mesh(((a + h) / 2, 0, T / 2), (a - h, 2 * a, T), 8), box_mesh((-(a + h) / 2, 0, T / 2), (a - h, 2 * a, T), 8),
+             box_mesh((0, (a + h) / 2, T / 2), (2 * h, a - h, T), 8), box_mesh((0, -(a + h) / 2, T / 2), (2 * h, a - h, T), 8)]
+    add_mesh(st, "/World/visual/ring", *merge(*parts), mat=look, smooth=False)
+    for k, (c, s) in enumerate(((((a + h) / 2, 0, T / 2), (a - h, 2 * a, T)), ((-(a + h) / 2, 0, T / 2), (a - h, 2 * a, T)),
+                                ((0, (a + h) / 2, T / 2), (2 * h, a - h, T)), ((0, -(a + h) / 2, T / 2), (2 * h, a - h, T)))):
+        add_convex(st, f"side_{k}", box_pts(c, s), pm)
+    finish(st, aid, path, mass_kg=0.05, friction=[0.45, 0.35], collision="4 boxes",
+           note="eval-only similar distractor (square ring)")
+
+
+ODD_MATERIALS = {   # name: (texture, colour/tint, roughness, height) -- same material and colour as a task prop
+    "straw_green": (STRAW, (0.73, 0.83, 0.62), 0.8, 0.025),     # = bright_cup_green
+    "sapele": (SAPELE, (0.45, 0.25, 0.18), 0.55, 0.019),         # = rings 1/3/5
+    "redpaint": (None, (0.85, 0.07, 0.08), 0.3, 0.022),          # = screw twister hub / balls
+    "yarn_red": (YARN, (0.80, 0.05, 0.09), 0.9, 0.03),           # = red rose
+    "towel_blue": (TOWEL, (0.2, 0.45, 0.9), 1.0, 0.006),         # = blue towel
+}
+
+
+def gen_odd_shapes(root: Path, mat_name: str):
+    """Three odd-shaped eval-only distractors (triangle prism, 5-point star prism, L block) in one material."""
+    tex, color, rough, h = ODD_MATERIALS[mat_name]
+    big = 1.6 if mat_name == "towel_blue" else 1.0
+    shapes = {
+        "tri": [(0.035 * big * math.cos(a), 0.035 * big * math.sin(a)) for a in (math.pi / 2, math.pi * 7 / 6, math.pi * 11 / 6)],
+        "star": [((0.035 if k % 2 == 0 else 0.015) * big * math.cos(math.pi / 2 + k * math.pi / 5),
+                  (0.035 if k % 2 == 0 else 0.015) * big * math.sin(math.pi / 2 + k * math.pi / 5)) for k in range(10)],
+        "ell": [(-0.03 * big, -0.025 * big), (0.03 * big, -0.025 * big), (0.03 * big, -0.005 * big),
+                (-0.01 * big, -0.005 * big), (-0.01 * big, 0.03 * big), (-0.03 * big, 0.03 * big)],
+    }
+    for sname, poly in shapes.items():
+        aid = f"bright_odd_{mat_name}_{sname}"
+        path = root / "distractors" / f"{aid}.usd"
+        st = new_stage(path, mass=0.03)
+        pm = physics_material(st, static=0.6, dynamic=0.5)
+        look = omnipbr(st, "mat", color=color, texture=tex_or_none(root, tex) if tex else None,
+                       tint=color if tex else None, roughness=rough)
+        part, hull = _extrude(poly, h)
+        add_mesh(st, "/World/visual/shape", *part, mat=look, smooth=False)
+        if sname == "ell":   # non-convex: two boxes
+            add_convex(st, "a", box_pts((0, -0.015 * big, h / 2), (0.06 * big, 0.02 * big, h)), pm)
+            add_convex(st, "b", box_pts((-0.02 * big, 0.0125 * big, h / 2), (0.02 * big, 0.035 * big, h)), pm)
+        else:
+            add_convex(st, "hull", hull, pm)
+        finish(st, aid, path, mass_kg=0.03, friction=[0.6, 0.5], collision="convex hull / 2 boxes",
+               note=f"eval-only odd-shaped distractor, same material/colour as a task prop ({mat_name})")
+
+
+def gen_generalization_props(root: Path):
+    _check_gen_pools()
+    gen_slope_tray(root)
+    gen_slope_tray(root, "bright_slope_tray_small", 0.24, 0.24)
+    gen_occluder(root, "hand")
+    gen_occluder(root, "board")
+    gen_backdrop(root, "warm", (0.93, 0.62, 0.38))
+    gen_backdrop(root, "cool", (0.45, 0.62, 0.85))
+    gen_desk_lamp(root)
+    for name, color in (("beige", (0.86, 0.80, 0.68)), ("olive", (0.55, 0.58, 0.40)),
+                        ("lightgray", (0.80, 0.80, 0.80)), ("navy", (0.20, 0.25, 0.42))):
+        gen_solid_tablecloth(root, f"solid_{name}", color)                       # train pool
+    gen_solid_tablecloth(root, "solid_terracotta", (0.78, 0.42, 0.28))           # eval: warm table colour
+    gen_solid_tablecloth(root, "metal_steel", (0.82, 0.83, 0.85), metallic=1.0, roughness=0.22)   # eval: metal
+    gen_block(root, "bright_block_cube_beech", "cube", BEECH, (0.85, 0.7, 0.5))   # train distractors
+    gen_block(root, "bright_block_cyl_sapele", "cyl", SAPELE, (0.45, 0.25, 0.18))
+    gen_square_ring(root)
+    gen_towel(root, "small_gray", (0.55, 0.56, 0.58), size=0.20)
+    for m in ODD_MATERIALS:
+        gen_odd_shapes(root, m)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--asset-root", default=os.environ.get("MANAENV_ASSET_ROOT", "x2real-assets"))
@@ -1178,6 +1414,7 @@ def main():
     for n, c in towels.items():
         gen_towel(root, n, c)
     gen_bean(root)
+    gen_generalization_props(root)
     (root / "asset_manifest.json").write_text(json.dumps(MANIFEST, indent=1))
     print(f"wrote {len(MANIFEST)} assets under {root}")
 

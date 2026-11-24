@@ -1,0 +1,217 @@
+definition:
+  scene_type: bright_pour_beans_pos2_b_scene
+  metadata:
+    name: bright_pour_beans_pos2_b
+    source: bright/pour_beans
+    semantic_goal: 'One hand steadies the light (20 cm, 130 g, low-friction) blue bowl on the table, the other hand
+      pours all red beans from the cup into it and puts the cup back (sides swap) | case: the target_bowl stands
+      on a 5 deg slope tray (38 x 32 cm, kinematic), fixed side'
+render_settings:
+  gen_method: 0
+  tags: green_booth
+background:
+  id: booth
+  asset:
+    type: asset_id
+    id: green_booth_mesh
+  pose:
+    position: [-0.452, -0.271, -0.985]
+    orientation: [0.0, 0.0, -0.704, 0.709]
+  required_surfaces:
+  - tabletop
+objects:
+- id: tablecloth
+  asset:
+    type: pool
+    candidates:
+    - id: any
+      assets:
+      - bright_tablecloth_blue_cloud
+      - bright_tablecloth_red_check
+      - bright_tablecloth_forest_deer
+      - bright_tablecloth_gray_grid
+  semantic_tags:
+  - background_cloth
+  kinematic: true
+  anchors:
+    local_surfaces:
+      top:
+        center: [0.0, 0.0, 0.0015]
+        x_axis: [-1.0, 0.0, 0.0]
+        y_axis: [0.0, -1.0, 0.0]
+        bounds:
+          x: [-0.32, 0.32]
+          y: [-0.53, 0.53]
+- id: target_bowl
+  asset:
+    type: asset_id
+    id: bright_bowl_blue
+  semantic_tags:
+  - container
+  - target_bowl
+- id: distractor_bowl
+  asset:
+    type: pool
+    candidates:
+    - id: any
+      assets:
+      - bright_bowl_green
+  semantic_tags:
+  - distractor
+- id: bean_cup
+  asset:
+    type: asset_id
+    id: bright_cup_green
+  semantic_tags:
+  - pickable
+  - bean_cup
+  anchors:
+    local_surfaces:
+      rim:
+        center: [0.0, 0.0, 0.111]
+        x_axis: [1.0, 0.0, 0.0]
+        y_axis: [0.0, 1.0, 0.0]
+        bounds:
+          x: [-0.026, 0.026]
+          y: [-0.026, 0.026]
+- id: beans
+  asset:
+    type: asset_id
+    id: bright_bean_red
+  instances:
+    type: auto
+    count: 9
+    template: bean_{i}
+    start_index: 1
+  spawn_mass: [0.0003, 0.0005]
+  semantic_tags:
+  - content
+  - beans
+- id: slope_tray
+  asset:
+    type: asset_id
+    id: bright_slope_tray
+  semantic_tags:
+  - fixture
+  kinematic: true
+  anchors:
+    local_surfaces:
+      top:
+        center: [0.0, 0.0, 0.0286]
+        x_axis: [0.99619, 0.0, 0.08716]
+        y_axis: [0.0, 1.0, 0.0]
+        bounds:
+          x: [-0.18, 0.18]
+          y: [-0.15, 0.15]
+layout:
+  surfaces:
+    tabletop:
+      type: ref
+      ref: background.tabletop
+    cloth:
+      type: ref
+      ref: tablecloth.top
+    cup_rim:
+      type: ref
+      ref: bean_cup.rim
+    tray_top:
+      type: ref
+      ref: slope_tray.top
+  nodes:
+    tablecloth:
+      object: tablecloth
+      placement:
+        type: surface
+        surface: tabletop
+        ranges:
+          x: [0.0, 0.0]
+          y: [0.0, 0.0]
+        yaws: 0.0
+    bean_cup:
+      object: bean_cup
+      placement:
+        type: surface
+        surface: cloth
+        ranges:
+          x: [0.1, 0.12]
+          y: [-0.01, 0.01]
+        yaws: 0.0
+    target_bowl:
+      object: target_bowl
+      placement:
+        type: surface
+        surface: tray_top
+        ranges:
+          x: [-0.005, 0.005]
+          y: [-0.005, 0.005]
+        yaws: 0.0
+        orientation: [0.0, -0.0436194, 0.0, 0.9990482]
+    distractor_bowl:
+      object: distractor_bowl
+    slope_tray:
+      object: slope_tray
+      placement:
+        type: surface
+        surface: cloth
+        ranges:
+          x: [0.08, 0.08]
+          y: [-0.26, -0.26]
+        yaws: 0.0
+  groups:
+    bowls_layout:
+      type: slot
+      nodes:
+      - distractor_bowl
+      slots:
+        distractor_bowl_L:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.12]
+            y: [0.22, 0.3]
+          yaws: [-3.14, 3.14]
+        distractor_bowl_R:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.12]
+            y: [-0.3, -0.22]
+          yaws: [-3.14, 3.14]
+      assignments:
+        mode: explicit
+        items:
+        - id: l0
+          bindings:
+            distractor_bowl: distractor_bowl_L
+      default_assignment: l0
+    beans_in_cup:
+      type: region
+      nodes: '@instances:beans'
+      surface: cup_rim
+      ranges:
+        x: [-0.024, 0.024]
+        y: [-0.024, 0.024]
+      yaws: 0.0
+      sample_method: stratified
+      spacing_mode: center_distance
+      min_spacing: 0.003
+      jitter: 0.2
+      max_attempts: 4000
+      ignore_intra_group_collision: true
+variants:
+  materialization:
+  - id: tablecloth_pick
+    type: asset_pool_choice
+    choices:
+    - id: pick_any
+      candidate_refs:
+      - tablecloth.any
+      weight: 1.0
+  - id: distractor_bowl_pick
+    type: asset_pool_choice
+    choices:
+    - id: pick_any
+      candidate_refs:
+      - distractor_bowl.any
+      weight: 1.0
+  assignments: []

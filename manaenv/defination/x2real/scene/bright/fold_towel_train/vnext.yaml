@@ -1,0 +1,194 @@
+definition:
+  scene_type: bright_fold_towel_train_scene
+  metadata:
+    name: bright_fold_towel_train
+    source: bright/fold_towel
+    semantic_goal: 'Fold the towel in half away from the robot, then put it flat into the basket | case: training
+      distribution'
+render_settings:
+  gen_method: 0
+  tags: green_booth
+background:
+  id: booth
+  asset:
+    type: asset_id
+    id: green_booth_mesh
+  pose:
+    position: [-0.452, -0.271, -0.985]
+    orientation: [0.0, 0.0, -0.704, 0.709]
+  required_surfaces:
+  - tabletop
+objects:
+- id: tablecloth
+  asset:
+    type: pool
+    candidates:
+    - id: any
+      assets:
+      - bright_tablecloth_blue_cloud
+      - bright_tablecloth_red_check
+      - bright_tablecloth_forest_deer
+      - bright_tablecloth_gray_grid
+      - bright_tablecloth_solid_beige
+      - bright_tablecloth_solid_olive
+      - bright_tablecloth_solid_lightgray
+      - bright_tablecloth_solid_navy
+  semantic_tags:
+  - background_cloth
+  kinematic: true
+  anchors:
+    local_surfaces:
+      top:
+        center: [0.0, 0.0, 0.0015]
+        x_axis: [-1.0, 0.0, 0.0]
+        y_axis: [0.0, -1.0, 0.0]
+        bounds:
+          x: [-0.32, 0.32]
+          y: [-0.53, 0.53]
+- id: towel
+  asset:
+    type: pool
+    candidates:
+    - id: any
+      assets:
+      - bright_towel_blue
+      - bright_towel_pink
+      - bright_towel_yellow
+      - bright_towel_green
+      - bright_towel_purple
+  semantic_tags:
+  - pickable
+  - towel
+  - cloth_placeholder
+- id: basket
+  asset:
+    type: asset_id
+    id: bright_basket_green
+  semantic_tags:
+  - container
+- id: clutter_1
+  asset:
+    type: pool
+    candidates:
+    - id: any
+      assets:
+      - bright_block_cube_beech
+  semantic_tags:
+  - distractor
+- id: clutter_2
+  asset:
+    type: pool
+    candidates:
+    - id: any
+      assets:
+      - bright_block_cyl_sapele
+  semantic_tags:
+  - distractor
+layout:
+  surfaces:
+    tabletop:
+      type: ref
+      ref: background.tabletop
+    cloth:
+      type: ref
+      ref: tablecloth.top
+  nodes:
+    tablecloth:
+      object: tablecloth
+      placement:
+        type: surface
+        surface: tabletop
+        ranges:
+          x: [0.0, 0.0]
+          y: [0.0, 0.0]
+        yaws: 0.0
+    towel:
+      object: towel
+      placement:
+        type: surface
+        surface: cloth
+        ranges:
+          x: [0.1, 0.16]
+          y: [-0.04, 0.04]
+        yaws: [-0.35, 0.35]
+    basket:
+      object: basket
+    clutter_1:
+      object: clutter_1
+      placement:
+        type: surface
+        surface: cloth
+        ranges:
+          x: [-0.25, -0.05]
+          y: [-0.45, -0.2]
+        yaws: [-3.14, 3.14]
+    clutter_2:
+      object: clutter_2
+      placement:
+        type: surface
+        surface: cloth
+        ranges:
+          x: [-0.25, -0.05]
+          y: [-0.45, -0.2]
+        yaws: [-3.14, 3.14]
+  groups:
+    basket_side:
+      type: slot
+      nodes:
+      - basket
+      slots:
+        basket_L:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [-0.19, -0.05]
+            y: [0.21, 0.35]
+          yaws: [1.3108, 1.8308]
+        basket_R:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [-0.19, -0.05]
+            y: [-0.35, -0.21]
+          yaws: [1.3108, 1.8308]
+      assignments:
+        mode: explicit
+        items:
+        - id: l0
+          bindings:
+            basket: basket_L
+        - id: r0
+          bindings:
+            basket: basket_R
+      default_assignment: l0
+variants:
+  materialization:
+  - id: tablecloth_pick
+    type: asset_pool_choice
+    choices:
+    - id: pick_any
+      candidate_refs:
+      - tablecloth.any
+      weight: 1.0
+  - id: towel_pick
+    type: asset_pool_choice
+    choices:
+    - id: pick_any
+      candidate_refs:
+      - towel.any
+      weight: 1.0
+  - id: clutter_1_pick
+    type: asset_pool_choice
+    choices:
+    - id: pick_any
+      candidate_refs:
+      - clutter_1.any
+      weight: 1.0
+  - id: clutter_2_pick
+    type: asset_pool_choice
+    choices:
+    - id: pick_any
+      candidate_refs:
+      - clutter_2.any
+      weight: 1.0
+  assignments: []

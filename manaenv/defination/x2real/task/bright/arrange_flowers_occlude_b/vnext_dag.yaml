@@ -1,0 +1,199 @@
+graph_task_generator:
+  definition:
+    task_type: bright_arrange_flowers_occlude_b
+    layout:
+      runtime_sample:
+        id: runtime
+        targets:
+          assets:
+          - id: tablecloth_asset
+            target:
+              type: node
+              id: tablecloth
+            selector:
+              type: uniform
+          placements:
+          - id: tablecloth
+            target:
+              type: node
+              id: tablecloth
+            sample:
+              type: inherit
+          - id: flowers_layout
+            target:
+              type: group
+              id: flowers_layout
+            sample:
+              type: inherit
+        global:
+          lighting:
+            dome:
+              intensity:
+                range: [600.0, 2600.0]
+              color_temperature:
+                range: [3600.0, 7500.0]
+              rotation:
+                range: [-180.0, 180.0]
+    component_sections:
+      log_component:
+        entries:
+          active_assets:
+            trigger: enter
+            func: schema_vnext_active_asset_ids_label
+            params:
+              object_names:
+              - tablecloth
+      instruction_component:
+        instructions:
+        - text: 'Put the deep purple, light blue, yellow, red and flesh-pink roses into the vase one at a time,
+            in this order. For each rose: with the arm on the flowers'' side pick it up by the stem from above,
+            lift it about 15 cm above the middle of the table and hand it over in mid-air to the other arm, which
+            grasps the flower head; then insert the stem into the vase and let go. Leave the other roses on the
+            table.'
+          log:
+            instruction_variant: direct
+      overlay_component:
+        evaluation: true
+        entries:
+        - log_key: active_assets
+          label: Assets
+          font_size: 18
+      event_component:
+        terms:
+          bright_occlude:
+            _func: manaenv.terms.bright_events.bright_occluder
+            mode: interval
+            interval_range_s: [0.1, 0.1]
+            is_global_time: false
+            asset_cfg: occluder
+            key: occlude
+            stage: pick_purple
+            delay_s: 0.0
+            duration_s: 2.0
+            park_xyz: [0.68, -0.27, -0.55]
+            distance: 0.12
+  nodes:
+  - id: pick_purple
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/pick_purple.yaml
+    score: 2
+  - id: purple_to_middle
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/purple_to_middle.yaml
+    score: 2
+  - id: purple_handover
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/purple_handover.yaml
+    score: 2
+  - id: purple_over_vase
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/purple_over_vase.yaml
+    score: 2
+  - id: purple_inserted
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/purple_inserted.yaml
+    score: 2
+  - id: pick_blue
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/pick_blue.yaml
+    score: 2
+  - id: blue_to_middle
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/blue_to_middle.yaml
+    score: 2
+  - id: blue_handover
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/blue_handover.yaml
+    score: 2
+  - id: blue_over_vase
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/blue_over_vase.yaml
+    score: 2
+  - id: blue_inserted
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/blue_inserted.yaml
+    score: 2
+  - id: pick_yellow
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/pick_yellow.yaml
+    score: 2
+  - id: yellow_to_middle
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/yellow_to_middle.yaml
+    score: 2
+  - id: yellow_handover
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/yellow_handover.yaml
+    score: 2
+  - id: yellow_over_vase
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/yellow_over_vase.yaml
+    score: 2
+  - id: yellow_inserted
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/yellow_inserted.yaml
+    score: 2
+  - id: pick_red
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/pick_red.yaml
+    score: 2
+  - id: red_to_middle
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/red_to_middle.yaml
+    score: 2
+  - id: red_handover
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/red_handover.yaml
+    score: 2
+  - id: red_over_vase
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/red_over_vase.yaml
+    score: 2
+  - id: red_inserted
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/red_inserted.yaml
+    score: 2
+  - id: pick_pink
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/pick_pink.yaml
+    score: 2
+  - id: pink_to_middle
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/pink_to_middle.yaml
+    score: 2
+  - id: pink_handover
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/pink_handover.yaml
+    score: 2
+  - id: pink_over_vase
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/pink_over_vase.yaml
+    score: 2
+  - id: pink_inserted
+    include: x2real/task/bright/arrange_flowers_occlude_b/stages/pink_inserted.yaml
+    score: 2
+  edges:
+  - src: pick_purple
+    dst: purple_to_middle
+  - src: purple_to_middle
+    dst: purple_handover
+  - src: purple_handover
+    dst: purple_over_vase
+  - src: purple_over_vase
+    dst: purple_inserted
+  - src: purple_inserted
+    dst: pick_blue
+  - src: pick_blue
+    dst: blue_to_middle
+  - src: blue_to_middle
+    dst: blue_handover
+  - src: blue_handover
+    dst: blue_over_vase
+  - src: blue_over_vase
+    dst: blue_inserted
+  - src: blue_inserted
+    dst: pick_yellow
+  - src: pick_yellow
+    dst: yellow_to_middle
+  - src: yellow_to_middle
+    dst: yellow_handover
+  - src: yellow_handover
+    dst: yellow_over_vase
+  - src: yellow_over_vase
+    dst: yellow_inserted
+  - src: yellow_inserted
+    dst: pick_red
+  - src: pick_red
+    dst: red_to_middle
+  - src: red_to_middle
+    dst: red_handover
+  - src: red_handover
+    dst: red_over_vase
+  - src: red_over_vase
+    dst: red_inserted
+  - src: red_inserted
+    dst: pick_pink
+  - src: pick_pink
+    dst: pink_to_middle
+  - src: pink_to_middle
+    dst: pink_handover
+  - src: pink_handover
+    dst: pink_over_vase
+  - src: pink_over_vase
+    dst: pink_inserted

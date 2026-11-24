@@ -1,0 +1,53 @@
+include: x2real/task/bright/stack_rings_disturb/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_stack_rings_disturb_ring1_above_peg
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          _combine: and
+          terms:
+          - above:
+              _func: object_position_in_zone
+              object_cfg: '@ring_1'
+              consecutive_steps: 3
+              reference_cfg: '@destination'
+              in_reference_frame: true
+              x_range: [-0.06, 0.06]
+              y_range: [-0.06, 0.06]
+              z_range: [0.145, 0.4]
+          - hands:
+              _combine: or
+              terms:
+              - base_left__ring1_right:
+                  _combine: and
+                  terms:
+                  - base_left:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@base_left_contact'
+                      force_threshold: 0.1
+                      consecutive_steps: 1
+                  - ring1_right:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@ring1_right_contact'
+                      force_threshold: 0.1
+                      consecutive_steps: 1
+              - base_right__ring1_left:
+                  _combine: and
+                  terms:
+                  - base_right:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@base_right_contact'
+                      force_threshold: 0.1
+                      consecutive_steps: 1
+                  - ring1_left:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@ring1_left_contact'
+                      force_threshold: 0.1
+                      consecutive_steps: 1
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: ring 1 lifted >= 20 mm above the peg top (M1)

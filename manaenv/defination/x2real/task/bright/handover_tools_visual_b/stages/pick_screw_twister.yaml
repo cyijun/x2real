@@ -1,0 +1,36 @@
+include: x2real/task/bright/handover_tools_visual_b/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_handover_tools_visual_b_pick_screw_twister
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          _combine: and
+          terms:
+          - grab:
+              _combine: or
+              terms:
+              - tool_screw_twister_by_left:
+                  _func: object_contact_destination
+                  contact_sensor_cfgs: '@tool_screw_twister_left_contact'
+                  force_threshold: 0.1
+                  consecutive_steps: 3
+              - tool_screw_twister_by_right:
+                  _func: object_contact_destination
+                  contact_sensor_cfgs: '@tool_screw_twister_right_contact'
+                  force_threshold: 0.1
+                  consecutive_steps: 3
+          - raised:
+              _func: object_lifted
+              object_cfg: '@tool_screw_twister'
+              min_lift: 0.04
+              consecutive_steps: 3
+              contact_sensor:
+              - left_gripper_contact
+              - right_gripper_contact
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: one hand picks the red T-handle screw (G1)

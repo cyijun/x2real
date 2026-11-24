@@ -1,0 +1,147 @@
+definition:
+  scene_type: bright_fold_towel_pos2_b_scene
+  metadata:
+    name: bright_fold_towel_pos2_b
+    source: bright/fold_towel
+    semantic_goal: 'Fold the towel in half away from the robot, then put it flat into the basket | case: the basket
+      stands on a 5 deg slope tray (38 x 32 cm, kinematic), fixed side'
+render_settings:
+  gen_method: 0
+  tags: green_booth
+background:
+  id: booth
+  asset:
+    type: asset_id
+    id: green_booth_mesh
+  pose:
+    position: [-0.452, -0.271, -0.985]
+    orientation: [0.0, 0.0, -0.704, 0.709]
+  required_surfaces:
+  - tabletop
+objects:
+- id: tablecloth
+  asset:
+    type: pool
+    candidates:
+    - id: any
+      assets:
+      - bright_tablecloth_blue_cloud
+      - bright_tablecloth_red_check
+      - bright_tablecloth_forest_deer
+      - bright_tablecloth_gray_grid
+  semantic_tags:
+  - background_cloth
+  kinematic: true
+  anchors:
+    local_surfaces:
+      top:
+        center: [0.0, 0.0, 0.0015]
+        x_axis: [-1.0, 0.0, 0.0]
+        y_axis: [0.0, -1.0, 0.0]
+        bounds:
+          x: [-0.32, 0.32]
+          y: [-0.53, 0.53]
+- id: towel
+  asset:
+    type: pool
+    candidates:
+    - id: any
+      assets:
+      - bright_towel_blue
+      - bright_towel_pink
+      - bright_towel_yellow
+      - bright_towel_green
+      - bright_towel_purple
+  semantic_tags:
+  - pickable
+  - towel
+  - cloth_placeholder
+- id: basket
+  asset:
+    type: asset_id
+    id: bright_basket_green
+  semantic_tags:
+  - container
+- id: slope_tray
+  asset:
+    type: asset_id
+    id: bright_slope_tray
+  semantic_tags:
+  - fixture
+  kinematic: true
+  anchors:
+    local_surfaces:
+      top:
+        center: [0.0, 0.0, 0.0286]
+        x_axis: [0.99619, 0.0, 0.08716]
+        y_axis: [0.0, 1.0, 0.0]
+        bounds:
+          x: [-0.18, 0.18]
+          y: [-0.15, 0.15]
+layout:
+  surfaces:
+    tabletop:
+      type: ref
+      ref: background.tabletop
+    cloth:
+      type: ref
+      ref: tablecloth.top
+    tray_top:
+      type: ref
+      ref: slope_tray.top
+  nodes:
+    tablecloth:
+      object: tablecloth
+      placement:
+        type: surface
+        surface: tabletop
+        ranges:
+          x: [0.0, 0.0]
+          y: [0.0, 0.0]
+        yaws: 0.0
+    towel:
+      object: towel
+      placement:
+        type: surface
+        surface: cloth
+        ranges:
+          x: [0.13, 0.16]
+          y: [-0.06, -0.04]
+        yaws: 0.0
+    basket:
+      object: basket
+      placement:
+        type: surface
+        surface: tray_top
+        ranges:
+          x: [-0.005, 0.005]
+          y: [-0.005, 0.005]
+        yaws: 1.5708
+        orientation: [0.0, -0.0436194, 0.0, 0.9990482]
+    slope_tray:
+      object: slope_tray
+      placement:
+        type: surface
+        surface: cloth
+        ranges:
+          x: [-0.135, -0.135]
+          y: [0.31, 0.31]
+        yaws: 1.5708
+  groups: {}
+variants:
+  materialization:
+  - id: tablecloth_pick
+    type: asset_pool_choice
+    choices:
+    - id: pick_any
+      candidate_refs:
+      - tablecloth.any
+      weight: 1.0
+  - id: towel_pick
+    type: asset_pool_choice
+    choices:
+    - id: pick_any
+      candidate_refs:
+      - towel.any
+      weight: 1.0
+  assignments: []

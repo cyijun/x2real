@@ -1,0 +1,54 @@
+include: x2real/task/bright/fold_towel_distractor/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_fold_towel_distractor_pick_folded
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          _combine: and
+          terms:
+          - one_hand:
+              _combine: or
+              terms:
+              - towel_only_left:
+                  _combine: and
+                  terms:
+                  - towel_left_on:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@towel_left_contact'
+                      force_threshold: 0.1
+                      consecutive_steps: 3
+                  - towel_right_off:
+                      _func: object_no_contact_destination
+                      contact_sensor_cfgs:
+                      - '@towel_right_contact'
+                      force_threshold: 0.05
+                      consecutive_steps: 1
+              - towel_only_right:
+                  _combine: and
+                  terms:
+                  - towel_right_on:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@towel_right_contact'
+                      force_threshold: 0.1
+                      consecutive_steps: 3
+                  - towel_left_off:
+                      _func: object_no_contact_destination
+                      contact_sensor_cfgs:
+                      - '@towel_left_contact'
+                      force_threshold: 0.05
+                      consecutive_steps: 1
+          - raised:
+              _func: object_lifted
+              object_cfg: '@towel'
+              min_lift: 0.05
+              consecutive_steps: 3
+              contact_sensor:
+              - left_gripper_contact
+              - right_gripper_contact
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: one hand grasps the folded edge and lifts the towel (G1)

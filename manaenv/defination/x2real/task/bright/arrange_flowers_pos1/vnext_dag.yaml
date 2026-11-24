@@ -1,0 +1,84 @@
+graph_task_generator:
+  definition:
+    task_type: bright_arrange_flowers_pos1
+    layout:
+      runtime_sample:
+        id: runtime
+        targets:
+          assets:
+          - id: tablecloth_asset
+            target:
+              type: node
+              id: tablecloth
+            selector:
+              type: uniform
+          placements:
+          - id: tablecloth
+            target:
+              type: node
+              id: tablecloth
+            sample:
+              type: inherit
+          - id: flowers_layout
+            target:
+              type: group
+              id: flowers_layout
+            sample:
+              type: inherit
+        global:
+          lighting:
+            dome:
+              intensity:
+                range: [600.0, 2600.0]
+              color_temperature:
+                range: [3600.0, 7500.0]
+              rotation:
+                range: [-180.0, 180.0]
+    component_sections:
+      log_component:
+        entries:
+          active_assets:
+            trigger: enter
+            func: schema_vnext_active_asset_ids_label
+            params:
+              object_names:
+              - tablecloth
+      instruction_component:
+        instructions:
+        - text: 'Put the red rose into the vase one at a time, in this order. For each rose: with the arm on the
+            flowers'' side pick it up by the stem from above, lift it about 15 cm above the middle of the table
+            and hand it over in mid-air to the other arm, which grasps the flower head; then insert the stem into
+            the vase and let go. Leave the other roses on the table.'
+          log:
+            instruction_variant: direct
+      overlay_component:
+        evaluation: true
+        entries:
+        - log_key: active_assets
+          label: Assets
+          font_size: 18
+  nodes:
+  - id: pick_red
+    include: x2real/task/bright/arrange_flowers_pos1/stages/pick_red.yaml
+    score: 2
+  - id: red_to_middle
+    include: x2real/task/bright/arrange_flowers_pos1/stages/red_to_middle.yaml
+    score: 2
+  - id: red_handover
+    include: x2real/task/bright/arrange_flowers_pos1/stages/red_handover.yaml
+    score: 2
+  - id: red_over_vase
+    include: x2real/task/bright/arrange_flowers_pos1/stages/red_over_vase.yaml
+    score: 2
+  - id: red_inserted
+    include: x2real/task/bright/arrange_flowers_pos1/stages/red_inserted.yaml
+    score: 2
+  edges:
+  - src: pick_red
+    dst: red_to_middle
+  - src: red_to_middle
+    dst: red_handover
+  - src: red_handover
+    dst: red_over_vase
+  - src: red_over_vase
+    dst: red_inserted

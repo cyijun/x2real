@@ -83,6 +83,6 @@ boards:
     scoring: id_only
     capabilities:
     - benchmark
-    case_count: 11
+    case_count: 78
     save_path: ./outputs/x2real_eval/bright_arm6a_tabletop/benchmark
   # <<< bright2026 end

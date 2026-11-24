@@ -1,0 +1,52 @@
+include: x2real/task/bright/pour_beans_pos2_b/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_pour_beans_pos2_b_pick_cup
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          _combine: and
+          terms:
+          - hands:
+              _combine: or
+              terms:
+              - bowl_left__cup_right:
+                  _combine: and
+                  terms:
+                  - bowl_left:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@bowl_left_contact'
+                      force_threshold: 0.1
+                      consecutive_steps: 1
+                  - cup_right:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@cup_right_contact'
+                      force_threshold: 0.2
+                      consecutive_steps: 5
+              - bowl_right__cup_left:
+                  _combine: and
+                  terms:
+                  - bowl_right:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@bowl_right_contact'
+                      force_threshold: 0.1
+                      consecutive_steps: 1
+                  - cup_left:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@cup_left_contact'
+                      force_threshold: 0.2
+                      consecutive_steps: 5
+          - cup_lifted:
+              _func: object_lifted
+              object_cfg: '@bean_cup'
+              min_lift: 0.05
+              consecutive_steps: 3
+              contact_sensor:
+              - left_gripper_contact
+              - right_gripper_contact
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: the other hand picks up the bean cup (G1)

@@ -1,0 +1,30 @@
+include: x2real/task/bright/arrange_flowers_visual_b/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_arrange_flowers_visual_b_purple_over_vase
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          _combine: and
+          terms:
+          - above:
+              _func: object_position_in_zone
+              object_cfg: '@flower_purple'
+              consecutive_steps: 3
+              reference_cfg: '@vase'
+              xy_distance_threshold: 0.05
+              z_min_offset: 0.15
+              z_max_offset: 0.45
+          - vertical:
+              _func: object_tilt_in_range
+              object_cfg: '@flower_purple'
+              axis: x
+              velocity_threshold: 0.5
+              consecutive_steps: 3
+              min_abs_dot: 0.8
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: deep purple stem bottom above the vase mouth (M3)

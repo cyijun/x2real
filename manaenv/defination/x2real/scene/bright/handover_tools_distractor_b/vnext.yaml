@@ -1,0 +1,294 @@
+definition:
+  scene_type: bright_handover_tools_distractor_b_scene
+  metadata:
+    name: bright_handover_tools_distractor_b
+    source: bright/handover_tools
+    semantic_goal: 'One hand picks a tool, hands it to the other hand in mid-air above the table centre, which puts
+      it into the toolbox (sides swap) | case: 3 distractor(s) [''bright_odd_redpaint_tri'', ''bright_odd_redpaint_star'',
+      ''bright_odd_redpaint_ell''], re-placed into free table space every reset (ManaEnv distractor_free_space)'
+render_settings:
+  gen_method: 0
+  tags: green_booth
+background:
+  id: booth
+  asset:
+    type: asset_id
+    id: green_booth_mesh
+  pose:
+    position: [-0.452, -0.271, -0.985]
+    orientation: [0.0, 0.0, -0.704, 0.709]
+  required_surfaces:
+  - tabletop
+objects:
+- id: tablecloth
+  asset:
+    type: pool
+    candidates:
+    - id: any
+      assets:
+      - bright_tablecloth_blue_cloud
+      - bright_tablecloth_red_check
+      - bright_tablecloth_forest_deer
+      - bright_tablecloth_gray_grid
+  semantic_tags:
+  - background_cloth
+  kinematic: true
+  anchors:
+    local_surfaces:
+      top:
+        center: [0.0, 0.0, 0.0015]
+        x_axis: [-1.0, 0.0, 0.0]
+        y_axis: [0.0, -1.0, 0.0]
+        bounds:
+          x: [-0.32, 0.32]
+          y: [-0.53, 0.53]
+- id: box
+  asset:
+    type: asset_id
+    id: bright_toolbox
+  semantic_tags:
+  - container
+  - toolbox
+- id: hammer
+  asset:
+    type: asset_id
+    id: bright_hammer
+  semantic_tags:
+  - pickable
+  - tool_hammer
+- id: screwdriver
+  asset:
+    type: asset_id
+    id: bright_screwdriver
+  semantic_tags:
+  - pickable
+  - tool_screwdriver
+- id: screw_twister
+  asset:
+    type: asset_id
+    id: bright_screw_twister
+  semantic_tags:
+  - pickable
+  - tool_screw_twister
+- id: clutter_1
+  asset:
+    type: asset_id
+    id: bright_odd_redpaint_tri
+  semantic_tags:
+  - distractor
+- id: clutter_2
+  asset:
+    type: asset_id
+    id: bright_odd_redpaint_star
+  semantic_tags:
+  - distractor
+- id: clutter_3
+  asset:
+    type: asset_id
+    id: bright_odd_redpaint_ell
+  semantic_tags:
+  - distractor
+layout:
+  surfaces:
+    tabletop:
+      type: ref
+      ref: background.tabletop
+    cloth:
+      type: ref
+      ref: tablecloth.top
+  nodes:
+    tablecloth:
+      object: tablecloth
+      placement:
+        type: surface
+        surface: tabletop
+        ranges:
+          x: [0.0, 0.0]
+          y: [0.0, 0.0]
+        yaws: 0.0
+    box:
+      object: box
+    hammer:
+      object: hammer
+    screwdriver:
+      object: screwdriver
+    screw_twister:
+      object: screw_twister
+    clutter_1:
+      object: clutter_1
+      placement:
+        type: surface
+        surface: cloth
+        ranges:
+          x: [-0.25, -0.08]
+          y: [-0.45, -0.05]
+        yaws: [-3.14, 3.14]
+    clutter_2:
+      object: clutter_2
+      placement:
+        type: surface
+        surface: cloth
+        ranges:
+          x: [-0.25, -0.08]
+          y: [-0.45, -0.05]
+        yaws: [-3.14, 3.14]
+    clutter_3:
+      object: clutter_3
+      placement:
+        type: surface
+        surface: cloth
+        ranges:
+          x: [-0.25, -0.08]
+          y: [-0.45, -0.05]
+        yaws: [-3.14, 3.14]
+  groups:
+    tools_layout:
+      type: slot
+      nodes:
+      - box
+      - hammer
+      - screwdriver
+      - screw_twister
+      slots:
+        box_L:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [-0.04, 0.04]
+            y: [0.24, 0.32]
+          yaws: [-0.1, 0.1]
+        p0s0_L:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.14]
+            y: [-0.37, -0.35]
+          yaws: [-0.08, 0.08]
+        p0s1_L:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.14]
+            y: [-0.26, -0.24]
+          yaws: [-0.08, 0.08]
+        p0s2_L:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.14]
+            y: [-0.15, -0.13]
+          yaws: [-0.08, 0.08]
+        box_R:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [-0.04, 0.04]
+            y: [-0.32, -0.24]
+          yaws: [-0.1, 0.1]
+        p0s0_R:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.14]
+            y: [0.35, 0.37]
+          yaws: [-0.08, 0.08]
+        p0s1_R:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.14]
+            y: [0.24, 0.26]
+          yaws: [-0.08, 0.08]
+        p0s2_R:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.14]
+            y: [0.13, 0.15]
+          yaws: [-0.08, 0.08]
+      assignments:
+        mode: explicit
+        items:
+        - id: l0
+          bindings:
+            box: box_L
+            hammer: p0s0_L
+            screwdriver: p0s1_L
+            screw_twister: p0s2_L
+        - id: l1
+          bindings:
+            box: box_L
+            hammer: p0s2_L
+            screwdriver: p0s1_L
+            screw_twister: p0s0_L
+        - id: l2
+          bindings:
+            box: box_L
+            hammer: p0s0_L
+            screwdriver: p0s2_L
+            screw_twister: p0s1_L
+        - id: l3
+          bindings:
+            box: box_L
+            hammer: p0s1_L
+            screwdriver: p0s0_L
+            screw_twister: p0s2_L
+        - id: l4
+          bindings:
+            box: box_L
+            hammer: p0s1_L
+            screwdriver: p0s2_L
+            screw_twister: p0s0_L
+        - id: l5
+          bindings:
+            box: box_L
+            hammer: p0s2_L
+            screwdriver: p0s0_L
+            screw_twister: p0s1_L
+        - id: r0
+          bindings:
+            box: box_R
+            hammer: p0s0_R
+            screwdriver: p0s1_R
+            screw_twister: p0s2_R
+        - id: r1
+          bindings:
+            box: box_R
+            hammer: p0s2_R
+            screwdriver: p0s1_R
+            screw_twister: p0s0_R
+        - id: r2
+          bindings:
+            box: box_R
+            hammer: p0s0_R
+            screwdriver: p0s2_R
+            screw_twister: p0s1_R
+        - id: r3
+          bindings:
+            box: box_R
+            hammer: p0s1_R
+            screwdriver: p0s0_R
+            screw_twister: p0s2_R
+        - id: r4
+          bindings:
+            box: box_R
+            hammer: p0s1_R
+            screwdriver: p0s2_R
+            screw_twister: p0s0_R
+        - id: r5
+          bindings:
+            box: box_R
+            hammer: p0s2_R
+            screwdriver: p0s0_R
+            screw_twister: p0s1_R
+      default_assignment: l0
+variants:
+  materialization:
+  - id: tablecloth_pick
+    type: asset_pool_choice
+    choices:
+    - id: pick_any
+      candidate_refs:
+      - tablecloth.any
+      weight: 1.0
+  assignments: []

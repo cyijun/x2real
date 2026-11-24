@@ -1,0 +1,43 @@
+include: x2real/task/bright/arrange_flowers_train/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_arrange_flowers_train_pink_inserted
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          _combine: and
+          terms:
+          - touch:
+              _func: object_contact_destination
+              contact_sensor_cfgs: '@flower_pink_vase_contact'
+              force_threshold: 0.01
+              consecutive_steps: 5
+          - inside:
+              _func: object_position_in_zone
+              object_cfg: '@flower_pink'
+              consecutive_steps: 5
+              reference_cfg: '@vase'
+              velocity_threshold: 0.5
+              reference_footprint_zone: true
+              xy_inset_ratio: 0.1
+              z_range: [-0.03, 0.35]
+          - upright:
+              _func: object_tilt_in_range
+              object_cfg: '@flower_pink'
+              axis: x
+              velocity_threshold: 0.5
+              consecutive_steps: 5
+              min_abs_dot: 0.6
+          - free:
+              _func: object_no_contact_destination
+              contact_sensor_cfgs:
+              - '@flower_pink_left_contact'
+              - '@flower_pink_right_contact'
+              force_threshold: 0.05
+              consecutive_steps: 5
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: flesh-pink rose inserted and released, stays in the vase (P3)

@@ -1,0 +1,287 @@
+definition:
+  scene_type: bright_arrange_flowers_pos2_b_scene
+  metadata:
+    name: bright_arrange_flowers_pos2_b
+    source: bright/arrange_flowers_r2
+    semantic_goal: 'Insert crochet roses stem-first into the vase after a mid-air hand-over (5 colours, sides swap)
+      | case: the vase stands on a 5 deg slope tray (24 x 24 cm, kinematic), fixed side'
+render_settings:
+  gen_method: 0
+  tags: green_booth
+background:
+  id: booth
+  asset:
+    type: asset_id
+    id: green_booth_mesh
+  pose:
+    position: [-0.452, -0.271, -0.985]
+    orientation: [0.0, 0.0, -0.704, 0.709]
+  required_surfaces:
+  - tabletop
+objects:
+- id: tablecloth
+  asset:
+    type: pool
+    candidates:
+    - id: any
+      assets:
+      - bright_tablecloth_blue_cloud
+      - bright_tablecloth_red_check
+      - bright_tablecloth_forest_deer
+      - bright_tablecloth_gray_grid
+  semantic_tags:
+  - background_cloth
+  kinematic: true
+  anchors:
+    local_surfaces:
+      top:
+        center: [0.0, 0.0, 0.0015]
+        x_axis: [-1.0, 0.0, 0.0]
+        y_axis: [0.0, -1.0, 0.0]
+        bounds:
+          x: [-0.32, 0.32]
+          y: [-0.53, 0.53]
+- id: vase
+  asset:
+    type: asset_id
+    id: bright_vase_white
+  semantic_tags:
+  - container
+  - vase
+- id: flower_purple
+  asset:
+    type: asset_id
+    id: bright_flower_rose_purple
+  semantic_tags:
+  - pickable
+  - flower_purple
+- id: flower_blue
+  asset:
+    type: asset_id
+    id: bright_flower_rose_blue
+  semantic_tags:
+  - pickable
+  - flower_blue
+- id: flower_yellow
+  asset:
+    type: asset_id
+    id: bright_flower_rose_yellow
+  semantic_tags:
+  - pickable
+  - flower_yellow
+- id: flower_red
+  asset:
+    type: asset_id
+    id: bright_flower_rose_red
+  semantic_tags:
+  - pickable
+  - flower_red
+- id: flower_pink
+  asset:
+    type: asset_id
+    id: bright_flower_rose_pink
+  semantic_tags:
+  - pickable
+  - flower_pink
+- id: slope_tray
+  asset:
+    type: asset_id
+    id: bright_slope_tray_small
+  semantic_tags:
+  - fixture
+  kinematic: true
+  anchors:
+    local_surfaces:
+      top:
+        center: [0.0, 0.0, 0.0225]
+        x_axis: [0.99619, 0.0, 0.08716]
+        y_axis: [0.0, 1.0, 0.0]
+        bounds:
+          x: [-0.11, 0.11]
+          y: [-0.11, 0.11]
+layout:
+  surfaces:
+    tabletop:
+      type: ref
+      ref: background.tabletop
+    cloth:
+      type: ref
+      ref: tablecloth.top
+    tray_top:
+      type: ref
+      ref: slope_tray.top
+  nodes:
+    tablecloth:
+      object: tablecloth
+      placement:
+        type: surface
+        surface: tabletop
+        ranges:
+          x: [0.0, 0.0]
+          y: [0.0, 0.0]
+        yaws: 0.0
+    vase:
+      object: vase
+      placement:
+        type: surface
+        surface: tray_top
+        ranges:
+          x: [-0.005, 0.005]
+          y: [-0.005, 0.005]
+        yaws: 0.0
+        orientation: [0.0, -0.0436194, 0.0, 0.9990482]
+    flower_purple:
+      object: flower_purple
+    flower_blue:
+      object: flower_blue
+    flower_yellow:
+      object: flower_yellow
+    flower_red:
+      object: flower_red
+    flower_pink:
+      object: flower_pink
+    slope_tray:
+      object: slope_tray
+      placement:
+        type: surface
+        surface: cloth
+        ranges:
+          x: [-0.01, -0.01]
+          y: [0.25, 0.25]
+        yaws: 0.0
+  groups:
+    flowers_layout:
+      type: slot
+      nodes:
+      - flower_purple
+      - flower_blue
+      - flower_yellow
+      - flower_red
+      - flower_pink
+      slots:
+        p0s0_L:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.1]
+            y: [-0.433, -0.427]
+          yaws: [-0.02, 0.02]
+        p0s1_L:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.1]
+            y: [-0.328, -0.322]
+          yaws: [-0.02, 0.02]
+        p0s2_L:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.1]
+            y: [-0.223, -0.217]
+          yaws: [-0.02, 0.02]
+        p0s3_L:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.1]
+            y: [-0.118, -0.112]
+          yaws: [-0.02, 0.02]
+        p0s4_L:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.1]
+            y: [-0.013, -0.007]
+          yaws: [-0.02, 0.02]
+        p0s0_R:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.1]
+            y: [0.427, 0.433]
+          yaws: [-0.02, 0.02]
+        p0s1_R:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.1]
+            y: [0.322, 0.328]
+          yaws: [-0.02, 0.02]
+        p0s2_R:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.1]
+            y: [0.217, 0.223]
+          yaws: [-0.02, 0.02]
+        p0s3_R:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.1]
+            y: [0.112, 0.118]
+          yaws: [-0.02, 0.02]
+        p0s4_R:
+          type: surface
+          surface: cloth
+          ranges:
+            x: [0.06, 0.1]
+            y: [0.007, 0.013]
+          yaws: [-0.02, 0.02]
+      assignments:
+        mode: explicit
+        items:
+        - id: l0
+          bindings:
+            flower_purple: p0s0_L
+            flower_blue: p0s1_L
+            flower_yellow: p0s2_L
+            flower_red: p0s3_L
+            flower_pink: p0s4_L
+        - id: l1
+          bindings:
+            flower_purple: p0s0_L
+            flower_blue: p0s2_L
+            flower_yellow: p0s3_L
+            flower_red: p0s4_L
+            flower_pink: p0s1_L
+        - id: l2
+          bindings:
+            flower_purple: p0s4_L
+            flower_blue: p0s3_L
+            flower_yellow: p0s2_L
+            flower_red: p0s1_L
+            flower_pink: p0s0_L
+        - id: l3
+          bindings:
+            flower_purple: p0s1_L
+            flower_blue: p0s0_L
+            flower_yellow: p0s2_L
+            flower_red: p0s3_L
+            flower_pink: p0s4_L
+        - id: l4
+          bindings:
+            flower_purple: p0s2_L
+            flower_blue: p0s0_L
+            flower_yellow: p0s1_L
+            flower_red: p0s3_L
+            flower_pink: p0s4_L
+        - id: l5
+          bindings:
+            flower_purple: p0s2_L
+            flower_blue: p0s1_L
+            flower_yellow: p0s3_L
+            flower_red: p0s4_L
+            flower_pink: p0s0_L
+      default_assignment: l0
+variants:
+  materialization:
+  - id: tablecloth_pick
+    type: asset_pool_choice
+    choices:
+    - id: pick_any
+      candidate_refs:
+      - tablecloth.any
+      weight: 1.0
+  assignments: []

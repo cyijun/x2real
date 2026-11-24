@@ -1,0 +1,90 @@
+graph_task_generator:
+  definition:
+    task_type: bright_pour_beans_distractor_b
+    layout:
+      runtime_sample:
+        id: runtime
+        targets:
+          assets:
+          - id: tablecloth_asset
+            target:
+              type: node
+              id: tablecloth
+            selector:
+              type: uniform
+          - id: distractor_bowl_asset
+            target:
+              type: node
+              id: distractor_bowl
+            selector:
+              type: uniform
+          placements:
+          - id: tablecloth
+            target:
+              type: node
+              id: tablecloth
+            sample:
+              type: inherit
+          - id: bowls_layout
+            target:
+              type: group
+              id: bowls_layout
+            sample:
+              type: inherit
+        global:
+          lighting:
+            dome:
+              intensity:
+                range: [600.0, 2600.0]
+              color_temperature:
+                range: [3600.0, 7500.0]
+              rotation:
+                range: [-180.0, 180.0]
+    component_sections:
+      log_component:
+        entries:
+          active_assets:
+            trigger: enter
+            func: schema_vnext_active_asset_ids_label
+            params:
+              object_names:
+              - tablecloth
+              - distractor_bowl
+      instruction_component:
+        instructions:
+        - text: Use the arm on the blue bowl's side to hold the blue bowl steady by its rim. With the other arm
+            pick up the green cup with red beans, move it above the blue bowl and tilt it to pour all the beans
+            into the bowl without spilling any, then put the cup back where it was.
+          log:
+            instruction_variant: direct
+      overlay_component:
+        evaluation: true
+        entries:
+        - log_key: active_assets
+          label: Assets
+          font_size: 18
+  nodes:
+  - id: hold_bowl
+    include: x2real/task/bright/pour_beans_distractor_b/stages/hold_bowl.yaml
+    score: 2
+  - id: pick_cup
+    include: x2real/task/bright/pour_beans_distractor_b/stages/pick_cup.yaml
+    score: 2
+  - id: cup_over_bowl
+    include: x2real/task/bright/pour_beans_distractor_b/stages/cup_over_bowl.yaml
+    score: 2
+  - id: pour
+    include: x2real/task/bright/pour_beans_distractor_b/stages/pour.yaml
+    score: 2
+  - id: return_cup
+    include: x2real/task/bright/pour_beans_distractor_b/stages/return_cup.yaml
+    score: 2
+  edges:
+  - src: hold_bowl
+    dst: pick_cup
+  - src: pick_cup
+    dst: cup_over_bowl
+  - src: cup_over_bowl
+    dst: pour
+  - src: pour
+    dst: return_cup

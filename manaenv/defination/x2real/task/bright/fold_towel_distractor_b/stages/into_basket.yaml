@@ -1,0 +1,66 @@
+include: x2real/task/bright/fold_towel_distractor_b/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_fold_towel_distractor_b_into_basket
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          _combine: and
+          terms:
+          - lowered:
+              _combine: and
+              terms:
+              - near_floor:
+                  _func: object_position_in_zone
+                  object_cfg: '@towel'
+                  consecutive_steps: 1
+                  reference_cfg: '@container'
+                  z_range: [-0.01, 0.034]
+                  in_reference_frame: true
+                  x_range: [-0.1, 0.1]
+                  y_range: &id001 [-0.07, 0.07]
+              - held:
+                  _combine: or
+                  terms:
+                  - towel_by_left:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@towel_left_contact'
+                      force_threshold: 0.05
+                      consecutive_steps: 1
+                  - towel_by_right:
+                      _func: object_contact_destination
+                      contact_sensor_cfgs: '@towel_right_contact'
+                      force_threshold: 0.05
+                      consecutive_steps: 1
+              _latch: true
+          - inside:
+              _func: object_position_in_zone
+              object_cfg: '@towel'
+              consecutive_steps: 10
+              reference_cfg: '@container'
+              velocity_threshold: 0.05
+              z_range: [-0.01, 0.04]
+              in_reference_frame: true
+              x_range: [-0.06, 0.06]
+              y_range: *id001
+          - flat:
+              _func: object_tilt_in_range
+              object_cfg: '@towel'
+              axis: z
+              velocity_threshold: 0.5
+              consecutive_steps: 10
+              min_dot: 0.9
+              max_dot: 1.0
+          - free:
+              _func: object_no_contact_destination
+              contact_sensor_cfgs:
+              - '@towel_left_contact'
+              - '@towel_right_contact'
+              force_threshold: 0.05
+              consecutive_steps: 10
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: lowered to <= 30 mm above the basket floor, released, lying flat inside (P2)

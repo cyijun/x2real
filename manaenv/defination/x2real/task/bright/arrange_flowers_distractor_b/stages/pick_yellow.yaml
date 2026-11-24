@@ -1,0 +1,36 @@
+include: x2real/task/bright/arrange_flowers_distractor_b/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_arrange_flowers_distractor_b_pick_yellow
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          _combine: and
+          terms:
+          - grab:
+              _combine: or
+              terms:
+              - flower_yellow_by_left:
+                  _func: object_contact_destination
+                  contact_sensor_cfgs: '@flower_yellow_left_contact'
+                  force_threshold: 0.05
+                  consecutive_steps: 3
+              - flower_yellow_by_right:
+                  _func: object_contact_destination
+                  contact_sensor_cfgs: '@flower_yellow_right_contact'
+                  force_threshold: 0.05
+                  consecutive_steps: 3
+          - raised:
+              _func: object_lifted
+              object_cfg: '@flower_yellow'
+              min_lift: 0.04
+              consecutive_steps: 3
+              contact_sensor:
+              - left_gripper_contact
+              - right_gripper_contact
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: one hand picks the yellow rose by the stem from above (G1)

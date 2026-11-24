@@ -1,0 +1,33 @@
+include: x2real/task/bright/pour_beans_occlude_b/stages/_stage_base.yaml
+direct_task_generator:
+  definition:
+    task_type: bright_pour_beans_occlude_b_hold_bowl
+  component_sections:
+    termination_component:
+      terms:
+        success:
+          _combine: and
+          terms:
+          - hold:
+              _combine: or
+              terms:
+              - bowl_by_left:
+                  _func: object_contact_destination
+                  contact_sensor_cfgs: '@bowl_left_contact'
+                  force_threshold: 0.2
+                  consecutive_steps: 10
+              - bowl_by_right:
+                  _func: object_contact_destination
+                  contact_sensor_cfgs: '@bowl_right_contact'
+                  force_threshold: 0.2
+                  consecutive_steps: 10
+          - cup_anchor:
+              _func: any_object_displaced_from_anchor
+              object_cfgs: '@bean_cup'
+              xy_only: true
+              min_displacement: 0.0
+    log_component:
+      entries:
+        progress:
+          trigger: success
+          value: one hand holds the rim of the blue bowl (C1)
