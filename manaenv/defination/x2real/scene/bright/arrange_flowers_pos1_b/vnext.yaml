@@ -4,8 +4,9 @@ definition:
     name: bright_arrange_flowers_pos1_b
     source: bright/arrange_flowers_r1
     semantic_goal: 'Insert crochet roses stem-first into the vase after a mid-air hand-over (5 colours, sides swap)
-      | case: vase moved 10 cm back and 8 cm inward; every rose turned 180 deg (heads toward the robot); a 30 deg
-      turn of the tightly packed roses is not solvable by the AABB layout solver'
+      | case: vase moved 10 cm back and 8 cm inward; the row of roses moved 6 cm toward the robot. Rotating the
+      roses is not done: 30 deg makes the tightly packed rows collide in the AABB layout solver and a 180 deg turn
+      is rejected by the runtime fit-bounds check'
 render_settings:
   gen_method: 0
   tags: green_booth
@@ -136,37 +137,37 @@ layout:
           type: surface
           surface: cloth
           ranges:
-            x: [-0.12, -0.08]
+            x: [0.12, 0.16]
             y: [-0.433, -0.427]
-          yaws: [3.1, 3.14]
+          yaws: [-0.02, 0.02]
         p0s1_L:
           type: surface
           surface: cloth
           ranges:
-            x: [-0.12, -0.08]
+            x: [0.12, 0.16]
             y: [-0.328, -0.322]
-          yaws: [3.1, 3.14]
+          yaws: [-0.02, 0.02]
         p0s2_L:
           type: surface
           surface: cloth
           ranges:
-            x: [-0.12, -0.08]
+            x: [0.12, 0.16]
             y: [-0.223, -0.217]
-          yaws: [3.1, 3.14]
+          yaws: [-0.02, 0.02]
         p0s3_L:
           type: surface
           surface: cloth
           ranges:
-            x: [-0.12, -0.08]
+            x: [0.12, 0.16]
             y: [-0.118, -0.112]
-          yaws: [3.1, 3.14]
+          yaws: [-0.02, 0.02]
         p0s4_L:
           type: surface
           surface: cloth
           ranges:
-            x: [-0.12, -0.08]
+            x: [0.12, 0.16]
             y: [-0.013, -0.007]
-          yaws: [3.1, 3.14]
+          yaws: [-0.02, 0.02]
         vase_R:
           type: surface
           surface: cloth
@@ -178,37 +179,37 @@ layout:
           type: surface
           surface: cloth
           ranges:
-            x: [-0.12, -0.08]
+            x: [0.12, 0.16]
             y: [0.427, 0.433]
-          yaws: [3.1, 3.14]
+          yaws: [-0.02, 0.02]
         p0s1_R:
           type: surface
           surface: cloth
           ranges:
-            x: [-0.12, -0.08]
+            x: [0.12, 0.16]
             y: [0.322, 0.328]
-          yaws: [3.1, 3.14]
+          yaws: [-0.02, 0.02]
         p0s2_R:
           type: surface
           surface: cloth
           ranges:
-            x: [-0.12, -0.08]
+            x: [0.12, 0.16]
             y: [0.217, 0.223]
-          yaws: [3.1, 3.14]
+          yaws: [-0.02, 0.02]
         p0s3_R:
           type: surface
           surface: cloth
           ranges:
-            x: [-0.12, -0.08]
+            x: [0.12, 0.16]
             y: [0.112, 0.118]
-          yaws: [3.1, 3.14]
+          yaws: [-0.02, 0.02]
         p0s4_R:
           type: surface
           surface: cloth
           ranges:
-            x: [-0.12, -0.08]
+            x: [0.12, 0.16]
             y: [0.007, 0.013]
-          yaws: [3.1, 3.14]
+          yaws: [-0.02, 0.02]
       assignments:
         mode: explicit
         items:

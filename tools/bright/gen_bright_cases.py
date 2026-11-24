@@ -241,10 +241,10 @@ def case_pos1(task, tier, scene, files):
             if sid.startswith(cont):
                 _shift_slot(s, dx=-0.10, dy_inward=0.08)
             else:
-                s["yaws"] = [3.10, 3.14]                   # heads toward the robot (rotated 180 deg)
-                s["ranges"]["x"] = [-0.12, -0.08]           # origin = stem bottom; the head now reaches x ~ +0.2
-        return ("vase moved 10 cm back and 8 cm inward; every rose turned 180 deg (heads toward the robot); "
-                "a 30 deg turn of the tightly packed roses is not solvable by the AABB layout solver")
+                _shift_slot(s, dx=0.06)                     # the whole row 6 cm toward the robot
+        return ("vase moved 10 cm back and 8 cm inward; the row of roses moved 6 cm toward the robot. Rotating the "
+                "roses is not done: 30 deg makes the tightly packed rows collide in the AABB layout solver and a "
+                "180 deg turn is rejected by the runtime fit-bounds check")
     tool_y = {"p0s0": -0.40, "p0s1": -0.245, "p0s2": -0.09}   # 30 deg turned tools need 15.5 cm spacing
     for sid, s in g["slots"].items():
         if sid.startswith(cont):
@@ -481,10 +481,11 @@ def case_reorder(task, tier, scene, files):
     for n in fixed:
         _remove_from_group(g, n)
     # stacker at its authored (left) slot, with one "seat" surface per peg level (all rings on the peg are children
-    # of the stacker, so the layout solver treats them as supported, not colliding)
+    # of the stacker, so the layout solver treats them as supported, not colliding).  A child's whole footprint must
+    # fit inside the parent surface bounds, so the seats are ring-sized; the child centre range stays +-0.2 mm.
     stacker = _obj(scene, "stacker")
     seats = {f"seat{j}": {"center": [0.0, 0.0, round(D.BASE_H + D.RING_T * j, 4)], "x_axis": [1.0, 0.0, 0.0],
-                          "y_axis": [0.0, 1.0, 0.0], "bounds": {"x": [-0.002, 0.002], "y": [-0.002, 0.002]}}
+                          "y_axis": [0.0, 1.0, 0.0], "bounds": {"x": [-0.036, 0.036], "y": [-0.036, 0.036]}}
              for j in range(len(spec["peg"]))}
     stacker["anchors"] = {"local_surfaces": seats}
     scene["layout"]["nodes"]["stacker"] = {"object": "stacker", "placement": _surf([0.03, 0.03], [-0.075, -0.075],
@@ -496,7 +497,7 @@ def case_reorder(task, tier, scene, files):
     for bottom, top in spec["table_stack"]:
         _obj(scene, f"ring_{bottom}")["anchors"] = {"local_surfaces": {"top": {
             "center": [0.0, 0.0, D.RING_T], "x_axis": [1.0, 0.0, 0.0], "y_axis": [0.0, 1.0, 0.0],
-            "bounds": {"x": [-0.004, 0.004], "y": [-0.004, 0.004]}}}}
+            "bounds": {"x": [-0.036, 0.036], "y": [-0.036, 0.036]}}}}
         scene["layout"]["nodes"][f"ring_{bottom}"] = {"object": f"ring_{bottom}",
                                                       "placement": _surf([-0.10, -0.10], [0.21, 0.21], yaws=0.0)}
         scene["layout"]["surfaces"][f"ring{bottom}_top"] = {"type": "ref", "ref": f"ring_{bottom}.top"}
